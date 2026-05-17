@@ -1,7 +1,7 @@
 [
   {
     "id": "AEONGLASS",
-    "name": "永劫の砂時計",
+    "name": "Aeonglass",
     "type": "Boss",
     "min_hp": 512,
     "max_hp": null,
@@ -10,7 +10,7 @@
     "moves": [
       {
         "id": "EBB",
-        "name": "衰退",
+        "name": "Ebb",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -26,7 +26,7 @@
       },
       {
         "id": "EYE_LASERS",
-        "name": "アイレーザー",
+        "name": "Eye Lasers",
         "intent": "Attack",
         "damage": {
           "normal": 11,
@@ -35,7 +35,7 @@
       },
       {
         "id": "INCREASING_INTENSITY",
-        "name": "激化",
+        "name": "Increasing Intensity",
         "intent": "Buff + Defend",
         "block": 33
       }
@@ -53,15 +53,7 @@
     "block_values": {
       "IncreasingIntensity": 33
     },
-    "encounters": [
-      {
-        "encounter_id": "AEONGLASS_BOSS",
-        "encounter_name": "永劫の砂時計",
-        "room_type": "Boss",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -86,14 +78,14 @@
           "next": "EBB_MOVE"
         }
       ],
-      "description": "衰退 → アイレーザー → 激化 → repeat"
+      "description": "Ebb → Eye Lasers → Increasing Intensity → repeat"
     },
     "image_url": "/static/data-beta/v0.105.1/images/monsters/aeonglass.webp",
     "beta_image_url": null
   },
   {
     "id": "ARCHITECT",
-    "name": "アーキテクト",
+    "name": "Architect",
     "type": "Normal",
     "min_hp": 9999,
     "max_hp": 9999,
@@ -102,21 +94,13 @@
     "moves": [
       {
         "id": "NOTHING",
-        "name": "何もしない",
+        "name": "Nothing",
         "intent": "Unknown"
       }
     ],
     "damage_values": null,
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "THE_ARCHITECT_EVENT_ENCOUNTER",
-        "encounter_name": "アーキテクト",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -129,14 +113,14 @@
           "next": "NOTHING"
         }
       ],
-      "description": "Always uses 何もしない"
+      "description": "Always uses Nothing"
     },
     "image_url": "/static/images/monsters/architect.webp",
     "beta_image_url": null
   },
   {
     "id": "ASSASSIN_RUBY_RAIDER",
-    "name": "アサシンレイダー",
+    "name": "AssassinRubyRaider",
     "type": "Normal",
     "min_hp": 18,
     "max_hp": 23,
@@ -145,7 +129,7 @@
     "moves": [
       {
         "id": "KILLSHOT",
-        "name": "キルショット",
+        "name": "Killshot",
         "intent": "Attack",
         "damage": {
           "normal": 10,
@@ -160,15 +144,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "RUBY_RAIDERS_NORMAL",
-        "encounter_name": "ルビーレイダーズ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -181,14 +157,14 @@
           "next": "KILLSHOT_MOVE"
         }
       ],
-      "description": "Always uses キルショット"
+      "description": "Always uses Killshot"
     },
     "image_url": "/static/images/monsters/assassin_ruby_raider.webp",
     "beta_image_url": null
   },
   {
     "id": "AXE_RUBY_RAIDER",
-    "name": "アックスレイダー",
+    "name": "AxeRubyRaider",
     "type": "Normal",
     "min_hp": 20,
     "max_hp": 22,
@@ -217,7 +193,7 @@
       },
       {
         "id": "BIG_SWING",
-        "name": "大振り",
+        "name": "Big Swing",
         "intent": "Attack",
         "damage": {
           "normal": 12,
@@ -236,15 +212,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "RUBY_RAIDERS_NORMAL",
-        "encounter_name": "ルビーレイダーズ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -269,14 +237,14 @@
           "next": "SWING_1"
         }
       ],
-      "description": "Swing 1 → Swing 2 → 大振り → repeat"
+      "description": "Swing 1 → Swing 2 → Big Swing → repeat"
     },
     "image_url": "/static/images/monsters/axe_ruby_raider.webp",
     "beta_image_url": null
   },
   {
     "id": "AXEBOT",
-    "name": "アックスマシン",
+    "name": "Axebot",
     "type": "Normal",
     "min_hp": 70,
     "max_hp": 78,
@@ -285,7 +253,7 @@
     "moves": [
       {
         "id": "BOOT_UP",
-        "name": "起動",
+        "name": "Boot Up",
         "intent": "Defend + Buff",
         "powers": [
           {
@@ -298,7 +266,7 @@
       },
       {
         "id": "ONE_TWO",
-        "name": "ワンツー",
+        "name": "One Two",
         "intent": "Attack",
         "damage": {
           "normal": 9,
@@ -308,7 +276,7 @@
       },
       {
         "id": "HAMMER_UPPERCUT",
-        "name": "ハンマーアッパー",
+        "name": "Hammer Uppercut",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -340,15 +308,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "AXEBOTS_NORMAL",
-        "encounter_name": "アックスマシン",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -370,14 +330,14 @@
           "move_id": "HAMMER_UPPERCUT"
         }
       ],
-      "description": "Always uses 起動"
+      "description": "Always uses Boot Up"
     },
     "image_url": "/static/images/monsters/axebot.webp",
     "beta_image_url": null
   },
   {
     "id": "BATTLE_FRIEND_V1",
-    "name": "バトルフレンド V1.0",
+    "name": "BattleFriendV1",
     "type": "Normal",
     "min_hp": 75,
     "max_hp": 75,
@@ -386,21 +346,13 @@
     "moves": [
       {
         "id": "NOTHING",
-        "name": "何もしない",
+        "name": "Nothing",
         "intent": "Unknown"
       }
     ],
     "damage_values": null,
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "BATTLEWORN_DUMMY_EVENT_ENCOUNTER",
-        "encounter_name": "歴戦のダミー",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -420,7 +372,7 @@
   },
   {
     "id": "BATTLE_FRIEND_V2",
-    "name": "バトルフレンド V2.0",
+    "name": "BattleFriendV2",
     "type": "Normal",
     "min_hp": 150,
     "max_hp": 150,
@@ -429,21 +381,13 @@
     "moves": [
       {
         "id": "NOTHING",
-        "name": "何もしない",
+        "name": "Nothing",
         "intent": "Unknown"
       }
     ],
     "damage_values": null,
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "BATTLEWORN_DUMMY_EVENT_ENCOUNTER",
-        "encounter_name": "歴戦のダミー",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -463,7 +407,7 @@
   },
   {
     "id": "BATTLE_FRIEND_V3",
-    "name": "バトルフレンド V3.0",
+    "name": "BattleFriendV3",
     "type": "Normal",
     "min_hp": 300,
     "max_hp": 300,
@@ -472,21 +416,13 @@
     "moves": [
       {
         "id": "NOTHING",
-        "name": "何もしない",
+        "name": "Nothing",
         "intent": "Unknown"
       }
     ],
     "damage_values": null,
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "BATTLEWORN_DUMMY_EVENT_ENCOUNTER",
-        "encounter_name": "歴戦のダミー",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -506,7 +442,7 @@
   },
   {
     "id": "BOWLBUG_EGG",
-    "name": "ボウルバグ（卵）",
+    "name": "BowlbugEgg",
     "type": "Normal",
     "min_hp": 21,
     "max_hp": 22,
@@ -515,7 +451,7 @@
     "moves": [
       {
         "id": "BITE",
-        "name": "噛みつき",
+        "name": "Bite",
         "intent": "Attack + Defend",
         "block": 7,
         "damage": {
@@ -531,22 +467,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "BOWLBUGS_NORMAL",
-        "encounter_name": "ボウルバグの群れ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "BOWLBUGS_WEAK",
-        "encounter_name": "ボウルバグ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -559,14 +480,14 @@
           "next": "BITE_MOVE"
         }
       ],
-      "description": "Always uses 噛みつき"
+      "description": "Always uses Bite"
     },
     "image_url": "/static/images/monsters/bowlbug_egg.webp",
     "beta_image_url": null
   },
   {
     "id": "BOWLBUG_NECTAR",
-    "name": "ボウルバグ（みつ）",
+    "name": "BowlbugNectar",
     "type": "Normal",
     "min_hp": 35,
     "max_hp": 38,
@@ -575,7 +496,7 @@
     "moves": [
       {
         "id": "THRASH",
-        "name": "大暴れ",
+        "name": "Thrash",
         "intent": "Attack",
         "damage": {
           "normal": 3
@@ -583,7 +504,7 @@
       },
       {
         "id": "BUFF",
-        "name": "強化",
+        "name": "Buff",
         "intent": "Buff",
         "powers": [
           {
@@ -608,22 +529,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "BOWLBUGS_NORMAL",
-        "encounter_name": "ボウルバグの群れ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "BOWLBUGS_WEAK",
-        "encounter_name": "ボウルバグ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -648,14 +554,14 @@
           "next": "THRASH2_MOVE"
         }
       ],
-      "description": "大暴れ → 強化 → Thrash2 → repeat"
+      "description": "Thrash → Buff → Thrash2 → repeat"
     },
     "image_url": "/static/images/monsters/bowlbug_nectar.webp",
     "beta_image_url": null
   },
   {
     "id": "BOWLBUG_ROCK",
-    "name": "ボウルバグ（岩）",
+    "name": "BowlbugRock",
     "type": "Normal",
     "min_hp": 45,
     "max_hp": 48,
@@ -664,7 +570,7 @@
     "moves": [
       {
         "id": "HEADBUTT",
-        "name": "頭突き",
+        "name": "Headbutt",
         "intent": "Attack",
         "damage": {
           "normal": 15,
@@ -673,7 +579,7 @@
       },
       {
         "id": "DIZZY",
-        "name": "めまい",
+        "name": "Dizzy",
         "intent": "Stun"
       }
     ],
@@ -684,29 +590,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "BOWLBUGS_NORMAL",
-        "encounter_name": "ボウルバグの群れ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "BOWLBUGS_WEAK",
-        "encounter_name": "ボウルバグ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": true
-      },
-      {
-        "encounter_id": "SLUMBERING_BEETLE_NORMAL",
-        "encounter_name": "パジャマパーティー",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -729,14 +613,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with 頭突き"
+      "description": "Starts with Headbutt"
     },
     "image_url": "/static/data-beta/v0.105.1/images/monsters/bowlbug_rock.webp",
     "beta_image_url": null
   },
   {
     "id": "BOWLBUG_SILK",
-    "name": "ボウルバグ（糸）",
+    "name": "BowlbugSilk",
     "type": "Normal",
     "min_hp": 40,
     "max_hp": 43,
@@ -745,7 +629,7 @@
     "moves": [
       {
         "id": "THRASH",
-        "name": "大暴れ",
+        "name": "Thrash",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -755,7 +639,7 @@
       },
       {
         "id": "TOXIC_SPIT",
-        "name": "酸液",
+        "name": "Toxic Spit",
         "intent": "Debuff",
         "powers": [
           {
@@ -774,22 +658,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "BOWLBUGS_NORMAL",
-        "encounter_name": "ボウルバグの群れ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SLUMBERING_BEETLE_NORMAL",
-        "encounter_name": "パジャマパーティー",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -813,7 +682,7 @@
   },
   {
     "id": "BRUTE_RUBY_RAIDER",
-    "name": "ブルートレイダー",
+    "name": "BruteRubyRaider",
     "type": "Normal",
     "min_hp": 30,
     "max_hp": 33,
@@ -822,7 +691,7 @@
     "moves": [
       {
         "id": "BEAT",
-        "name": "ビート",
+        "name": "Beat",
         "intent": "Attack",
         "damage": {
           "normal": 7,
@@ -831,7 +700,7 @@
       },
       {
         "id": "ROAR",
-        "name": "咆哮",
+        "name": "Roar",
         "intent": "Buff",
         "powers": [
           {
@@ -849,15 +718,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "RUBY_RAIDERS_NORMAL",
-        "encounter_name": "ルビーレイダーズ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -874,14 +735,14 @@
           "move_id": "ROAR"
         }
       ],
-      "description": "Always uses ビート"
+      "description": "Always uses Beat"
     },
     "image_url": "/static/images/monsters/brute_ruby_raider.webp",
     "beta_image_url": null
   },
   {
     "id": "BYGONE_EFFIGY",
-    "name": "古の偶像",
+    "name": "BygoneEffigy",
     "type": "Elite",
     "min_hp": 127,
     "max_hp": null,
@@ -890,12 +751,12 @@
     "moves": [
       {
         "id": "SLEEP",
-        "name": "ねむる",
+        "name": "Sleep",
         "intent": "Sleep"
       },
       {
         "id": "WAKE",
-        "name": "目覚め",
+        "name": "Wake",
         "intent": "Buff",
         "powers": [
           {
@@ -912,7 +773,7 @@
       },
       {
         "id": "SLASHES",
-        "name": "切り裂き",
+        "name": "Slashes",
         "intent": "Attack",
         "damage": {
           "normal": 13,
@@ -927,15 +788,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "BYGONE_EFFIGY_ELITE",
-        "encounter_name": "古の偶像",
-        "room_type": "Elite",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -966,14 +819,14 @@
           "next": "SLASHES_MOVE"
         }
       ],
-      "description": "ねむる → 目覚め → 切り裂き → repeat"
+      "description": "Sleep → Wake → Slashes → repeat"
     },
     "image_url": "/static/images/monsters/bygone_effigy.webp",
     "beta_image_url": null
   },
   {
     "id": "BYRDONIS",
-    "name": "ビャードニス",
+    "name": "Byrdonis",
     "type": "Elite",
     "min_hp": 81,
     "max_hp": 84,
@@ -982,7 +835,7 @@
     "moves": [
       {
         "id": "PECK",
-        "name": "つつく",
+        "name": "Peck",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -993,7 +846,7 @@
       },
       {
         "id": "SWOOP",
-        "name": "急降下",
+        "name": "Swoop",
         "intent": "Attack",
         "damage": {
           "normal": 17,
@@ -1013,15 +866,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "BYRDONIS_ELITE",
-        "encounter_name": "ビャードニス",
-        "room_type": "Elite",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -1040,14 +885,14 @@
           "next": "PECK_MOVE"
         }
       ],
-      "description": "急降下 → つつく → repeat"
+      "description": "Swoop → Peck → repeat"
     },
     "image_url": "/static/images/monsters/byrdonis.webp",
     "beta_image_url": null
   },
   {
     "id": "BYRDPIP",
-    "name": "ビャードのヒナ",
+    "name": "Byrdpip",
     "type": "Normal",
     "min_hp": 9999,
     "max_hp": 9999,
@@ -1056,7 +901,7 @@
     "moves": [
       {
         "id": "NOTHING",
-        "name": "何もしない",
+        "name": "Nothing",
         "intent": "Unknown"
       }
     ],
@@ -1082,7 +927,7 @@
   },
   {
     "id": "CALCIFIED_CULTIST",
-    "name": "石を纏った狂信者",
+    "name": "CalcifiedCultist",
     "type": "Normal",
     "min_hp": 38,
     "max_hp": 41,
@@ -1091,7 +936,7 @@
     "moves": [
       {
         "id": "INCANTATION",
-        "name": "祈祷",
+        "name": "Incantation",
         "intent": "Buff",
         "powers": [
           {
@@ -1103,7 +948,7 @@
       },
       {
         "id": "DARK_STRIKE",
-        "name": "ダークストライク",
+        "name": "Dark Strike",
         "intent": "Attack",
         "damage": {
           "normal": 9,
@@ -1118,22 +963,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "CULTISTS_NORMAL",
-        "encounter_name": "狂信者たち",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SEAPUNK_NORMAL",
-        "encounter_name": "地下ドックに生きるものたち",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -1150,14 +980,14 @@
           "move_id": "DARK_STRIKE"
         }
       ],
-      "description": "Always uses 祈祷"
+      "description": "Always uses Incantation"
     },
     "image_url": "/static/images/monsters/calcified_cultist.webp",
     "beta_image_url": null
   },
   {
     "id": "CEREMONIAL_BEAST",
-    "name": "儀式の獣",
+    "name": "CeremonialBeast",
     "type": "Boss",
     "min_hp": 252,
     "max_hp": null,
@@ -1166,7 +996,7 @@
     "moves": [
       {
         "id": "STAMP",
-        "name": "スタンプ",
+        "name": "Stamp",
         "intent": "Buff",
         "powers": [
           {
@@ -1178,7 +1008,7 @@
       },
       {
         "id": "PLOW",
-        "name": "突進",
+        "name": "Plow",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -1199,7 +1029,7 @@
       },
       {
         "id": "BEAST_CRY",
-        "name": "獣の咆哮",
+        "name": "Beast Cry",
         "intent": "Debuff",
         "powers": [
           {
@@ -1211,7 +1041,7 @@
       },
       {
         "id": "STOMP",
-        "name": "踏みつけ",
+        "name": "Stomp",
         "intent": "Attack",
         "damage": {
           "normal": 15,
@@ -1220,7 +1050,7 @@
       },
       {
         "id": "CRUSH",
-        "name": "クラッシュ",
+        "name": "Crush",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -1250,15 +1080,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "CEREMONIAL_BEAST_BOSS",
-        "encounter_name": "儀式の獣",
-        "room_type": "Boss",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -1302,14 +1124,14 @@
           "next": "STOMP_MOVE"
         }
       ],
-      "description": "スタンプ → 突進 → repeat"
+      "description": "Stamp → Plow → repeat"
     },
     "image_url": "/static/images/monsters/ceremonial_beast.webp",
     "beta_image_url": null
   },
   {
     "id": "CHOMPER",
-    "name": "チョンパー",
+    "name": "Chomper",
     "type": "Normal",
     "min_hp": 60,
     "max_hp": 64,
@@ -1318,7 +1140,7 @@
     "moves": [
       {
         "id": "CLAMP",
-        "name": "はさむ",
+        "name": "Clamp",
         "intent": "Attack",
         "damage": {
           "normal": 8,
@@ -1328,7 +1150,7 @@
       },
       {
         "id": "SCREECH",
-        "name": "金切り声",
+        "name": "Screech",
         "intent": "Status"
       }
     ],
@@ -1340,22 +1162,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "CHOMPERS_NORMAL",
-        "encounter_name": "オートマトンのコンビ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "TUNNELER_NORMAL",
-        "encounter_name": "トンネリング",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -1379,7 +1186,7 @@
   },
   {
     "id": "CORPSE_SLUG",
-    "name": "屍ナメクジ",
+    "name": "CorpseSlug",
     "type": "Normal",
     "min_hp": 25,
     "max_hp": 27,
@@ -1388,7 +1195,7 @@
     "moves": [
       {
         "id": "WHIP_SLAP",
-        "name": "ムチ打ち",
+        "name": "Whip Slap",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -1397,7 +1204,7 @@
       },
       {
         "id": "GLOMP",
-        "name": "飛びつき",
+        "name": "Glomp",
         "intent": "Attack",
         "damage": {
           "normal": 8,
@@ -1406,7 +1213,7 @@
       },
       {
         "id": "GOOP",
-        "name": "粘液",
+        "name": "Goop",
         "intent": "Debuff",
         "powers": [
           {
@@ -1428,22 +1235,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "CORPSE_SLUGS_NORMAL",
-        "encounter_name": "多数の屍ナメクジ",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "CORPSE_SLUGS_WEAK",
-        "encounter_name": "屍ナメクジ",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -1475,7 +1267,7 @@
   },
   {
     "id": "CROSSBOW_RUBY_RAIDER",
-    "name": "クロスボウレイダー",
+    "name": "CrossbowRubyRaider",
     "type": "Normal",
     "min_hp": 18,
     "max_hp": 21,
@@ -1484,7 +1276,7 @@
     "moves": [
       {
         "id": "FIRE",
-        "name": "発射！",
+        "name": "Fire",
         "intent": "Attack",
         "damage": {
           "normal": 14,
@@ -1493,7 +1285,7 @@
       },
       {
         "id": "RELOAD",
-        "name": "リロード",
+        "name": "Reload",
         "intent": "Defend",
         "block": 3
       }
@@ -1505,15 +1297,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "RUBY_RAIDERS_NORMAL",
-        "encounter_name": "ルビーレイダーズ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -1537,7 +1321,7 @@
   },
   {
     "id": "CRUSHER",
-    "name": "クラッシャー",
+    "name": "Crusher",
     "type": "Boss",
     "min_hp": 209,
     "max_hp": null,
@@ -1546,7 +1330,7 @@
     "moves": [
       {
         "id": "THRASH",
-        "name": "大暴れ",
+        "name": "Thrash",
         "intent": "Attack",
         "damage": {
           "normal": 12,
@@ -1555,7 +1339,7 @@
       },
       {
         "id": "ENLARGING_STRIKE",
-        "name": "巨大化攻撃",
+        "name": "Enlarging Strike",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -1564,7 +1348,7 @@
       },
       {
         "id": "BUG_STING",
-        "name": "虫刺し",
+        "name": "Bug Sting",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -1586,7 +1370,7 @@
       },
       {
         "id": "ADAPT",
-        "name": "適応",
+        "name": "Adapt",
         "intent": "Buff",
         "powers": [
           {
@@ -1598,7 +1382,7 @@
       },
       {
         "id": "GUARDED_STRIKE",
-        "name": "ガードストライク",
+        "name": "Guarded Strike",
         "intent": "Attack + Defend",
         "block": 18,
         "damage": {
@@ -1627,15 +1411,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "KAISER_CRAB_BOSS",
-        "encounter_name": "カイザークラブ",
-        "room_type": "Boss",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -1672,14 +1448,14 @@
           "next": "THRASH_MOVE"
         }
       ],
-      "description": "大暴れ → 巨大化攻撃 → 虫刺し → 適応 → ガードストライク → repeat"
+      "description": "Thrash → Enlarging Strike → Bug Sting → Adapt → Guarded Strike → repeat"
     },
     "image_url": "/static/images/monsters/crusher.webp",
     "beta_image_url": null
   },
   {
     "id": "CUBEX_CONSTRUCT",
-    "name": "キューベックス",
+    "name": "CubexConstruct",
     "type": "Normal",
     "min_hp": 65,
     "max_hp": null,
@@ -1688,7 +1464,7 @@
     "moves": [
       {
         "id": "CHARGE_UP",
-        "name": "チャージアップ",
+        "name": "Charge Up",
         "intent": "Buff",
         "powers": [
           {
@@ -1700,7 +1476,7 @@
       },
       {
         "id": "REPEATER_BLAST",
-        "name": "リピーターブラスト",
+        "name": "Repeater Blast",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -1732,7 +1508,7 @@
       },
       {
         "id": "EXPEL",
-        "name": "排出",
+        "name": "Expel",
         "intent": "Attack",
         "damage": {
           "normal": 5,
@@ -1753,22 +1529,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "CONSTRUCT_MENAGERIE_NORMAL",
-        "encounter_name": "機械兵の動物園",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "CUBEX_CONSTRUCT_NORMAL",
-        "encounter_name": "キューベックス",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -1799,14 +1560,14 @@
           "next": "REPEATER_BLAST_MOVE"
         }
       ],
-      "description": "チャージアップ → リピーターブラスト → Repeater Blast Move 2 → 排出 → repeat"
+      "description": "Charge Up → Repeater Blast → Repeater Blast Move 2 → Expel → repeat"
     },
     "image_url": "/static/images/monsters/cubex_construct.webp",
     "beta_image_url": null
   },
   {
     "id": "DAMP_CULTIST",
-    "name": "湿った狂信者",
+    "name": "DampCultist",
     "type": "Normal",
     "min_hp": 51,
     "max_hp": 53,
@@ -1815,7 +1576,7 @@
     "moves": [
       {
         "id": "INCANTATION",
-        "name": "祈祷",
+        "name": "Incantation",
         "intent": "Buff",
         "powers": [
           {
@@ -1827,7 +1588,7 @@
       },
       {
         "id": "DARK_STRIKE",
-        "name": "ダークストライク",
+        "name": "Dark Strike",
         "intent": "Attack",
         "damage": {
           "normal": 1,
@@ -1842,15 +1603,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "CULTISTS_NORMAL",
-        "encounter_name": "狂信者たち",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -1867,14 +1620,14 @@
           "move_id": "DARK_STRIKE"
         }
       ],
-      "description": "Always uses 祈祷"
+      "description": "Always uses Incantation"
     },
     "image_url": "/static/images/monsters/damp_cultist.webp",
     "beta_image_url": null
   },
   {
     "id": "DECIMILLIPEDE_SEGMENT",
-    "name": "万足ムカデ",
+    "name": "DecimillipedeSegment",
     "type": "Elite",
     "min_hp": 40,
     "max_hp": 46,
@@ -1883,7 +1636,7 @@
     "moves": [
       {
         "id": "WRITHE",
-        "name": "のたうち",
+        "name": "Writhe",
         "intent": "Attack",
         "damage": {
           "normal": 5,
@@ -1893,7 +1646,7 @@
       },
       {
         "id": "BULK",
-        "name": "バルク",
+        "name": "Bulk",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -1925,12 +1678,12 @@
       },
       {
         "id": "DEAD",
-        "name": "死亡",
+        "name": "Dead",
         "intent": "Unknown"
       },
       {
         "id": "REATTACH",
-        "name": "再結合",
+        "name": "Reattach",
         "intent": "Heal"
       }
     ],
@@ -2000,7 +1753,7 @@
   },
   {
     "id": "DEVOTED_SCULPTOR",
-    "name": "狂信の彫刻家",
+    "name": "DevotedSculptor",
     "type": "Normal",
     "min_hp": 162,
     "max_hp": null,
@@ -2009,12 +1762,12 @@
     "moves": [
       {
         "id": "FORBIDDEN_INCANTATION",
-        "name": "禁じられた祈り",
+        "name": "Forbidden Incantation",
         "intent": "Buff"
       },
       {
         "id": "SAVAGE",
-        "name": "野蛮な一撃",
+        "name": "Savage",
         "intent": "Attack",
         "damage": {
           "normal": 12,
@@ -2029,15 +1782,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "DEVOTED_SCULPTOR_WEAK",
-        "encounter_name": "狂信の彫刻家",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -2054,7 +1799,7 @@
           "move_id": "SAVAGE"
         }
       ],
-      "description": "Always uses 禁じられた祈り"
+      "description": "Always uses Forbidden Incantation"
     },
     "image_url": "/static/images/monsters/devoted_sculptor.webp",
     "beta_image_url": null
@@ -2163,7 +1908,7 @@
   },
   {
     "id": "ENTOMANCER",
-    "name": "エントマンサー",
+    "name": "Entomancer",
     "type": "Elite",
     "min_hp": 145,
     "max_hp": null,
@@ -2172,7 +1917,7 @@
     "moves": [
       {
         "id": "PHEROMONE_SPIT",
-        "name": "フェロモン噴射",
+        "name": "Pheromone Spit",
         "intent": "Buff",
         "powers": [
           {
@@ -2194,7 +1939,7 @@
       },
       {
         "id": "BEES",
-        "name": "ハチだ！",
+        "name": "Bees",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -2205,7 +1950,7 @@
       },
       {
         "id": "SPEAR",
-        "name": "スピア！",
+        "name": "Spear",
         "intent": "Attack",
         "damage": {
           "normal": 18,
@@ -2225,15 +1970,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "ENTOMANCER_ELITE",
-        "encounter_name": "エントマンサー",
-        "room_type": "Elite",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -2256,14 +1993,14 @@
           "move_id": "SPEAR"
         }
       ],
-      "description": "Always uses ハチだ！"
+      "description": "Always uses Bees"
     },
     "image_url": "/static/images/monsters/entomancer.webp",
     "beta_image_url": null
   },
   {
     "id": "EXOSKELETON",
-    "name": "外骨格蟲",
+    "name": "Exoskeleton",
     "type": "Normal",
     "min_hp": 24,
     "max_hp": 28,
@@ -2272,7 +2009,7 @@
     "moves": [
       {
         "id": "SKITTER",
-        "name": "這い回る",
+        "name": "Skitter",
         "intent": "Attack",
         "damage": {
           "normal": 1,
@@ -2282,7 +2019,7 @@
       },
       {
         "id": "MANDIBLES",
-        "name": "大顎",
+        "name": "Mandibles",
         "intent": "Attack",
         "damage": {
           "normal": 8,
@@ -2291,7 +2028,7 @@
       },
       {
         "id": "ENRAGE",
-        "name": "激怒",
+        "name": "Enrage",
         "intent": "Buff",
         "powers": [
           {
@@ -2312,22 +2049,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "EXOSKELETONS_NORMAL",
-        "encounter_name": "数多の外骨格蟲",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "EXOSKELETONS_WEAK",
-        "encounter_name": "外骨格蟲",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "mixed",
@@ -2390,14 +2112,14 @@
           ]
         }
       ],
-      "description": "then random: 這い回る (no repeat), 大顎 (no repeat); then conditional: 這い回る (if in first slot) / 大顎 (if in second slot) / 激怒 (if in third slot) / Rand (if in fourth slot)"
+      "description": "then random: Skitter (no repeat), Mandibles (no repeat); then conditional: Skitter (if in first slot) / Mandibles (if in second slot) / Enrage (if in third slot) / Rand (if in fourth slot)"
     },
     "image_url": "/static/images/monsters/exoskeleton.webp",
     "beta_image_url": null
   },
   {
     "id": "EYE_WITH_TEETH",
-    "name": "牙むく眼",
+    "name": "EyeWithTeeth",
     "type": "Normal",
     "min_hp": 6,
     "max_hp": null,
@@ -2406,21 +2128,13 @@
     "moves": [
       {
         "id": "DISTRACT",
-        "name": "目くらまし",
+        "name": "Distract",
         "intent": "Status"
       }
     ],
     "damage_values": null,
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FOGMOG_NORMAL",
-        "encounter_name": "フォグモグ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -2433,14 +2147,14 @@
           "next": "DISTRACT_MOVE"
         }
       ],
-      "description": "Always uses 目くらまし"
+      "description": "Always uses Distract"
     },
     "image_url": "/static/images/monsters/eye_with_teeth.webp",
     "beta_image_url": null
   },
   {
     "id": "FABRICATOR",
-    "name": "ファブリケーター",
+    "name": "Fabricator",
     "type": "Normal",
     "min_hp": 150,
     "max_hp": null,
@@ -2449,12 +2163,12 @@
     "moves": [
       {
         "id": "FABRICATE",
-        "name": "製造",
+        "name": "Fabricate",
         "intent": "Summon"
       },
       {
         "id": "FABRICATING_STRIKE",
-        "name": "製造ストライク",
+        "name": "Fabricating Strike",
         "intent": "Attack + Summon",
         "damage": {
           "normal": 18,
@@ -2463,7 +2177,7 @@
       },
       {
         "id": "DISINTEGRATE",
-        "name": "崩壊",
+        "name": "Disintegrate",
         "intent": "Attack",
         "damage": {
           "normal": 11,
@@ -2482,15 +2196,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FABRICATOR_NORMAL",
-        "encounter_name": "ファブリケーター",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "mixed",
@@ -2545,14 +2251,14 @@
           ]
         }
       ],
-      "description": "then random: 製造, 製造ストライク; then conditional: Rand (if can fabricate) / 崩壊 (if cannot fabricate)"
+      "description": "then random: Fabricate, Fabricating Strike; then conditional: Rand (if can fabricate) / Disintegrate (if cannot fabricate)"
     },
     "image_url": "/static/images/monsters/fabricator.webp",
     "beta_image_url": null
   },
   {
     "id": "FAKE_MERCHANT_MONSTER",
-    "name": "商人？",
+    "name": "FakeMerchantMonster",
     "type": "Normal",
     "min_hp": 165,
     "max_hp": 165,
@@ -2561,7 +2267,7 @@
     "moves": [
       {
         "id": "SWIPE",
-        "name": "なぎ払い",
+        "name": "Swipe",
         "intent": "Attack",
         "damage": {
           "normal": 13,
@@ -2570,7 +2276,7 @@
       },
       {
         "id": "SPEW_COINS",
-        "name": "コイン吐き",
+        "name": "Spew Coins",
         "intent": "Attack",
         "damage": {
           "normal": 2
@@ -2578,7 +2284,7 @@
       },
       {
         "id": "THROW_RELIC",
-        "name": "レリック投げ",
+        "name": "Throw Relic",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -2594,7 +2300,7 @@
       },
       {
         "id": "ENRAGE",
-        "name": "激怒",
+        "name": "Enrage",
         "intent": "Buff",
         "powers": [
           {
@@ -2619,15 +2325,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FAKE_MERCHANT_EVENT_ENCOUNTER",
-        "encounter_name": "商人？",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -2668,14 +2366,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with なぎ払い"
+      "description": "Starts with Swipe"
     },
     "image_url": "/static/images/monsters/fake_merchant.webp",
     "beta_image_url": null
   },
   {
     "id": "FAT_GREMLIN",
-    "name": "ファットグレムリン",
+    "name": "FatGremlin",
     "type": "Normal",
     "min_hp": 13,
     "max_hp": 17,
@@ -2684,26 +2382,18 @@
     "moves": [
       {
         "id": "SPAWNED",
-        "name": "目覚め",
+        "name": "Spawned",
         "intent": "Stun"
       },
       {
         "id": "FLEE",
-        "name": "逃走",
+        "name": "Flee",
         "intent": "Escape"
       }
     ],
     "damage_values": null,
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "GREMLIN_MERC_NORMAL",
-        "encounter_name": "トレンチコートのグレムリン",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -2720,14 +2410,14 @@
           "move_id": "FLEE"
         }
       ],
-      "description": "Always uses 目覚め"
+      "description": "Always uses Spawned"
     },
     "image_url": "/static/images/monsters/fat_gremlin.webp",
     "beta_image_url": null
   },
   {
     "id": "FLAIL_KNIGHT",
-    "name": "フレイルナイト",
+    "name": "FlailKnight",
     "type": "Elite",
     "min_hp": 101,
     "max_hp": null,
@@ -2736,7 +2426,7 @@
     "moves": [
       {
         "id": "WAR_CHANT",
-        "name": "戦いの歌",
+        "name": "War Chant",
         "intent": "Buff",
         "powers": [
           {
@@ -2748,7 +2438,7 @@
       },
       {
         "id": "FLAIL",
-        "name": "フレイル",
+        "name": "Flail",
         "intent": "Attack",
         "damage": {
           "normal": 9,
@@ -2758,7 +2448,7 @@
       },
       {
         "id": "RAM",
-        "name": "打ち込み",
+        "name": "Ram",
         "intent": "Attack",
         "damage": {
           "normal": 15,
@@ -2778,15 +2468,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "KNIGHTS_ELITE",
-        "encounter_name": "騎士のギャング",
-        "room_type": "Elite",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -2821,14 +2503,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with 打ち込み"
+      "description": "Starts with Ram"
     },
     "image_url": "/static/images/monsters/flail_knight.webp",
     "beta_image_url": null
   },
   {
     "id": "FLYCONID",
-    "name": "フライコニド",
+    "name": "Flyconid",
     "type": "Normal",
     "min_hp": 47,
     "max_hp": 49,
@@ -2837,7 +2519,7 @@
     "moves": [
       {
         "id": "VULNERABLE_SPORES",
-        "name": "弱体の胞子",
+        "name": "Vulnerable Spores",
         "intent": "Debuff",
         "powers": [
           {
@@ -2853,7 +2535,7 @@
       },
       {
         "id": "FRAIL_SPORES",
-        "name": "脆弱の胞子",
+        "name": "Frail Spores",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -2869,7 +2551,7 @@
       },
       {
         "id": "SMASH",
-        "name": "スマッシュ",
+        "name": "Smash",
         "intent": "Attack",
         "damage": {
           "normal": 11,
@@ -2888,22 +2570,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FLYCONID_NORMAL",
-        "encounter_name": "キノコとスライム",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SNAPPING_JAXFRUIT_NORMAL",
-        "encounter_name": "繁茂の地の植物",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -2945,7 +2612,7 @@
   },
   {
     "id": "FOGMOG",
-    "name": "フォグモグ",
+    "name": "Fogmog",
     "type": "Normal",
     "min_hp": 74,
     "max_hp": null,
@@ -2954,12 +2621,12 @@
     "moves": [
       {
         "id": "ILLUSION",
-        "name": "幻惑の胞子",
+        "name": "Illusion",
         "intent": "Summon"
       },
       {
         "id": "SWIPE",
-        "name": "痛撃",
+        "name": "Swipe",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -3010,15 +2677,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FOGMOG_NORMAL",
-        "encounter_name": "フォグモグ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -3065,14 +2724,14 @@
           ]
         }
       ],
-      "description": "Starts with 幻惑の胞子, then random: Swipe Random (no repeat, 40%), Headbutt (no repeat, 60%)"
+      "description": "Starts with Illusion, then random: Swipe Random (no repeat, 40%), Headbutt (no repeat, 60%)"
     },
     "image_url": "/static/images/monsters/fogmog.webp",
     "beta_image_url": null
   },
   {
     "id": "FOSSIL_STALKER",
-    "name": "化石のストーカー",
+    "name": "FossilStalker",
     "type": "Normal",
     "min_hp": 51,
     "max_hp": 53,
@@ -3081,7 +2740,7 @@
     "moves": [
       {
         "id": "TACKLE",
-        "name": "体当たり",
+        "name": "Tackle",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -3097,7 +2756,7 @@
       },
       {
         "id": "LATCH",
-        "name": "ラッチ",
+        "name": "Latch",
         "intent": "Attack",
         "damage": {
           "normal": 12,
@@ -3106,7 +2765,7 @@
       },
       {
         "id": "LASH",
-        "name": "ムチ打ち",
+        "name": "Lash",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -3131,15 +2790,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FOSSIL_STALKER_NORMAL",
-        "encounter_name": "化石のストーカー",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -3174,14 +2825,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with ラッチ"
+      "description": "Starts with Latch"
     },
     "image_url": "/static/images/monsters/fossil_stalker.webp",
     "beta_image_url": null
   },
   {
     "id": "FROG_KNIGHT",
-    "name": "カエルの騎士",
+    "name": "FrogKnight",
     "type": "Normal",
     "min_hp": 191,
     "max_hp": null,
@@ -3190,7 +2841,7 @@
     "moves": [
       {
         "id": "FOR_THE_QUEEN",
-        "name": "女王のために",
+        "name": "For The Queen",
         "intent": "Buff",
         "powers": [
           {
@@ -3202,7 +2853,7 @@
       },
       {
         "id": "STRIKE_DOWN_EVIL",
-        "name": "悪を討つ",
+        "name": "Strike Down Evil",
         "intent": "Attack",
         "damage": {
           "normal": 21,
@@ -3211,7 +2862,7 @@
       },
       {
         "id": "TONGUE_LASH",
-        "name": "ベロラッシュ",
+        "name": "Tongue Lash",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -3227,7 +2878,7 @@
       },
       {
         "id": "BEETLE_CHARGE",
-        "name": "ビートルチャージ",
+        "name": "Beetle Charge",
         "intent": "Attack",
         "damage": {
           "normal": 35,
@@ -3250,15 +2901,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FROG_KNIGHT_NORMAL",
-        "encounter_name": "カエルの騎士",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -3303,14 +2946,14 @@
           ]
         }
       ],
-      "description": "Starts: ベロラッシュ → 悪を討つ → 女王のために; then conditional: ベロラッシュ (if HasBeetleCharged || CurrentHp >= MaxHp / 2) / ビートルチャージ (if !HasBeetleCharged && CurrentHp < MaxHp / 2)"
+      "description": "Starts: Tongue Lash → Strike Down Evil → For The Queen; then conditional: Tongue Lash (if HasBeetleCharged || CurrentHp >= MaxHp / 2) / Beetle Charge (if !HasBeetleCharged && CurrentHp < MaxHp / 2)"
     },
     "image_url": "/static/images/monsters/frog_knight.webp",
     "beta_image_url": null
   },
   {
     "id": "FUZZY_WURM_CRAWLER",
-    "name": "剛毛のワーム",
+    "name": "FuzzyWurmCrawler",
     "type": "Normal",
     "min_hp": 55,
     "max_hp": 57,
@@ -3328,7 +2971,7 @@
       },
       {
         "id": "ACID_GOOP",
-        "name": "酸の粘液",
+        "name": "Acid Goop",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -3337,7 +2980,7 @@
       },
       {
         "id": "INHALE",
-        "name": "吸い込み",
+        "name": "Inhale",
         "intent": "Buff",
         "powers": [
           {
@@ -3355,22 +2998,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FUZZY_WURM_CRAWLER_WEAK",
-        "encounter_name": "剛毛のワーム",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": true
-      },
-      {
-        "encounter_id": "OVERGROWTH_CRAWLERS",
-        "encounter_name": "繁茂の地のクローラー",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -3400,7 +3028,7 @@
   },
   {
     "id": "GAS_BOMB",
-    "name": "ガス爆弾",
+    "name": "GasBomb",
     "type": "Normal",
     "min_hp": 7,
     "max_hp": null,
@@ -3409,7 +3037,7 @@
     "moves": [
       {
         "id": "EXPLODE",
-        "name": "爆発",
+        "name": "Explode",
         "intent": "Special",
         "damage": {
           "normal": 8,
@@ -3424,15 +3052,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "LIVING_FOG_NORMAL",
-        "encounter_name": "邪悪なガス",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -3444,14 +3064,14 @@
           "move_id": "EXPLODE"
         }
       ],
-      "description": "Always uses 爆発"
+      "description": "Always uses Explode"
     },
     "image_url": "/static/images/monsters/gas_bomb.webp",
     "beta_image_url": null
   },
   {
     "id": "GLOBE_HEAD",
-    "name": "グローブヘッド",
+    "name": "GlobeHead",
     "type": "Normal",
     "min_hp": 148,
     "max_hp": null,
@@ -3460,7 +3080,7 @@
     "moves": [
       {
         "id": "THUNDER_STRIKE",
-        "name": "ライトニング生成",
+        "name": "Thunder Strike",
         "intent": "Attack",
         "damage": {
           "normal": 6,
@@ -3470,7 +3090,7 @@
       },
       {
         "id": "SHOCKING_SLAP",
-        "name": "ショッキングスラップ",
+        "name": "Shocking Slap",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -3517,15 +3137,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "GLOBE_HEAD_NORMAL",
-        "encounter_name": "孤独なグローブヘッド",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -3550,14 +3162,14 @@
           "next": "SHOCKING_SLAP"
         }
       ],
-      "description": "ショッキングスラップ → ライトニング生成 → Galvanic Burst → repeat"
+      "description": "Shocking Slap → Thunder Strike → Galvanic Burst → repeat"
     },
     "image_url": "/static/images/monsters/orb_head.webp",
     "beta_image_url": null
   },
   {
     "id": "GREMLIN_MERC",
-    "name": "傭兵グレムリン",
+    "name": "GremlinMerc",
     "type": "Normal",
     "min_hp": 47,
     "max_hp": 49,
@@ -3566,7 +3178,7 @@
     "moves": [
       {
         "id": "GIMME",
-        "name": "よこせ",
+        "name": "Gimme",
         "intent": "Attack",
         "damage": {
           "normal": 7,
@@ -3576,7 +3188,7 @@
       },
       {
         "id": "DOUBLE_SMASH",
-        "name": "ダブルスマッシュ",
+        "name": "Double Smash",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -3593,7 +3205,7 @@
       },
       {
         "id": "HEHE",
-        "name": "ヘヘッ",
+        "name": "Hehe",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -3625,15 +3237,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "GREMLIN_MERC_NORMAL",
-        "encounter_name": "トレンチコートのグレムリン",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -3658,14 +3262,14 @@
           "next": "GIMME_MOVE"
         }
       ],
-      "description": "よこせ → ダブルスマッシュ → ヘヘッ → repeat"
+      "description": "Gimme → Double Smash → Hehe → repeat"
     },
     "image_url": "/static/images/monsters/gremlin_merc.webp",
     "beta_image_url": null
   },
   {
     "id": "GUARDBOT",
-    "name": "ガードマシン",
+    "name": "Guardbot",
     "type": "Normal",
     "min_hp": 16,
     "max_hp": 20,
@@ -3674,7 +3278,7 @@
     "moves": [
       {
         "id": "GUARD",
-        "name": "ガード",
+        "name": "Guard",
         "intent": "Defend",
         "block": 15
       }
@@ -3694,14 +3298,14 @@
           "next": "GUARD_MOVE"
         }
       ],
-      "description": "Always uses ガード"
+      "description": "Always uses Guard"
     },
     "image_url": "/static/images/monsters/guardbot.webp",
     "beta_image_url": null
   },
   {
     "id": "HAUNTED_SHIP",
-    "name": "幽霊船",
+    "name": "HauntedShip",
     "type": "Normal",
     "min_hp": 63,
     "max_hp": null,
@@ -3710,7 +3314,7 @@
     "moves": [
       {
         "id": "RAMMING_SPEED",
-        "name": "衝突",
+        "name": "Ramming Speed",
         "intent": "Attack",
         "damage": {
           "normal": 10,
@@ -3719,7 +3323,7 @@
       },
       {
         "id": "SWIPE",
-        "name": "なぎ払い",
+        "name": "Swipe",
         "intent": "Attack",
         "damage": {
           "normal": 13,
@@ -3728,7 +3332,7 @@
       },
       {
         "id": "STOMP",
-        "name": "踏みつけ",
+        "name": "Stomp",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -3738,7 +3342,7 @@
       },
       {
         "id": "HAUNT",
-        "name": "取り憑く",
+        "name": "Haunt",
         "intent": "Debuff + Status",
         "powers": [
           {
@@ -3765,15 +3369,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "HAUNTED_SHIP_NORMAL",
-        "encounter_name": "幽霊船",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -3814,14 +3410,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with 取り憑く"
+      "description": "Starts with Haunt"
     },
     "image_url": "/static/images/monsters/haunted_ship.webp",
     "beta_image_url": null
   },
   {
     "id": "HUNTER_KILLER",
-    "name": "ハンターキラー",
+    "name": "HunterKiller",
     "type": "Normal",
     "min_hp": 121,
     "max_hp": null,
@@ -3830,7 +3426,7 @@
     "moves": [
       {
         "id": "TENDERIZING_GOOP",
-        "name": "軟化の粘液",
+        "name": "Tenderizing Goop",
         "intent": "Debuff",
         "powers": [
           {
@@ -3842,7 +3438,7 @@
       },
       {
         "id": "BITE",
-        "name": "噛みつき",
+        "name": "Bite",
         "intent": "Attack",
         "damage": {
           "normal": 17,
@@ -3851,7 +3447,7 @@
       },
       {
         "id": "PUNCTURE",
-        "name": "穿刺",
+        "name": "Puncture",
         "intent": "Attack",
         "damage": {
           "normal": 7,
@@ -3872,15 +3468,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "HUNTER_KILLER_NORMAL",
-        "encounter_name": "ハンターキラー",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -3915,14 +3503,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with 軟化の粘液"
+      "description": "Starts with Tenderizing Goop"
     },
     "image_url": "/static/images/monsters/hunter_killer.webp",
     "beta_image_url": null
   },
   {
     "id": "INFESTED_PRISM",
-    "name": "寄生されたプリズム",
+    "name": "InfestedPrism",
     "type": "Elite",
     "min_hp": 200,
     "max_hp": null,
@@ -3931,7 +3519,7 @@
     "moves": [
       {
         "id": "JAB",
-        "name": "ジャブ",
+        "name": "Jab",
         "intent": "Attack",
         "damage": {
           "normal": 22,
@@ -3940,7 +3528,7 @@
       },
       {
         "id": "RADIATE",
-        "name": "放射",
+        "name": "Radiate",
         "intent": "Attack + Defend",
         "block": 16,
         "damage": {
@@ -3950,7 +3538,7 @@
       },
       {
         "id": "WHIRLWIND",
-        "name": "旋風",
+        "name": "Whirlwind",
         "intent": "Attack",
         "damage": {
           "normal": 9,
@@ -3960,7 +3548,7 @@
       },
       {
         "id": "PULSATE",
-        "name": "脈動",
+        "name": "Pulsate",
         "intent": "Buff + Defend",
         "powers": [
           {
@@ -3988,15 +3576,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "INFESTED_PRISMS_ELITE",
-        "encounter_name": "寄生されたプリズム",
-        "room_type": "Elite",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -4027,14 +3607,14 @@
           "next": "JAB_MOVE"
         }
       ],
-      "description": "ジャブ → 放射 → 旋風 → 脈動 → repeat"
+      "description": "Jab → Radiate → Whirlwind → Pulsate → repeat"
     },
     "image_url": "/static/images/monsters/infested_prism.webp",
     "beta_image_url": null
   },
   {
     "id": "INKLET",
-    "name": "インクレット",
+    "name": "Inklet",
     "type": "Normal",
     "min_hp": 11,
     "max_hp": 17,
@@ -4043,7 +3623,7 @@
     "moves": [
       {
         "id": "JAB",
-        "name": "ジャブ",
+        "name": "Jab",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -4052,7 +3632,7 @@
       },
       {
         "id": "WHIRLWIND",
-        "name": "旋風",
+        "name": "Whirlwind",
         "intent": "Attack",
         "damage": {
           "normal": 2,
@@ -4062,7 +3642,7 @@
       },
       {
         "id": "PIERCING_GAZE",
-        "name": "鋭い視線",
+        "name": "Piercing Gaze",
         "intent": "Attack",
         "damage": {
           "normal": 10,
@@ -4086,15 +3666,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "INKLETS_NORMAL",
-        "encounter_name": "インクレット",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -4157,14 +3729,14 @@
           ]
         }
       ],
-      "description": "Starts: 旋風 → ジャブ; then random: ジャブ, 旋風 (no repeat); then random: 鋭い視線 (no repeat), 旋風 (no repeat)"
+      "description": "Starts: Whirlwind → Jab; then random: Jab, Whirlwind (no repeat); then random: Piercing Gaze (no repeat), Whirlwind (no repeat)"
     },
     "image_url": "/static/images/monsters/inklet.webp",
     "beta_image_url": null
   },
   {
     "id": "KIN_FOLLOWER",
-    "name": "血族の信者",
+    "name": "KinFollower",
     "type": "Boss",
     "min_hp": 58,
     "max_hp": 59,
@@ -4173,7 +3745,7 @@
     "moves": [
       {
         "id": "QUICK_SLASH",
-        "name": "はやぶさ斬り",
+        "name": "Quick Slash",
         "intent": "Attack",
         "damage": {
           "normal": 5,
@@ -4182,7 +3754,7 @@
       },
       {
         "id": "BOOMERANG",
-        "name": "ブーメラン",
+        "name": "Boomerang",
         "intent": "Attack",
         "damage": {
           "normal": 2,
@@ -4192,7 +3764,7 @@
       },
       {
         "id": "POWER_DANCE",
-        "name": "力のダンス",
+        "name": "Power Dance",
         "intent": "Buff",
         "powers": [
           {
@@ -4215,15 +3787,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "THE_KIN_BOSS",
-        "encounter_name": "血族",
-        "room_type": "Boss",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -4248,14 +3812,14 @@
           "next": "QUICK_SLASH_MOVE"
         }
       ],
-      "description": "力のダンス → はやぶさ斬り → ブーメラン → repeat"
+      "description": "Power Dance → Quick Slash → Boomerang → repeat"
     },
     "image_url": "/static/images/monsters/kin_follower.webp",
     "beta_image_url": null
   },
   {
     "id": "KIN_PRIEST",
-    "name": "血族の司祭",
+    "name": "KinPriest",
     "type": "Boss",
     "min_hp": 190,
     "max_hp": null,
@@ -4264,7 +3828,7 @@
     "moves": [
       {
         "id": "ORB_OF_FRAILTY",
-        "name": "脆弱のオーブ",
+        "name": "Orb Of Frailty",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -4280,7 +3844,7 @@
       },
       {
         "id": "ORB_OF_WEAKNESS",
-        "name": "脱力のオーブ",
+        "name": "Orb Of Weakness",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -4296,7 +3860,7 @@
       },
       {
         "id": "BEAM",
-        "name": "ソウルビーム",
+        "name": "Beam",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -4306,7 +3870,7 @@
       },
       {
         "id": "RITUAL",
-        "name": "暗黒の儀式",
+        "name": "Ritual",
         "intent": "Buff",
         "powers": [
           {
@@ -4333,15 +3897,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "THE_KIN_BOSS",
-        "encounter_name": "血族",
-        "room_type": "Boss",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -4372,14 +3928,14 @@
           "next": "ORB_OF_FRAILTY_MOVE"
         }
       ],
-      "description": "脆弱のオーブ → 脱力のオーブ → ソウルビーム → 暗黒の儀式 → repeat"
+      "description": "Orb Of Frailty → Orb Of Weakness → Beam → Ritual → repeat"
     },
     "image_url": "/static/images/monsters/kin_priest.webp",
     "beta_image_url": null
   },
   {
     "id": "KNOWLEDGE_DEMON",
-    "name": "知識の悪魔",
+    "name": "KnowledgeDemon",
     "type": "Boss",
     "min_hp": 379,
     "max_hp": null,
@@ -4388,12 +3944,12 @@
     "moves": [
       {
         "id": "CURSE_OF_KNOWLEDGE",
-        "name": "知識の呪い",
+        "name": "Curse Of Knowledge",
         "intent": "Debuff"
       },
       {
         "id": "SLAP",
-        "name": "はたく",
+        "name": "Slap",
         "intent": "Attack",
         "damage": {
           "normal": 17,
@@ -4402,7 +3958,7 @@
       },
       {
         "id": "KNOWLEDGE_OVERWHELMING",
-        "name": "知識の本流",
+        "name": "Knowledge Overwhelming",
         "intent": "Attack",
         "damage": {
           "normal": 8,
@@ -4412,7 +3968,7 @@
       },
       {
         "id": "PONDER",
-        "name": "熟考",
+        "name": "Ponder",
         "intent": "Attack + Heal + Buff",
         "powers": [
           {
@@ -4444,15 +4000,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "KNOWLEDGE_DEMON_BOSS",
-        "encounter_name": "知識の悪魔",
-        "room_type": "Boss",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -4497,14 +4045,14 @@
           ]
         }
       ],
-      "description": "Starts: 知識の呪い → はたく → 知識の本流 → 熟考; then conditional: 知識の呪い (if curse of knowledge counter < 3) / はたく (if curse of knowledge counter >= 3)"
+      "description": "Starts: Curse Of Knowledge → Slap → Knowledge Overwhelming → Ponder; then conditional: Curse Of Knowledge (if curse of knowledge counter < 3) / Slap (if curse of knowledge counter >= 3)"
     },
     "image_url": "/static/images/monsters/knowledge_demon.webp",
     "beta_image_url": null
   },
   {
     "id": "LAGAVULIN_MATRIARCH",
-    "name": "ラガヴーリン・メイトリアーク",
+    "name": "LagavulinMatriarch",
     "type": "Boss",
     "min_hp": 222,
     "max_hp": null,
@@ -4513,12 +4061,12 @@
     "moves": [
       {
         "id": "SLEEP",
-        "name": "睡眠",
+        "name": "Sleep",
         "intent": "Sleep"
       },
       {
         "id": "SLASH",
-        "name": "切り裂き",
+        "name": "Slash",
         "intent": "Attack",
         "damage": {
           "normal": 19,
@@ -4537,7 +4085,7 @@
       },
       {
         "id": "DISEMBOWEL",
-        "name": "はらわた裂き",
+        "name": "Disembowel",
         "intent": "Attack",
         "damage": {
           "normal": 9,
@@ -4547,7 +4095,7 @@
       },
       {
         "id": "SOUL_SIPHON",
-        "name": "魂吸収",
+        "name": "Soul Siphon",
         "intent": "Debuff + Buff",
         "powers": [
           {
@@ -4574,15 +4122,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "LAGAVULIN_MATRIARCH_BOSS",
-        "encounter_name": "ラガヴーリン・メイトリアーク",
-        "room_type": "Boss",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -4623,14 +4163,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with 睡眠"
+      "description": "Starts with Sleep"
     },
     "image_url": "/static/images/monsters/lagavulin_matriarch.webp",
     "beta_image_url": null
   },
   {
     "id": "LEAF_SLIME_M",
-    "name": "リーフスライム (中)",
+    "name": "LeafSlimeM",
     "type": "Normal",
     "min_hp": 32,
     "max_hp": 35,
@@ -4639,7 +4179,7 @@
     "moves": [
       {
         "id": "CLUMP_SHOT",
-        "name": "塊ショット",
+        "name": "Clump Shot",
         "intent": "Attack",
         "damage": {
           "normal": 8,
@@ -4648,7 +4188,7 @@
       },
       {
         "id": "STICKY_SHOT",
-        "name": "粘着ショット",
+        "name": "Sticky Shot",
         "intent": "Status"
       }
     ],
@@ -4659,36 +4199,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FLYCONID_NORMAL",
-        "encounter_name": "キノコとスライム",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SLIMES_NORMAL",
-        "encounter_name": "スライムの大群",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SLIMES_WEAK",
-        "encounter_name": "スライムの群れ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": true
-      },
-      {
-        "encounter_id": "SLITHERING_STRANGLER_NORMAL",
-        "encounter_name": "絞蛇と友達",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -4707,14 +4218,14 @@
           "next": "CLUMP_SHOT"
         }
       ],
-      "description": "粘着ショット → 塊ショット → repeat"
+      "description": "Sticky Shot → Clump Shot → repeat"
     },
     "image_url": "/static/images/monsters/leaf_slime_m.webp",
     "beta_image_url": null
   },
   {
     "id": "LEAF_SLIME_S",
-    "name": "リーフスライム (小)",
+    "name": "LeafSlimeS",
     "type": "Normal",
     "min_hp": 11,
     "max_hp": 15,
@@ -4723,7 +4234,7 @@
     "moves": [
       {
         "id": "TACKLE",
-        "name": "体当たり",
+        "name": "Tackle",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -4732,7 +4243,7 @@
       },
       {
         "id": "GOOP",
-        "name": "粘液",
+        "name": "Goop",
         "intent": "Status"
       }
     ],
@@ -4743,29 +4254,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SLIMES_NORMAL",
-        "encounter_name": "スライムの大群",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SLIMES_WEAK",
-        "encounter_name": "スライムの群れ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": true
-      },
-      {
-        "encounter_id": "SLITHERING_STRANGLER_NORMAL",
-        "encounter_name": "絞蛇と友達",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -4801,7 +4290,7 @@
   },
   {
     "id": "LIVING_FOG",
-    "name": "生きた霧",
+    "name": "LivingFog",
     "type": "Normal",
     "min_hp": 80,
     "max_hp": null,
@@ -4810,7 +4299,7 @@
     "moves": [
       {
         "id": "ADVANCED_GAS",
-        "name": "濃縮ガス",
+        "name": "Advanced Gas",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -4826,7 +4315,7 @@
       },
       {
         "id": "BLOAT",
-        "name": "膨張",
+        "name": "Bloat",
         "intent": "Attack + Summon",
         "damage": {
           "normal": 5,
@@ -4835,7 +4324,7 @@
       },
       {
         "id": "SUPER_GAS_BLAST",
-        "name": "ガス大爆発",
+        "name": "Super Gas Blast",
         "intent": "Attack",
         "damage": {
           "normal": 8,
@@ -4858,15 +4347,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "LIVING_FOG_NORMAL",
-        "encounter_name": "邪悪なガス",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -4891,14 +4372,14 @@
           "next": "BLOAT_MOVE"
         }
       ],
-      "description": "濃縮ガス → 膨張 → ガス大爆発 → repeat"
+      "description": "Advanced Gas → Bloat → Super Gas Blast → repeat"
     },
     "image_url": "/static/images/monsters/living_smog.webp",
     "beta_image_url": null
   },
   {
     "id": "LIVING_SHIELD",
-    "name": "リビングシールド",
+    "name": "LivingShield",
     "type": "Normal",
     "min_hp": 55,
     "max_hp": null,
@@ -4907,7 +4388,7 @@
     "moves": [
       {
         "id": "SHIELD_SLAM",
-        "name": "シールドスラム",
+        "name": "Shield Slam",
         "intent": "Attack",
         "damage": {
           "normal": 6
@@ -4915,7 +4396,7 @@
       },
       {
         "id": "SMASH",
-        "name": "スマッシュ",
+        "name": "Smash",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -4940,15 +4421,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "TURRET_OPERATOR_WEAK",
-        "encounter_name": "タレットオペレーター",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -4981,14 +4454,14 @@
           ]
         }
       ],
-      "description": "Starts with シールドスラム; then conditional: シールドスラム (if has allies) / スマッシュ (if no allies)"
+      "description": "Starts with Shield Slam; then conditional: Shield Slam (if has allies) / Smash (if no allies)"
     },
     "image_url": "/static/images/monsters/living_shield.webp",
     "beta_image_url": null
   },
   {
     "id": "LOUSE_PROGENITOR",
-    "name": "始祖虫",
+    "name": "LouseProgenitor",
     "type": "Normal",
     "min_hp": 134,
     "max_hp": 136,
@@ -4997,7 +4470,7 @@
     "moves": [
       {
         "id": "WEB_CANNON",
-        "name": "ウェブ・キャノン",
+        "name": "Web Cannon",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -5013,7 +4486,7 @@
       },
       {
         "id": "POUNCE",
-        "name": "飛び掛かり",
+        "name": "Pounce",
         "intent": "Attack",
         "damage": {
           "normal": 14,
@@ -5022,7 +4495,7 @@
       },
       {
         "id": "CURL_AND_GROW",
-        "name": "まるくなり成長",
+        "name": "Curl And Grow",
         "intent": "Defend + Buff",
         "powers": [
           {
@@ -5045,15 +4518,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "LOUSE_PROGENITOR_NORMAL",
-        "encounter_name": "始祖ラミー",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -5076,14 +4541,14 @@
           "move_id": "CURL_AND_GROW"
         }
       ],
-      "description": "Always uses ウェブ・キャノン"
+      "description": "Always uses Web Cannon"
     },
     "image_url": "/static/images/monsters/louse_progenitor.webp",
     "beta_image_url": null
   },
   {
     "id": "MAGI_KNIGHT",
-    "name": "マギ・ナイト",
+    "name": "MagiKnight",
     "type": "Elite",
     "min_hp": 82,
     "max_hp": null,
@@ -5092,7 +4557,7 @@
     "moves": [
       {
         "id": "POWER_SHIELD",
-        "name": "パワーシールド",
+        "name": "Power Shield",
         "intent": "Attack + Defend",
         "block": 5,
         "damage": {
@@ -5102,7 +4567,7 @@
       },
       {
         "id": "DAMPEN",
-        "name": "減衰",
+        "name": "Dampen",
         "intent": "Debuff"
       },
       {
@@ -5113,7 +4578,7 @@
       },
       {
         "id": "MAGIC_BOMB",
-        "name": "マジックボム",
+        "name": "Magic Bomb",
         "intent": "Attack",
         "damage": {
           "normal": 35,
@@ -5122,7 +4587,7 @@
       },
       {
         "id": "RAM",
-        "name": "打ち込み",
+        "name": "Ram",
         "intent": "Attack",
         "damage": {
           "normal": 10,
@@ -5145,15 +4610,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "KNIGHTS_ELITE",
-        "encounter_name": "騎士のギャング",
-        "room_type": "Elite",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -5190,14 +4647,14 @@
           "next": "PREP_MOVE"
         }
       ],
-      "description": "パワーシールド → 減衰 → 打ち込み → Prep → マジックボム → repeat"
+      "description": "Power Shield → Dampen → Ram → Prep → Magic Bomb → repeat"
     },
     "image_url": "/static/images/monsters/magi_knight.webp",
     "beta_image_url": null
   },
   {
     "id": "MAWLER",
-    "name": "モーラー",
+    "name": "Mawler",
     "type": "Normal",
     "min_hp": 72,
     "max_hp": null,
@@ -5206,7 +4663,7 @@
     "moves": [
       {
         "id": "RIP_AND_TEAR",
-        "name": "引き裂き",
+        "name": "Rip And Tear",
         "intent": "Attack",
         "damage": {
           "normal": 14,
@@ -5215,7 +4672,7 @@
       },
       {
         "id": "ROAR",
-        "name": "咆哮",
+        "name": "Roar",
         "intent": "Debuff",
         "powers": [
           {
@@ -5227,7 +4684,7 @@
       },
       {
         "id": "CLAW",
-        "name": "爪",
+        "name": "Claw",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -5248,15 +4705,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "MAWLER_NORMAL",
-        "encounter_name": "モーラー",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -5307,14 +4756,14 @@
           ]
         }
       ],
-      "description": "Starts with 爪; then random: 引き裂き (no repeat), 咆哮 (once), 爪 (no repeat)"
+      "description": "Starts with Claw; then random: Rip And Tear (no repeat), Roar (once), Claw (no repeat)"
     },
     "image_url": "/static/images/monsters/mawler.webp",
     "beta_image_url": null
   },
   {
     "id": "MECHA_KNIGHT",
-    "name": "メカナイト",
+    "name": "MechaKnight",
     "type": "Elite",
     "min_hp": 300,
     "max_hp": null,
@@ -5323,7 +4772,7 @@
     "moves": [
       {
         "id": "CHARGE",
-        "name": "突撃",
+        "name": "Charge",
         "intent": "Attack",
         "damage": {
           "normal": 25,
@@ -5332,12 +4781,12 @@
       },
       {
         "id": "FLAMETHROWER",
-        "name": "火炎放射",
+        "name": "Flamethrower",
         "intent": "Status"
       },
       {
         "id": "WINDUP",
-        "name": "ワインドアップ",
+        "name": "Windup",
         "intent": "Defend + Buff",
         "powers": [
           {
@@ -5350,7 +4799,7 @@
       },
       {
         "id": "HEAVY_CLEAVE",
-        "name": "ヘビークリーブ",
+        "name": "Heavy Cleave",
         "intent": "Attack",
         "damage": {
           "normal": 35,
@@ -5371,15 +4820,7 @@
     "block_values": {
       "windup": 15
     },
-    "encounters": [
-      {
-        "encounter_id": "MECHA_KNIGHT_ELITE",
-        "encounter_name": "メカナイト",
-        "room_type": "Elite",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -5410,14 +4851,14 @@
           "next": "FLAMETHROWER_MOVE"
         }
       ],
-      "description": "突撃 → 火炎放射 → ワインドアップ → ヘビークリーブ → repeat"
+      "description": "Charge → Flamethrower → Windup → Heavy Cleave → repeat"
     },
     "image_url": "/static/images/monsters/mecha_knight.webp",
     "beta_image_url": null
   },
   {
     "id": "MYTE",
-    "name": "マイト",
+    "name": "Myte",
     "type": "Normal",
     "min_hp": 61,
     "max_hp": 67,
@@ -5426,12 +4867,12 @@
     "moves": [
       {
         "id": "TOXIC",
-        "name": "毒角",
+        "name": "Toxic",
         "intent": "Status"
       },
       {
         "id": "BITE",
-        "name": "噛みつき",
+        "name": "Bite",
         "intent": "Attack",
         "damage": {
           "normal": 13,
@@ -5440,7 +4881,7 @@
       },
       {
         "id": "SUCK",
-        "name": "吸い取る",
+        "name": "Suck",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -5466,15 +4907,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "MYTES_NORMAL",
-        "encounter_name": "マイトの群れ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -5513,14 +4946,14 @@
           ]
         }
       ],
-      "description": "then conditional: 毒角 (if in first slot) / 吸い取る (if in second slot)"
+      "description": "then conditional: Toxic (if in first slot) / Suck (if in second slot)"
     },
     "image_url": "/static/images/monsters/myte.webp",
     "beta_image_url": null
   },
   {
     "id": "NIBBIT",
-    "name": "ニビット",
+    "name": "Nibbit",
     "type": "Normal",
     "min_hp": 42,
     "max_hp": 46,
@@ -5529,7 +4962,7 @@
     "moves": [
       {
         "id": "BUTT",
-        "name": "バット",
+        "name": "Butt",
         "intent": "Attack",
         "damage": {
           "normal": 12,
@@ -5548,7 +4981,7 @@
       },
       {
         "id": "HISS",
-        "name": "威嚇",
+        "name": "Hiss",
         "intent": "Buff",
         "powers": [
           {
@@ -5570,22 +5003,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "NIBBITS_NORMAL",
-        "encounter_name": "ニビットのコンビ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "NIBBITS_WEAK",
-        "encounter_name": "孤独なニビット",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -5628,14 +5046,14 @@
           ]
         }
       ],
-      "description": "then conditional: バット (if alone) / 威嚇 (if not in front) / Slice (if in front)"
+      "description": "then conditional: Butt (if alone) / Hiss (if not in front) / Slice (if in front)"
     },
     "image_url": "/static/images/monsters/nibbit.webp",
     "beta_image_url": null
   },
   {
     "id": "NOISEBOT",
-    "name": "ノイズマシン",
+    "name": "Noisebot",
     "type": "Normal",
     "min_hp": 18,
     "max_hp": 23,
@@ -5644,7 +5062,7 @@
     "moves": [
       {
         "id": "NOISE",
-        "name": "ノイズ",
+        "name": "Noise",
         "intent": "Status"
       }
     ],
@@ -5663,14 +5081,14 @@
           "next": "NOISE_MOVE"
         }
       ],
-      "description": "Always uses ノイズ"
+      "description": "Always uses Noise"
     },
     "image_url": "/static/images/monsters/noisebot.webp",
     "beta_image_url": null
   },
   {
     "id": "OSTY",
-    "name": "オスティ",
+    "name": "Osty",
     "type": "Normal",
     "min_hp": 1,
     "max_hp": 1,
@@ -5705,7 +5123,7 @@
   },
   {
     "id": "OVICOPTER",
-    "name": "オビコプター",
+    "name": "Ovicopter",
     "type": "Normal",
     "min_hp": 124,
     "max_hp": 130,
@@ -5714,7 +5132,7 @@
     "moves": [
       {
         "id": "LAY_EGGS",
-        "name": "産卵",
+        "name": "Lay Eggs",
         "intent": "Summon",
         "powers": [
           {
@@ -5726,7 +5144,7 @@
       },
       {
         "id": "SMASH",
-        "name": "スマッシュ",
+        "name": "Smash",
         "intent": "Attack",
         "damage": {
           "normal": 16,
@@ -5735,7 +5153,7 @@
       },
       {
         "id": "TENDERIZER",
-        "name": "テンダライザー",
+        "name": "Tenderizer",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -5751,7 +5169,7 @@
       },
       {
         "id": "NUTRITIONAL_PASTE",
-        "name": "栄養ペースト",
+        "name": "Nutritional Paste",
         "intent": "Buff",
         "powers": [
           {
@@ -5773,15 +5191,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "OVICOPTER_NORMAL",
-        "encounter_name": "オビコプター",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -5826,14 +5236,14 @@
           ]
         }
       ],
-      "description": "Starts: 産卵 → スマッシュ → テンダライザー; then conditional: 産卵 (if can lay) / 栄養ペースト (if cannot lay)"
+      "description": "Starts: Lay Eggs → Smash → Tenderizer; then conditional: Lay Eggs (if can lay) / Nutritional Paste (if cannot lay)"
     },
     "image_url": "/static/images/monsters/ovicopter.webp",
     "beta_image_url": null
   },
   {
     "id": "OWL_MAGISTRATE",
-    "name": "フクロウ判事",
+    "name": "OwlMagistrate",
     "type": "Normal",
     "min_hp": 231,
     "max_hp": null,
@@ -5842,7 +5252,7 @@
     "moves": [
       {
         "id": "MAGISTRATE_SCRUTINY",
-        "name": "判事の監視",
+        "name": "Magistrate Scrutiny",
         "intent": "Attack",
         "damage": {
           "normal": 16,
@@ -5851,7 +5261,7 @@
       },
       {
         "id": "PECK_ASSAULT",
-        "name": "強襲つっつき",
+        "name": "Peck Assault",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -5861,7 +5271,7 @@
       },
       {
         "id": "JUDICIAL_FLIGHT",
-        "name": "司法の飛行",
+        "name": "Judicial Flight",
         "intent": "Buff",
         "powers": [
           {
@@ -5873,7 +5283,7 @@
       },
       {
         "id": "VERDICT",
-        "name": "評決",
+        "name": "Verdict",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -5904,15 +5314,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "OWL_MAGISTRATE_NORMAL",
-        "encounter_name": "裁きのフクロウ",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -5943,14 +5345,14 @@
           "next": "MAGISTRATE_SCRUTINY"
         }
       ],
-      "description": "判事の監視 → 強襲つっつき → 司法の飛行 → 評決 → repeat"
+      "description": "Magistrate Scrutiny → Peck Assault → Judicial Flight → Verdict → repeat"
     },
     "image_url": "/static/images/monsters/owl_magistrate.webp",
     "beta_image_url": null
   },
   {
     "id": "PAELS_LEGION",
-    "name": "パエルの肉兵",
+    "name": "PaelsLegion",
     "type": "Normal",
     "min_hp": 9999,
     "max_hp": 9999,
@@ -5959,7 +5361,7 @@
     "moves": [
       {
         "id": "NOTHING",
-        "name": "何もしない",
+        "name": "Nothing",
         "intent": "Unknown"
       }
     ],
@@ -5985,7 +5387,7 @@
   },
   {
     "id": "PARAFRIGHT",
-    "name": "パラフライト",
+    "name": "Parafright",
     "type": "Normal",
     "min_hp": 21,
     "max_hp": null,
@@ -5994,7 +5396,7 @@
     "moves": [
       {
         "id": "SLAM",
-        "name": "スラム",
+        "name": "Slam",
         "intent": "Attack",
         "damage": {
           "normal": 16,
@@ -6022,14 +5424,14 @@
           "next": "SLAM_MOVE"
         }
       ],
-      "description": "Always uses スラム"
+      "description": "Always uses Slam"
     },
     "image_url": "/static/images/monsters/parafright.webp",
     "beta_image_url": null
   },
   {
     "id": "PHANTASMAL_GARDENER",
-    "name": "幻影蟲",
+    "name": "PhantasmalGardener",
     "type": "Elite",
     "min_hp": 26,
     "max_hp": 31,
@@ -6038,7 +5440,7 @@
     "moves": [
       {
         "id": "BITE",
-        "name": "噛みつき",
+        "name": "Bite",
         "intent": "Attack",
         "damage": {
           "normal": 5,
@@ -6047,7 +5449,7 @@
       },
       {
         "id": "LASH",
-        "name": "ムチ打ち",
+        "name": "Lash",
         "intent": "Attack",
         "damage": {
           "normal": 7,
@@ -6056,7 +5458,7 @@
       },
       {
         "id": "FLAIL",
-        "name": "フレイル",
+        "name": "Flail",
         "intent": "Attack",
         "damage": {
           "normal": 1,
@@ -6066,7 +5468,7 @@
       },
       {
         "id": "ENLARGE",
-        "name": "巨大化",
+        "name": "Enlarge",
         "intent": "Buff",
         "powers": [
           {
@@ -6092,15 +5494,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "PHANTASMAL_GARDENERS_ELITE",
-        "encounter_name": "幻影蟲",
-        "room_type": "Elite",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -6153,14 +5547,14 @@
           ]
         }
       ],
-      "description": "then conditional: フレイル (if in first slot) / 噛みつき (if in second slot) / ムチ打ち (if in third slot) / 巨大化 (if in fourth slot)"
+      "description": "then conditional: Flail (if in first slot) / Bite (if in second slot) / Lash (if in third slot) / Enlarge (if in fourth slot)"
     },
     "image_url": "/static/images/monsters/phantasmal_gardener.webp",
     "beta_image_url": null
   },
   {
     "id": "PHROG_PARASITE",
-    "name": "寄生キャエル",
+    "name": "PhrogParasite",
     "type": "Elite",
     "min_hp": 61,
     "max_hp": 64,
@@ -6169,12 +5563,12 @@
     "moves": [
       {
         "id": "INFECT",
-        "name": "感染",
+        "name": "Infect",
         "intent": "Status"
       },
       {
         "id": "LASH",
-        "name": "ムチ打ち",
+        "name": "Lash",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -6191,15 +5585,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "PHROG_PARASITE_ELITE",
-        "encounter_name": "寄生キャエル",
-        "room_type": "Elite",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -6223,14 +5609,14 @@
           "branches": []
         }
       ],
-      "description": "Starts: 感染 → ムチ打ち"
+      "description": "Starts: Infect → Lash"
     },
     "image_url": "/static/images/monsters/phrog_parasite.webp",
     "beta_image_url": null
   },
   {
     "id": "PUNCH_CONSTRUCT",
-    "name": "パンチマシン",
+    "name": "PunchConstruct",
     "type": "Normal",
     "min_hp": 55,
     "max_hp": null,
@@ -6239,13 +5625,13 @@
     "moves": [
       {
         "id": "READY",
-        "name": "準備完了",
+        "name": "Ready",
         "intent": "Defend",
         "block": 10
       },
       {
         "id": "STRONG_PUNCH",
-        "name": "ストロングパンチ",
+        "name": "Strong Punch",
         "intent": "Attack",
         "damage": {
           "normal": 14,
@@ -6254,7 +5640,7 @@
       },
       {
         "id": "FAST_PUNCH",
-        "name": "ファストパンチ",
+        "name": "Fast Punch",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -6282,29 +5668,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "CONSTRUCT_MENAGERIE_NORMAL",
-        "encounter_name": "機械兵の動物園",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "PUNCH_CONSTRUCT_NORMAL",
-        "encounter_name": "パンチマシーン",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "PUNCH_OFF_EVENT_ENCOUNTER",
-        "encounter_name": "パンチマシーン",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -6336,7 +5700,7 @@
   },
   {
     "id": "QUEEN",
-    "name": "クイーン",
+    "name": "Queen",
     "type": "Boss",
     "min_hp": 400,
     "max_hp": null,
@@ -6357,7 +5721,7 @@
       },
       {
         "id": "YOU_ARE_MINE",
-        "name": "お前は私のものだ",
+        "name": "You Are Mine",
         "intent": "Debuff",
         "powers": [
           {
@@ -6379,13 +5743,13 @@
       },
       {
         "id": "BURN_BRIGHT_FOR_ME",
-        "name": "燃え上がれ",
+        "name": "Burn Bright For Me",
         "intent": "Buff + Defend",
         "block": 20
       },
       {
         "id": "OFF_WITH_YOUR_HEAD",
-        "name": "首をはねよ",
+        "name": "Off With Your Head",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -6395,7 +5759,7 @@
       },
       {
         "id": "EXECUTION",
-        "name": "処刑",
+        "name": "Execution",
         "intent": "Attack",
         "damage": {
           "normal": 15,
@@ -6427,15 +5791,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "QUEEN_BOSS",
-        "encounter_name": "クイーン",
-        "room_type": "Boss",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -6506,14 +5862,14 @@
           ]
         }
       ],
-      "description": "Starts: Puppet Strings → お前は私のものだ; then conditional: 燃え上がれ (if does not have amalgam died) / 首をはねよ (if has amalgam died); then conditional: 燃え上がれ (if does not have amalgam died) / 首をはねよ (if has amalgam died)"
+      "description": "Starts: Puppet Strings → You Are Mine; then conditional: Burn Bright For Me (if does not have amalgam died) / Off With Your Head (if has amalgam died); then conditional: Burn Bright For Me (if does not have amalgam died) / Off With Your Head (if has amalgam died)"
     },
     "image_url": "/static/images/monsters/queen.webp",
     "beta_image_url": null
   },
   {
     "id": "ROCKET",
-    "name": "ロケット",
+    "name": "Rocket",
     "type": "Boss",
     "min_hp": 199,
     "max_hp": null,
@@ -6522,7 +5878,7 @@
     "moves": [
       {
         "id": "TARGETING_RETICLE",
-        "name": "ターゲットを照準",
+        "name": "Targeting Reticle",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -6531,7 +5887,7 @@
       },
       {
         "id": "PRECISION_BEAM",
-        "name": "精密ビーム",
+        "name": "Precision Beam",
         "intent": "Attack",
         "damage": {
           "normal": 18,
@@ -6540,7 +5896,7 @@
       },
       {
         "id": "CHARGE_UP",
-        "name": "チャージアップ",
+        "name": "Charge Up",
         "intent": "Buff",
         "powers": [
           {
@@ -6552,7 +5908,7 @@
       },
       {
         "id": "LASER",
-        "name": "レーザー",
+        "name": "Laser",
         "intent": "Attack",
         "damage": {
           "normal": 31,
@@ -6561,7 +5917,7 @@
       },
       {
         "id": "RECHARGE",
-        "name": "リチャージ",
+        "name": "Recharge",
         "intent": "Sleep"
       }
     ],
@@ -6580,15 +5936,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "KAISER_CRAB_BOSS",
-        "encounter_name": "カイザークラブ",
-        "room_type": "Boss",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -6625,14 +5973,14 @@
           "next": "TARGETING_RETICLE_MOVE"
         }
       ],
-      "description": "ターゲットを照準 → 精密ビーム → チャージアップ → レーザー → リチャージ → repeat"
+      "description": "Targeting Reticle → Precision Beam → Charge Up → Laser → Recharge → repeat"
     },
     "image_url": "/static/images/monsters/rocket.webp",
     "beta_image_url": null
   },
   {
     "id": "SCROLL_OF_BITING",
-    "name": "噛みつきの巻物",
+    "name": "ScrollOfBiting",
     "type": "Normal",
     "min_hp": 30,
     "max_hp": 37,
@@ -6641,7 +5989,7 @@
     "moves": [
       {
         "id": "CHOMP",
-        "name": "噛み砕く",
+        "name": "Chomp",
         "intent": "Attack",
         "damage": {
           "normal": 14,
@@ -6650,7 +5998,7 @@
       },
       {
         "id": "CHEW",
-        "name": "咀嚼",
+        "name": "Chew",
         "intent": "Attack",
         "damage": {
           "normal": 5,
@@ -6660,7 +6008,7 @@
       },
       {
         "id": "MORE_TEETH",
-        "name": "もっと歯を",
+        "name": "More Teeth",
         "intent": "Buff",
         "powers": [
           {
@@ -6683,22 +6031,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SCROLLS_OF_BITING_NORMAL",
-        "encounter_name": "多数の噛みつきの巻物",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SCROLLS_OF_BITING_WEAK",
-        "encounter_name": "噛みつきの巻物",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -6735,7 +6068,7 @@
   },
   {
     "id": "SEAPUNK",
-    "name": "シーパンク",
+    "name": "Seapunk",
     "type": "Normal",
     "min_hp": 44,
     "max_hp": 46,
@@ -6744,7 +6077,7 @@
     "moves": [
       {
         "id": "SEA_KICK",
-        "name": "シーキック",
+        "name": "Sea Kick",
         "intent": "Attack",
         "damage": {
           "normal": 11,
@@ -6753,7 +6086,7 @@
       },
       {
         "id": "SPINNING_KICK",
-        "name": "スピニングキック",
+        "name": "Spinning Kick",
         "intent": "Attack",
         "damage": {
           "normal": 2,
@@ -6762,7 +6095,7 @@
       },
       {
         "id": "BUBBLE_BURP",
-        "name": "バブルゲップ",
+        "name": "Bubble Burp",
         "intent": "Buff + Defend",
         "powers": [
           {
@@ -6785,22 +6118,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SEAPUNK_NORMAL",
-        "encounter_name": "地下ドックに生きるものたち",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SEAPUNK_WEAK",
-        "encounter_name": "シーパンク",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -6825,14 +6143,14 @@
           "next": "SEA_KICK_MOVE"
         }
       ],
-      "description": "シーキック → スピニングキック → バブルゲップ → repeat"
+      "description": "Sea Kick → Spinning Kick → Bubble Burp → repeat"
     },
     "image_url": "/static/images/monsters/seapunk.webp",
     "beta_image_url": null
   },
   {
     "id": "SEWER_CLAM",
-    "name": "下水貝",
+    "name": "SewerClam",
     "type": "Normal",
     "min_hp": 56,
     "max_hp": null,
@@ -6841,7 +6159,7 @@
     "moves": [
       {
         "id": "PRESSURIZE",
-        "name": "加圧",
+        "name": "Pressurize",
         "intent": "Buff",
         "powers": [
           {
@@ -6853,7 +6171,7 @@
       },
       {
         "id": "JET",
-        "name": "ジェット",
+        "name": "Jet",
         "intent": "Attack",
         "damage": {
           "normal": 10,
@@ -6868,15 +6186,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SEWER_CLAM_NORMAL",
-        "encounter_name": "下水貝",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -6900,7 +6210,7 @@
   },
   {
     "id": "SHRINKER_BEETLE",
-    "name": "シュリンカービートル",
+    "name": "ShrinkerBeetle",
     "type": "Normal",
     "min_hp": 38,
     "max_hp": 40,
@@ -6909,12 +6219,12 @@
     "moves": [
       {
         "id": "SHRINKER",
-        "name": "シュリンカー",
+        "name": "Shrinker",
         "intent": "Debuff"
       },
       {
         "id": "CHOMP",
-        "name": "噛み砕く",
+        "name": "Chomp",
         "intent": "Attack",
         "damage": {
           "normal": 7,
@@ -6923,7 +6233,7 @@
       },
       {
         "id": "STOMP",
-        "name": "踏みつけ",
+        "name": "Stomp",
         "intent": "Attack",
         "damage": {
           "normal": 13,
@@ -6942,22 +6252,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "OVERGROWTH_CRAWLERS",
-        "encounter_name": "繁茂の地のクローラー",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SHRINKER_BEETLE_WEAK",
-        "encounter_name": "シュリンカービートル",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -6982,14 +6277,14 @@
           "next": "CHOMP_MOVE"
         }
       ],
-      "description": "シュリンカー → 噛み砕く → 踏みつけ → repeat"
+      "description": "Shrinker → Chomp → Stomp → repeat"
     },
     "image_url": "/static/images/monsters/shrinker_beetle.webp",
     "beta_image_url": null
   },
   {
     "id": "SKULKING_COLONY",
-    "name": "蠢く群生体",
+    "name": "SkulkingColony",
     "type": "Elite",
     "min_hp": 70,
     "max_hp": null,
@@ -7007,7 +6302,7 @@
       },
       {
         "id": "ZOOM",
-        "name": "ズーム",
+        "name": "Zoom",
         "intent": "Attack + Defend",
         "block": 10,
         "damage": {
@@ -7017,7 +6312,7 @@
       },
       {
         "id": "INERTIA",
-        "name": "慣性",
+        "name": "Inertia",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -7033,7 +6328,7 @@
       },
       {
         "id": "PIERCING_STABS",
-        "name": "貫通刺突",
+        "name": "Piercing Stabs",
         "intent": "Attack",
         "damage": {
           "normal": 7,
@@ -7062,15 +6357,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SKULKING_COLONY_ELITE",
-        "encounter_name": "蠢く群生体",
-        "room_type": "Elite",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -7101,14 +6388,14 @@
           "next": "SMASH_MOVE"
         }
       ],
-      "description": "Smash → ズーム → 慣性 → 貫通刺突 → repeat"
+      "description": "Smash → Zoom → Inertia → Piercing Stabs → repeat"
     },
     "image_url": "/static/images/monsters/skulkling_colomy.webp",
     "beta_image_url": null
   },
   {
     "id": "SLIMED_BERSERKER",
-    "name": "スライムバーサーカー",
+    "name": "SlimedBerserker",
     "type": "Normal",
     "min_hp": 261,
     "max_hp": null,
@@ -7117,12 +6404,12 @@
     "moves": [
       {
         "id": "VOMIT_ICHOR",
-        "name": "霊液噴出",
+        "name": "Vomit Ichor",
         "intent": "Status"
       },
       {
         "id": "LEECHING_HUG",
-        "name": "吸血ハグ",
+        "name": "Leeching Hug",
         "intent": "Debuff + Buff",
         "powers": [
           {
@@ -7148,7 +6435,7 @@
       },
       {
         "id": "FURIOUS_PUMMELING",
-        "name": "猛烈な殴打",
+        "name": "Furious Pummeling",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -7169,15 +6456,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SLIMED_BERSERKER_NORMAL",
-        "encounter_name": "スライムバーサーカー",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -7206,14 +6485,14 @@
           "move_id": "FURIOUS_PUMMELING"
         }
       ],
-      "description": "Always uses 霊液噴出"
+      "description": "Always uses Vomit Ichor"
     },
     "image_url": "/static/images/monsters/slimed_berserker.webp",
     "beta_image_url": null
   },
   {
     "id": "SLITHERING_STRANGLER",
-    "name": "絞蛇",
+    "name": "SlitheringStrangler",
     "type": "Normal",
     "min_hp": 53,
     "max_hp": 55,
@@ -7222,7 +6501,7 @@
     "moves": [
       {
         "id": "CONSTRICT",
-        "name": "締め付け",
+        "name": "Constrict",
         "intent": "Debuff",
         "powers": [
           {
@@ -7234,7 +6513,7 @@
       },
       {
         "id": "THWACK",
-        "name": "痛撃",
+        "name": "Thwack",
         "intent": "Attack + Defend",
         "block": 5,
         "damage": {
@@ -7244,7 +6523,7 @@
       },
       {
         "id": "LASH",
-        "name": "ムチ打ち",
+        "name": "Lash",
         "intent": "Attack",
         "damage": {
           "normal": 12,
@@ -7263,15 +6542,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SLITHERING_STRANGLER_NORMAL",
-        "encounter_name": "絞蛇と友達",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -7306,14 +6577,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with 締め付け"
+      "description": "Starts with Constrict"
     },
     "image_url": "/static/images/monsters/slithering_strangler.webp",
     "beta_image_url": null
   },
   {
     "id": "SLUDGE_SPINNER",
-    "name": "スラッジスピナー",
+    "name": "SludgeSpinner",
     "type": "Normal",
     "min_hp": 37,
     "max_hp": 39,
@@ -7322,7 +6593,7 @@
     "moves": [
       {
         "id": "OIL_SPRAY",
-        "name": "オイルスプレー",
+        "name": "Oil Spray",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -7338,7 +6609,7 @@
       },
       {
         "id": "SLAM",
-        "name": "スラム",
+        "name": "Slam",
         "intent": "Attack",
         "damage": {
           "normal": 11,
@@ -7347,7 +6618,7 @@
       },
       {
         "id": "RAGE",
-        "name": "激怒",
+        "name": "Rage",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -7377,15 +6648,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SLUDGE_SPINNER_WEAK",
-        "encounter_name": "スラッジスピナー",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -7420,14 +6683,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with オイルスプレー"
+      "description": "Starts with Oil Spray"
     },
     "image_url": "/static/images/monsters/sludge_spinner.webp",
     "beta_image_url": null
   },
   {
     "id": "SLUMBERING_BEETLE",
-    "name": "眠れるビートル",
+    "name": "SlumberingBeetle",
     "type": "Normal",
     "min_hp": 86,
     "max_hp": null,
@@ -7436,12 +6699,12 @@
     "moves": [
       {
         "id": "SNORE",
-        "name": "いびき",
+        "name": "Snore",
         "intent": "Sleep"
       },
       {
         "id": "ROLL_OUT",
-        "name": "ロールアウト",
+        "name": "Roll Out",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -7463,15 +6726,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SLUMBERING_BEETLE_NORMAL",
-        "encounter_name": "パジャマパーティー",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -7494,14 +6749,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with いびき"
+      "description": "Starts with Snore"
     },
     "image_url": "/static/images/monsters/slumbering_beetle.webp",
     "beta_image_url": null
   },
   {
     "id": "SNAPPING_JAXFRUIT",
-    "name": "暴れジャックフルーツ",
+    "name": "SnappingJaxfruit",
     "type": "Normal",
     "min_hp": 31,
     "max_hp": 33,
@@ -7510,7 +6765,7 @@
     "moves": [
       {
         "id": "ENERGY_ORB",
-        "name": "エナジーオーブ",
+        "name": "Energy Orb",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -7532,22 +6787,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SLITHERING_STRANGLER_NORMAL",
-        "encounter_name": "絞蛇と友達",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SNAPPING_JAXFRUIT_NORMAL",
-        "encounter_name": "繁茂の地の植物",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -7560,14 +6800,14 @@
           "next": "ENERGY_ORB_MOVE"
         }
       ],
-      "description": "Always uses エナジーオーブ"
+      "description": "Always uses Energy Orb"
     },
     "image_url": "/static/images/monsters/snapping_jaxfruit.webp",
     "beta_image_url": null
   },
   {
     "id": "SNEAKY_GREMLIN",
-    "name": "スニーキーグレムリン",
+    "name": "SneakyGremlin",
     "type": "Normal",
     "min_hp": 10,
     "max_hp": 14,
@@ -7576,12 +6816,12 @@
     "moves": [
       {
         "id": "SPAWNED",
-        "name": "目覚め",
+        "name": "Spawned",
         "intent": "Stun"
       },
       {
         "id": "TACKLE",
-        "name": "体当たり",
+        "name": "Tackle",
         "intent": "Attack",
         "damage": {
           "normal": 9,
@@ -7596,15 +6836,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "GREMLIN_MERC_NORMAL",
-        "encounter_name": "トレンチコートのグレムリン",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -7621,14 +6853,14 @@
           "move_id": "TACKLE"
         }
       ],
-      "description": "Always uses 目覚め"
+      "description": "Always uses Spawned"
     },
     "image_url": "/static/images/monsters/sneaky_gremlin.webp",
     "beta_image_url": null
   },
   {
     "id": "SOUL_FYSH",
-    "name": "ソウルフィッシュ",
+    "name": "SoulFysh",
     "type": "Boss",
     "min_hp": 211,
     "max_hp": null,
@@ -7637,12 +6869,12 @@
     "moves": [
       {
         "id": "BECKON",
-        "name": "誘い",
+        "name": "Beckon",
         "intent": "Status"
       },
       {
         "id": "DE_GAS",
-        "name": "ガス抜き",
+        "name": "De Gas",
         "intent": "Attack",
         "damage": {
           "normal": 16,
@@ -7651,7 +6883,7 @@
       },
       {
         "id": "GAZE",
-        "name": "凝視",
+        "name": "Gaze",
         "intent": "Attack + Status",
         "damage": {
           "normal": 7,
@@ -7660,7 +6892,7 @@
       },
       {
         "id": "FADE",
-        "name": "幽体化",
+        "name": "Fade",
         "intent": "Buff",
         "powers": [
           {
@@ -7672,7 +6904,7 @@
       },
       {
         "id": "SCREAM",
-        "name": "スクリーム",
+        "name": "Scream",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -7702,15 +6934,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SOUL_FYSH_BOSS",
-        "encounter_name": "ソウルフィッシュ",
-        "room_type": "Boss",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -7747,14 +6971,14 @@
           "next": "BECKON_MOVE"
         }
       ],
-      "description": "誘い → ガス抜き → 凝視 → 幽体化 → スクリーム → repeat"
+      "description": "Beckon → De Gas → Gaze → Fade → Scream → repeat"
     },
     "image_url": "/static/images/monsters/soul_fysh.webp",
     "beta_image_url": null
   },
   {
     "id": "SOUL_NEXUS",
-    "name": "ソウルネクサス",
+    "name": "SoulNexus",
     "type": "Elite",
     "min_hp": 234,
     "max_hp": null,
@@ -7763,7 +6987,7 @@
     "moves": [
       {
         "id": "SOUL_BURN",
-        "name": "ソウルバーン",
+        "name": "Soul Burn",
         "intent": "Attack",
         "damage": {
           "normal": 29,
@@ -7772,7 +6996,7 @@
       },
       {
         "id": "MAELSTROM",
-        "name": "メイルシュトローム",
+        "name": "Maelstrom",
         "intent": "Attack",
         "damage": {
           "normal": 6,
@@ -7783,7 +7007,7 @@
       },
       {
         "id": "DRAIN_LIFE",
-        "name": "生命吸収",
+        "name": "Drain Life",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -7819,15 +7043,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SOUL_NEXUS_ELITE",
-        "encounter_name": "ソウルネクサス",
-        "room_type": "Elite",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -7878,14 +7094,14 @@
           ]
         }
       ],
-      "description": "Starts with ソウルバーン; then random: ソウルバーン (no repeat), メイルシュトローム (no repeat), 生命吸収 (no repeat)"
+      "description": "Starts with Soul Burn; then random: Soul Burn (no repeat), Maelstrom (no repeat), Drain Life (no repeat)"
     },
     "image_url": "/static/images/monsters/soul_nexus.webp",
     "beta_image_url": null
   },
   {
     "id": "SPECTRAL_KNIGHT",
-    "name": "スペクトルナイト",
+    "name": "SpectralKnight",
     "type": "Elite",
     "min_hp": 93,
     "max_hp": null,
@@ -7894,7 +7110,7 @@
     "moves": [
       {
         "id": "HEX",
-        "name": "呪術",
+        "name": "Hex",
         "intent": "Debuff",
         "powers": [
           {
@@ -7906,7 +7122,7 @@
       },
       {
         "id": "SOUL_SLASH",
-        "name": "ソウルスラッシュ",
+        "name": "Soul Slash",
         "intent": "Attack",
         "damage": {
           "normal": 15,
@@ -7915,7 +7131,7 @@
       },
       {
         "id": "SOUL_FLAME",
-        "name": "ソウルフレイム",
+        "name": "Soul Flame",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -7936,15 +7152,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "KNIGHTS_ELITE",
-        "encounter_name": "騎士のギャング",
-        "room_type": "Elite",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -7974,14 +7182,14 @@
           "branches": []
         }
       ],
-      "description": "Starts: 呪術 → ソウルスラッシュ"
+      "description": "Starts: Hex → Soul Slash"
     },
     "image_url": "/static/images/monsters/spectral_knight.webp",
     "beta_image_url": null
   },
   {
     "id": "SPINY_TOAD",
-    "name": "トゲヒキガエル",
+    "name": "SpinyToad",
     "type": "Normal",
     "min_hp": 116,
     "max_hp": 119,
@@ -7990,7 +7198,7 @@
     "moves": [
       {
         "id": "PROTRUDING_SPIKES",
-        "name": "突き出るスパイク",
+        "name": "Protruding Spikes",
         "intent": "Buff",
         "powers": [
           {
@@ -8002,7 +7210,7 @@
       },
       {
         "id": "SPIKE_EXPLOSION",
-        "name": "スパイク爆発",
+        "name": "Spike Explosion",
         "intent": "Attack",
         "damage": {
           "normal": 23,
@@ -8011,7 +7219,7 @@
       },
       {
         "id": "TONGUE_LASH",
-        "name": "舌打ち",
+        "name": "Tongue Lash",
         "intent": "Attack",
         "damage": {
           "normal": 17,
@@ -8030,15 +7238,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SPINY_TOAD_NORMAL",
-        "encounter_name": "トゲヒキガエル",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -8063,14 +7263,14 @@
           "next": "PROTRUDING_SPIKES_MOVE"
         }
       ],
-      "description": "突き出るスパイク → スパイク爆発 → 舌打ち → repeat"
+      "description": "Protruding Spikes → Spike Explosion → Tongue Lash → repeat"
     },
     "image_url": "/static/images/monsters/spiny_toad.webp",
     "beta_image_url": null
   },
   {
     "id": "STABBOT",
-    "name": "スタブマシン",
+    "name": "Stabbot",
     "type": "Normal",
     "min_hp": 18,
     "max_hp": 23,
@@ -8079,7 +7279,7 @@
     "moves": [
       {
         "id": "STAB",
-        "name": "突き",
+        "name": "Stab",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -8114,14 +7314,14 @@
           "next": "STAB_MOVE"
         }
       ],
-      "description": "Always uses 突き"
+      "description": "Always uses Stab"
     },
     "image_url": "/static/images/monsters/stabbot.webp",
     "beta_image_url": null
   },
   {
     "id": "TERROR_EEL",
-    "name": "テラーウツボ",
+    "name": "TerrorEel",
     "type": "Elite",
     "min_hp": 140,
     "max_hp": null,
@@ -8130,7 +7330,7 @@
     "moves": [
       {
         "id": "CRASH",
-        "name": "クラッシュ",
+        "name": "Crash",
         "intent": "Attack",
         "damage": {
           "normal": 16,
@@ -8139,7 +7339,7 @@
       },
       {
         "id": "THRASH",
-        "name": "大暴れ",
+        "name": "Thrash",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -8161,7 +7361,7 @@
       },
       {
         "id": "TERROR",
-        "name": "恐怖",
+        "name": "Terror",
         "intent": "Debuff",
         "powers": [
           {
@@ -8184,15 +7384,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "TERROR_EEL_ELITE",
-        "encounter_name": "テラーウツボ",
-        "room_type": "Elite",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -8223,14 +7415,14 @@
           "next": "CRASH_MOVE"
         }
       ],
-      "description": "クラッシュ → 大暴れ → repeat"
+      "description": "Crash → Thrash → repeat"
     },
     "image_url": "/static/images/monsters/terror_eel.webp",
     "beta_image_url": null
   },
   {
     "id": "TEST_SUBJECT",
-    "name": "実験体 #C14",
+    "name": "TestSubject",
     "type": "Boss",
     "min_hp": null,
     "max_hp": null,
@@ -8239,7 +7431,7 @@
     "moves": [
       {
         "id": "RESPAWN",
-        "name": "復活",
+        "name": "Respawn",
         "intent": "Heal + Buff",
         "powers": [
           {
@@ -8256,7 +7448,7 @@
       },
       {
         "id": "BITE",
-        "name": "噛みつき",
+        "name": "Bite",
         "intent": "Attack",
         "damage": {
           "normal": 20,
@@ -8265,7 +7457,7 @@
       },
       {
         "id": "SKULL_BASH",
-        "name": "スカルバッシュ",
+        "name": "Skull Bash",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -8281,7 +7473,7 @@
       },
       {
         "id": "MULTI_CLAW",
-        "name": "連続引っかき",
+        "name": "Multi Claw",
         "intent": "Attack",
         "damage": {
           "normal": 10,
@@ -8290,7 +7482,7 @@
       },
       {
         "id": "PHASE3_LACERATE",
-        "name": "惨撃",
+        "name": "Phase3 Lacerate",
         "intent": "Attack",
         "damage": {
           "normal": 10,
@@ -8300,7 +7492,7 @@
       },
       {
         "id": "BIG_POUNCE",
-        "name": "強襲",
+        "name": "Big Pounce",
         "intent": "Attack",
         "damage": {
           "normal": 45
@@ -8308,7 +7500,7 @@
       },
       {
         "id": "BURNING_GROWL",
-        "name": "焦熱の咆哮",
+        "name": "Burning Growl",
         "intent": "Status + Buff",
         "powers": [
           {
@@ -8342,15 +7534,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "TEST_SUBJECT_BOSS",
-        "encounter_name": "実験体",
-        "room_type": "Boss",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -8414,14 +7598,14 @@
           ]
         }
       ],
-      "description": "Starts: 噛みつき → スカルバッシュ; then conditional: 連続引っかき (if respawns < 2) / 惨撃 (if respawns >= 2)"
+      "description": "Starts: Bite → Skull Bash; then conditional: Multi Claw (if respawns < 2) / Phase3 Lacerate (if respawns >= 2)"
     },
     "image_url": "/static/images/monsters/test_subject.webp",
     "beta_image_url": null
   },
   {
     "id": "THE_ADVERSARY_MK_ONE",
-    "name": "アドバーサリー Mk 1",
+    "name": "TheAdversaryMkOne",
     "type": "Normal",
     "min_hp": 100,
     "max_hp": null,
@@ -8430,7 +7614,7 @@
     "moves": [
       {
         "id": "SMASH",
-        "name": "スマッシュ",
+        "name": "Smash",
         "intent": "Attack",
         "damage": {
           "normal": 12
@@ -8438,7 +7622,7 @@
       },
       {
         "id": "BEAM",
-        "name": "ビーム",
+        "name": "Beam",
         "intent": "Attack",
         "damage": {
           "normal": 15
@@ -8446,7 +7630,7 @@
       },
       {
         "id": "BARRAGE",
-        "name": "一斉発射",
+        "name": "Barrage",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -8499,14 +7683,14 @@
           "next": "SMASH_MOVE"
         }
       ],
-      "description": "スマッシュ → ビーム → 一斉発射 → repeat"
+      "description": "Smash → Beam → Barrage → repeat"
     },
     "image_url": "/static/images/monsters/the_adversary_placeholder.webp",
     "beta_image_url": null
   },
   {
     "id": "THE_ADVERSARY_MK_THREE",
-    "name": "アドバーサリー Mk 3",
+    "name": "TheAdversaryMkThree",
     "type": "Normal",
     "min_hp": 300,
     "max_hp": null,
@@ -8515,7 +7699,7 @@
     "moves": [
       {
         "id": "CRASH",
-        "name": "クラッシュ",
+        "name": "Crash",
         "intent": "Attack",
         "damage": {
           "normal": 15
@@ -8523,7 +7707,7 @@
       },
       {
         "id": "FLAME_BEAM",
-        "name": "フレイムビーム",
+        "name": "Flame Beam",
         "intent": "Attack",
         "damage": {
           "normal": 18
@@ -8531,7 +7715,7 @@
       },
       {
         "id": "BARRAGE",
-        "name": "一斉発射",
+        "name": "Barrage",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -8584,14 +7768,14 @@
           "next": "CRASH_MOVE"
         }
       ],
-      "description": "クラッシュ → フレイムビーム → 一斉発射 → repeat"
+      "description": "Crash → Flame Beam → Barrage → repeat"
     },
     "image_url": "/static/images/monsters/the_adversary_placeholder.webp",
     "beta_image_url": null
   },
   {
     "id": "THE_ADVERSARY_MK_TWO",
-    "name": "アドバーサリー Mk 2",
+    "name": "TheAdversaryMkTwo",
     "type": "Normal",
     "min_hp": 200,
     "max_hp": null,
@@ -8600,7 +7784,7 @@
     "moves": [
       {
         "id": "BASH",
-        "name": "バッシュ",
+        "name": "Bash",
         "intent": "Attack",
         "damage": {
           "normal": 13
@@ -8608,7 +7792,7 @@
       },
       {
         "id": "FLAME_BEAM",
-        "name": "フレイムビーム",
+        "name": "Flame Beam",
         "intent": "Attack",
         "damage": {
           "normal": 16
@@ -8616,7 +7800,7 @@
       },
       {
         "id": "BARRAGE",
-        "name": "一斉発射",
+        "name": "Barrage",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -8669,14 +7853,14 @@
           "next": "BASH_MOVE"
         }
       ],
-      "description": "バッシュ → フレイムビーム → 一斉発射 → repeat"
+      "description": "Bash → Flame Beam → Barrage → repeat"
     },
     "image_url": "/static/images/monsters/the_adversary_placeholder.webp",
     "beta_image_url": null
   },
   {
     "id": "THE_FORGOTTEN",
-    "name": "忘れられし者",
+    "name": "TheForgotten",
     "type": "Normal",
     "min_hp": 106,
     "max_hp": null,
@@ -8685,7 +7869,7 @@
     "moves": [
       {
         "id": "MIASMA",
-        "name": "瘴気",
+        "name": "Miasma",
         "intent": "Debuff + Defend + Buff",
         "powers": [
           {
@@ -8698,21 +7882,13 @@
       },
       {
         "id": "DREAD",
-        "name": "恐怖",
+        "name": "Dread",
         "intent": "Attack"
       }
     ],
     "damage_values": null,
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "THE_LOST_AND_FORGOTTEN_NORMAL",
-        "encounter_name": "迷える者と忘れられし者",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -8729,14 +7905,14 @@
           "move_id": "DREAD"
         }
       ],
-      "description": "Always uses 瘴気"
+      "description": "Always uses Miasma"
     },
     "image_url": "/static/images/monsters/the_forgotten.webp",
     "beta_image_url": null
   },
   {
     "id": "THE_INSATIABLE",
-    "name": "貪りの獣",
+    "name": "TheInsatiable",
     "type": "Boss",
     "min_hp": 321,
     "max_hp": null,
@@ -8745,12 +7921,12 @@
     "moves": [
       {
         "id": "LIQUIFY_GROUND",
-        "name": "大地の溶解",
+        "name": "Liquify Ground",
         "intent": "Buff + Status"
       },
       {
         "id": "THRASH",
-        "name": "大暴れ",
+        "name": "Thrash",
         "intent": "Attack",
         "damage": {
           "normal": 8,
@@ -8770,7 +7946,7 @@
       },
       {
         "id": "LUNGING_BITE",
-        "name": "突進噛みつき",
+        "name": "Lunging Bite",
         "intent": "Attack",
         "damage": {
           "normal": 28,
@@ -8779,7 +7955,7 @@
       },
       {
         "id": "SALIVATE",
-        "name": "よだれ",
+        "name": "Salivate",
         "intent": "Buff",
         "powers": [
           {
@@ -8802,15 +7978,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "THE_INSATIABLE_BOSS",
-        "encounter_name": "貪りの獣",
-        "room_type": "Boss",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -8847,14 +8015,14 @@
           "next": "THRASH_MOVE_2"
         }
       ],
-      "description": "大地の溶解 → 大暴れ → 突進噛みつき → よだれ → Thrash Move 2 → repeat"
+      "description": "Liquify Ground → Thrash → Lunging Bite → Salivate → Thrash Move 2 → repeat"
     },
     "image_url": "/static/images/monsters/the_insatiable.webp",
     "beta_image_url": null
   },
   {
     "id": "THE_LOST",
-    "name": "迷える者",
+    "name": "TheLost",
     "type": "Normal",
     "min_hp": 93,
     "max_hp": null,
@@ -8863,7 +8031,7 @@
     "moves": [
       {
         "id": "DEBILITATING_SMOG",
-        "name": "衰弱スモッグ",
+        "name": "Debilitating Smog",
         "intent": "Debuff + Buff",
         "powers": [
           {
@@ -8875,7 +8043,7 @@
       },
       {
         "id": "EYE_LASERS",
-        "name": "アイレーザー",
+        "name": "Eye Lasers",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -8892,15 +8060,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "THE_LOST_AND_FORGOTTEN_NORMAL",
-        "encounter_name": "迷える者と忘れられし者",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -8917,14 +8077,14 @@
           "move_id": "EYE_LASERS"
         }
       ],
-      "description": "Always uses 衰弱スモッグ"
+      "description": "Always uses Debilitating Smog"
     },
     "image_url": "/static/images/monsters/the_lost.webp",
     "beta_image_url": null
   },
   {
     "id": "THE_OBSCURA",
-    "name": "オブスキュラ",
+    "name": "TheObscura",
     "type": "Normal",
     "min_hp": 123,
     "max_hp": null,
@@ -8933,12 +8093,12 @@
     "moves": [
       {
         "id": "ILLUSION",
-        "name": "イリュージョン",
+        "name": "Illusion",
         "intent": "Summon"
       },
       {
         "id": "PIERCING_GAZE",
-        "name": "鋭い視線",
+        "name": "Piercing Gaze",
         "intent": "Attack",
         "damage": {
           "normal": 10,
@@ -8947,12 +8107,12 @@
       },
       {
         "id": "SAIL",
-        "name": "セイル",
+        "name": "Sail",
         "intent": "Buff"
       },
       {
         "id": "HARDENING_STRIKE",
-        "name": "硬化ストライク",
+        "name": "Hardening Strike",
         "intent": "Attack + Defend",
         "block": 6,
         "damage": {
@@ -8972,15 +8132,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "THE_OBSCURA_NORMAL",
-        "encounter_name": "オブスキュラ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -9021,14 +8173,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with イリュージョン"
+      "description": "Starts with Illusion"
     },
     "image_url": "/static/images/monsters/the_obscura.webp",
     "beta_image_url": null
   },
   {
     "id": "THIEVING_HOPPER",
-    "name": "泥棒バッタ",
+    "name": "ThievingHopper",
     "type": "Normal",
     "min_hp": 79,
     "max_hp": null,
@@ -9037,7 +8189,7 @@
     "moves": [
       {
         "id": "THIEVERY",
-        "name": "泥棒",
+        "name": "Thievery",
         "intent": "Attack + Debuff",
         "damage": {
           "normal": 17,
@@ -9046,7 +8198,7 @@
       },
       {
         "id": "NAB",
-        "name": "ひったくり",
+        "name": "Nab",
         "intent": "Attack",
         "damage": {
           "normal": 14,
@@ -9055,7 +8207,7 @@
       },
       {
         "id": "HAT_TRICK",
-        "name": "ハットトリック",
+        "name": "Hat Trick",
         "intent": "Attack",
         "damage": {
           "normal": 21,
@@ -9064,7 +8216,7 @@
       },
       {
         "id": "FLUTTER",
-        "name": "羽ばたき",
+        "name": "Flutter",
         "intent": "Buff",
         "powers": [
           {
@@ -9076,7 +8228,7 @@
       },
       {
         "id": "ESCAPE",
-        "name": "逃走",
+        "name": "Escape",
         "intent": "Escape"
       }
     ],
@@ -9095,15 +8247,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "THIEVING_HOPPER_WEAK",
-        "encounter_name": "泥棒バッタ",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -9140,14 +8284,14 @@
           "next": "ESCAPE_MOVE"
         }
       ],
-      "description": "泥棒 → 羽ばたき → ハットトリック → ひったくり → 逃走 → repeat"
+      "description": "Thievery → Flutter → Hat Trick → Nab → Escape → repeat"
     },
     "image_url": "/static/images/monsters/thieving_hopper.webp",
     "beta_image_url": null
   },
   {
     "id": "TOADPOLE",
-    "name": "ヒキジャクシ",
+    "name": "Toadpole",
     "type": "Normal",
     "min_hp": 21,
     "max_hp": 25,
@@ -9156,7 +8300,7 @@
     "moves": [
       {
         "id": "SPIKE_SPIT",
-        "name": "スパイクスピット",
+        "name": "Spike Spit",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -9166,7 +8310,7 @@
       },
       {
         "id": "WHIRL",
-        "name": "旋回",
+        "name": "Whirl",
         "intent": "Attack",
         "damage": {
           "normal": 7,
@@ -9175,7 +8319,7 @@
       },
       {
         "id": "SPIKEN",
-        "name": "トゲトゲ",
+        "name": "Spiken",
         "intent": "Buff",
         "powers": [
           {
@@ -9198,15 +8342,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "TOADPOLES_WEAK",
-        "encounter_name": "ヒキジャクシ",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -9245,14 +8381,14 @@
           ]
         }
       ],
-      "description": "then conditional: 旋回 (if not in front) / トゲトゲ (if in front)"
+      "description": "then conditional: Whirl (if not in front) / Spiken (if in front)"
     },
     "image_url": "/static/images/monsters/toadpole.webp",
     "beta_image_url": null
   },
   {
     "id": "TORCH_HEAD_AMALGAM",
-    "name": "トーチヘッド・アマルガム",
+    "name": "TorchHeadAmalgam",
     "type": "Boss",
     "min_hp": 199,
     "max_hp": null,
@@ -9261,7 +8397,7 @@
     "moves": [
       {
         "id": "TACKLE",
-        "name": "体当たり",
+        "name": "Tackle",
         "intent": "Attack",
         "damage": {
           "normal": 18,
@@ -9279,7 +8415,7 @@
       },
       {
         "id": "BEAM",
-        "name": "ビーム",
+        "name": "Beam",
         "intent": "Attack",
         "damage": {
           "normal": 8,
@@ -9322,15 +8458,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "QUEEN_BOSS",
-        "encounter_name": "クイーン",
-        "room_type": "Boss",
-        "act": "Act 3 - Glory",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -9367,14 +8495,14 @@
           "next": "BEAM_MOVE"
         }
       ],
-      "description": "体当たり → Tackle 2 → ビーム → Tackle 3 → Tackle 4 → repeat"
+      "description": "Tackle → Tackle 2 → Beam → Tackle 3 → Tackle 4 → repeat"
     },
     "image_url": "/static/images/monsters/amalgam.webp",
     "beta_image_url": null
   },
   {
     "id": "TOUGH_EGG",
-    "name": "固い卵",
+    "name": "ToughEgg",
     "type": "Normal",
     "min_hp": 14,
     "max_hp": 18,
@@ -9383,7 +8511,7 @@
     "moves": [
       {
         "id": "HATCH",
-        "name": "ふ化",
+        "name": "Hatch",
         "intent": "Summon"
       },
       {
@@ -9403,15 +8531,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "OVICOPTER_NORMAL",
-        "encounter_name": "オビコプター",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -9428,14 +8548,14 @@
           "move_id": "NIBBLE"
         }
       ],
-      "description": "Always uses ふ化"
+      "description": "Always uses Hatch"
     },
     "image_url": "/static/images/monsters/tough_egg.webp",
     "beta_image_url": null
   },
   {
     "id": "TRACKER_RUBY_RAIDER",
-    "name": "トラッカーレイダー",
+    "name": "TrackerRubyRaider",
     "type": "Normal",
     "min_hp": 21,
     "max_hp": 25,
@@ -9444,7 +8564,7 @@
     "moves": [
       {
         "id": "TRACK",
-        "name": "追跡",
+        "name": "Track",
         "intent": "Debuff",
         "powers": [
           {
@@ -9456,7 +8576,7 @@
       },
       {
         "id": "HOUNDS",
-        "name": "猟犬を放つ",
+        "name": "Hounds",
         "intent": "Attack",
         "damage": {
           "normal": 1,
@@ -9474,15 +8594,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "RUBY_RAIDERS_NORMAL",
-        "encounter_name": "ルビーレイダーズ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -9499,14 +8611,14 @@
           "move_id": "HOUNDS"
         }
       ],
-      "description": "Always uses 追跡"
+      "description": "Always uses Track"
     },
     "image_url": "/static/images/monsters/tracker_ruby_raider.webp",
     "beta_image_url": null
   },
   {
     "id": "TUNNELER",
-    "name": "トンネラー",
+    "name": "Tunneler",
     "type": "Normal",
     "min_hp": 87,
     "max_hp": null,
@@ -9515,7 +8627,7 @@
     "moves": [
       {
         "id": "BITE",
-        "name": "噛みつき",
+        "name": "Bite",
         "intent": "Attack",
         "damage": {
           "normal": 13,
@@ -9524,7 +8636,7 @@
       },
       {
         "id": "BURROW",
-        "name": "潜伏",
+        "name": "Burrow",
         "intent": "Buff + Defend",
         "powers": [
           {
@@ -9537,7 +8649,7 @@
       },
       {
         "id": "BELOW",
-        "name": "下からの攻撃",
+        "name": "Below",
         "intent": "Attack",
         "damage": {
           "normal": 23,
@@ -9561,22 +8673,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "TUNNELER_NORMAL",
-        "encounter_name": "トンネリング",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      },
-      {
-        "encounter_id": "TUNNELER_WEAK",
-        "encounter_name": "トンネラー",
-        "room_type": "Monster",
-        "act": "Act 2 - Hive",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -9607,14 +8704,14 @@
           "next": "BITE_MOVE"
         }
       ],
-      "description": "噛みつき → 潜伏 → 下からの攻撃 → repeat"
+      "description": "Bite → Burrow → Below → repeat"
     },
     "image_url": "/static/images/monsters/tunneler.webp",
     "beta_image_url": null
   },
   {
     "id": "TURRET_OPERATOR",
-    "name": "タレットオペレーター",
+    "name": "TurretOperator",
     "type": "Normal",
     "min_hp": 41,
     "max_hp": null,
@@ -9623,7 +8720,7 @@
     "moves": [
       {
         "id": "UNLOAD",
-        "name": "アンロード！",
+        "name": "Unload",
         "intent": "Attack",
         "damage": {
           "normal": 3,
@@ -9643,7 +8740,7 @@
       },
       {
         "id": "RELOAD",
-        "name": "リロード",
+        "name": "Reload",
         "intent": "Buff",
         "powers": [
           {
@@ -9662,15 +8759,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "TURRET_OPERATOR_WEAK",
-        "encounter_name": "タレットオペレーター",
-        "room_type": "Monster",
-        "act": "Act 3 - Glory",
-        "is_weak": true
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -9695,14 +8784,14 @@
           "next": "UNLOAD_MOVE"
         }
       ],
-      "description": "アンロード！ → Unload Move 2 → リロード → repeat"
+      "description": "Unload → Unload Move 2 → Reload → repeat"
     },
     "image_url": "/static/images/monsters/turret_operator.webp",
     "beta_image_url": null
   },
   {
     "id": "TWIG_SLIME_M",
-    "name": "細枝スライム (中)",
+    "name": "TwigSlimeM",
     "type": "Normal",
     "min_hp": 26,
     "max_hp": 28,
@@ -9711,7 +8800,7 @@
     "moves": [
       {
         "id": "POKEY_POUNCE",
-        "name": "小枝の飛び掛かり",
+        "name": "Pokey Pounce",
         "intent": "Attack",
         "damage": {
           "normal": 11,
@@ -9720,7 +8809,7 @@
       },
       {
         "id": "STICKY_SHOT",
-        "name": "粘着ショット",
+        "name": "Sticky Shot",
         "intent": "Status"
       }
     ],
@@ -9731,36 +8820,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "FLYCONID_NORMAL",
-        "encounter_name": "キノコとスライム",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SLIMES_NORMAL",
-        "encounter_name": "スライムの大群",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SLIMES_WEAK",
-        "encounter_name": "スライムの群れ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": true
-      },
-      {
-        "encounter_id": "SLITHERING_STRANGLER_NORMAL",
-        "encounter_name": "絞蛇と友達",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -9789,14 +8849,14 @@
           "branches": []
         }
       ],
-      "description": "Starts with 粘着ショット"
+      "description": "Starts with Sticky Shot"
     },
     "image_url": "/static/images/monsters/twig_slime_m.webp",
     "beta_image_url": null
   },
   {
     "id": "TWIG_SLIME_S",
-    "name": "細枝スライム (小)",
+    "name": "TwigSlimeS",
     "type": "Normal",
     "min_hp": 7,
     "max_hp": 11,
@@ -9805,7 +8865,7 @@
     "moves": [
       {
         "id": "TACKLE",
-        "name": "体当たり",
+        "name": "Tackle",
         "intent": "Attack",
         "damage": {
           "normal": 4,
@@ -9820,29 +8880,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "SLIMES_NORMAL",
-        "encounter_name": "スライムの大群",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      },
-      {
-        "encounter_id": "SLIMES_WEAK",
-        "encounter_name": "スライムの群れ",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": true
-      },
-      {
-        "encounter_id": "SLITHERING_STRANGLER_NORMAL",
-        "encounter_name": "絞蛇と友達",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -9855,14 +8893,14 @@
           "next": "TACKLE_MOVE"
         }
       ],
-      "description": "Always uses 体当たり"
+      "description": "Always uses Tackle"
     },
     "image_url": "/static/images/monsters/twig_slime_s.webp",
     "beta_image_url": null
   },
   {
     "id": "TWO_TAILED_RAT",
-    "name": "双尾のネズミ",
+    "name": "TwoTailedRat",
     "type": "Normal",
     "min_hp": 17,
     "max_hp": 21,
@@ -9871,7 +8909,7 @@
     "moves": [
       {
         "id": "SCRATCH",
-        "name": "引っかき",
+        "name": "Scratch",
         "intent": "Attack",
         "damage": {
           "normal": 8,
@@ -9880,7 +8918,7 @@
       },
       {
         "id": "DISEASE_BITE",
-        "name": "病の噛みつき",
+        "name": "Disease Bite",
         "intent": "Attack",
         "damage": {
           "normal": 6,
@@ -9889,7 +8927,7 @@
       },
       {
         "id": "SCREECH",
-        "name": "金切り声",
+        "name": "Screech",
         "intent": "Debuff",
         "powers": [
           {
@@ -9901,7 +8939,7 @@
       },
       {
         "id": "CALL_FOR_BACKUP",
-        "name": "バックアップ要請",
+        "name": "Call For Backup",
         "intent": "Summon"
       }
     ],
@@ -9916,15 +8954,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "TWO_TAILED_RATS_NORMAL",
-        "encounter_name": "双尾のネズミ",
-        "room_type": "Monster",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "random",
@@ -9972,7 +9002,7 @@
   },
   {
     "id": "VANTOM",
-    "name": "ヴァントム",
+    "name": "Vantom",
     "type": "Boss",
     "min_hp": 173,
     "max_hp": null,
@@ -9981,7 +9011,7 @@
     "moves": [
       {
         "id": "INK_BLOT",
-        "name": "インクの染み",
+        "name": "Ink Blot",
         "intent": "Attack",
         "damage": {
           "normal": 7,
@@ -9990,7 +9020,7 @@
       },
       {
         "id": "INKY_LANCE",
-        "name": "インクの槍",
+        "name": "Inky Lance",
         "intent": "Attack",
         "damage": {
           "normal": 6,
@@ -10000,7 +9030,7 @@
       },
       {
         "id": "DISMEMBER",
-        "name": "切断",
+        "name": "Dismember",
         "intent": "Attack + Status",
         "damage": {
           "normal": 26,
@@ -10009,7 +9039,7 @@
       },
       {
         "id": "PREPARE",
-        "name": "構え",
+        "name": "Prepare",
         "intent": "Buff",
         "powers": [
           {
@@ -10036,15 +9066,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "VANTOM_BOSS",
-        "encounter_name": "ヴァントム",
-        "room_type": "Boss",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -10075,14 +9097,14 @@
           "next": "INK_BLOT_MOVE"
         }
       ],
-      "description": "インクの染み → インクの槍 → 切断 → 構え → repeat"
+      "description": "Ink Blot → Inky Lance → Dismember → Prepare → repeat"
     },
     "image_url": "/static/images/monsters/vantom.webp",
     "beta_image_url": null
   },
   {
     "id": "VINE_SHAMBLER",
-    "name": "ヴァインシャンブラー",
+    "name": "VineShambler",
     "type": "Normal",
     "min_hp": 61,
     "max_hp": null,
@@ -10091,7 +9113,7 @@
     "moves": [
       {
         "id": "GRASPING_VINES",
-        "name": "掴みかかるツタ",
+        "name": "Grasping Vines",
         "intent": "Attack + Debuff",
         "powers": [
           {
@@ -10107,7 +9129,7 @@
       },
       {
         "id": "SWIPE",
-        "name": "なぎ払い",
+        "name": "Swipe",
         "intent": "Attack",
         "damage": {
           "normal": 6,
@@ -10117,7 +9139,7 @@
       },
       {
         "id": "CHOMP",
-        "name": "噛み砕く",
+        "name": "Chomp",
         "intent": "Attack",
         "damage": {
           "normal": 16,
@@ -10141,15 +9163,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "VINE_SHAMBLER_NORMAL",
-        "encounter_name": "ヴァインシャンブラー",
-        "room_type": "Monster",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -10174,14 +9188,14 @@
           "next": "SWIPE_MOVE"
         }
       ],
-      "description": "なぎ払い → 掴みかかるツタ → 噛み砕く → repeat"
+      "description": "Swipe → Grasping Vines → Chomp → repeat"
     },
     "image_url": "/static/images/monsters/vine_shambler.webp",
     "beta_image_url": null
   },
   {
     "id": "WATERFALL_GIANT",
-    "name": "滝の巨人",
+    "name": "WaterfallGiant",
     "type": "Boss",
     "min_hp": 240,
     "max_hp": null,
@@ -10190,7 +9204,7 @@
     "moves": [
       {
         "id": "PRESSURIZE",
-        "name": "加圧",
+        "name": "Pressurize",
         "intent": "Buff",
         "powers": [
           {
@@ -10202,7 +9216,7 @@
       },
       {
         "id": "STOMP",
-        "name": "踏みつけ",
+        "name": "Stomp",
         "intent": "Attack + Debuff + Buff",
         "powers": [
           {
@@ -10223,7 +9237,7 @@
       },
       {
         "id": "RAM",
-        "name": "打ち込み",
+        "name": "Ram",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -10239,7 +9253,7 @@
       },
       {
         "id": "SIPHON",
-        "name": "サイフォン",
+        "name": "Siphon",
         "intent": "Heal + Buff",
         "powers": [
           {
@@ -10251,7 +9265,7 @@
       },
       {
         "id": "PRESSURE_GUN",
-        "name": "プレッシャーガン",
+        "name": "Pressure Gun",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -10263,7 +9277,7 @@
       },
       {
         "id": "PRESSURE_UP",
-        "name": "水圧上昇",
+        "name": "Pressure Up",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -10279,12 +9293,12 @@
       },
       {
         "id": "ABOUT_TO_BLOW",
-        "name": "爆発寸前",
+        "name": "About To Blow",
         "intent": "Stun"
       },
       {
         "id": "EXPLODE",
-        "name": "大爆発",
+        "name": "Explode",
         "intent": "Special"
       }
     ],
@@ -10307,15 +9321,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "WATERFALL_GIANT_BOSS",
-        "encounter_name": "滝の巨人",
-        "room_type": "Boss",
-        "act": "Act 1 - Underdocks",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "cycle",
@@ -10371,14 +9377,14 @@
           "next": "EXPLODE_MOVE"
         }
       ],
-      "description": "加圧 → 踏みつけ → 打ち込み → サイフォン → プレッシャーガン → 水圧上昇 → repeat"
+      "description": "Pressurize → Stomp → Ram → Siphon → Pressure Gun → Pressure Up → repeat"
     },
     "image_url": "/static/images/monsters/waterfall_giant.webp",
     "beta_image_url": null
   },
   {
     "id": "WRIGGLER",
-    "name": "リグラー",
+    "name": "Wriggler",
     "type": "Elite",
     "min_hp": 17,
     "max_hp": 21,
@@ -10387,7 +9393,7 @@
     "moves": [
       {
         "id": "NASTY_BITE",
-        "name": "厄介な噛みつき",
+        "name": "Nasty Bite",
         "intent": "Attack",
         "damage": {
           "normal": 6,
@@ -10396,7 +9402,7 @@
       },
       {
         "id": "WRIGGLE",
-        "name": "うごめき",
+        "name": "Wriggle",
         "intent": "Buff + Status",
         "powers": [
           {
@@ -10408,7 +9414,7 @@
       },
       {
         "id": "SPAWNED",
-        "name": "出現",
+        "name": "Spawned",
         "intent": "Stun"
       }
     ],
@@ -10419,22 +9425,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "DENSE_VEGETATION_EVENT_ENCOUNTER",
-        "encounter_name": "リグラー",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      },
-      {
-        "encounter_id": "PHROG_PARASITE_ELITE",
-        "encounter_name": "寄生キャエル",
-        "room_type": "Elite",
-        "act": "Act 1 - Overgrowth",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "innate_powers": null,
     "attack_pattern": {
       "type": "conditional",
@@ -10488,7 +9479,7 @@
   },
   {
     "id": "ZAPBOT",
-    "name": "ザップマシン",
+    "name": "Zapbot",
     "type": "Normal",
     "min_hp": 18,
     "max_hp": 23,
@@ -10497,7 +9488,7 @@
     "moves": [
       {
         "id": "ZAP",
-        "name": "ザップ",
+        "name": "Zap",
         "intent": "Attack",
         "damage": {
           "normal": 14,
@@ -10525,7 +9516,7 @@
           "next": "ZAP"
         }
       ],
-      "description": "Always uses ザップ"
+      "description": "Always uses Zap"
     },
     "image_url": "/static/images/monsters/zapbot.webp",
     "beta_image_url": null
@@ -10541,7 +9532,7 @@
     "moves": [
       {
         "id": "WRITHE",
-        "name": "のたうち",
+        "name": "Writhe",
         "intent": "Attack",
         "damage": {
           "normal": 5,
@@ -10551,7 +9542,7 @@
       },
       {
         "id": "BULK",
-        "name": "バルク",
+        "name": "Bulk",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -10583,12 +9574,12 @@
       },
       {
         "id": "DEAD",
-        "name": "死亡",
+        "name": "Dead",
         "intent": "Unknown"
       },
       {
         "id": "REATTACH",
-        "name": "再結合",
+        "name": "Reattach",
         "intent": "Heal"
       }
     ],
@@ -10608,15 +9599,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "DECIMILLIPEDE_ELITE",
-        "encounter_name": "万足ムカデ",
-        "room_type": "Elite",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "image_url": "/static/images/monsters/decimillipede_segment_back.webp"
   },
   {
@@ -10630,7 +9613,7 @@
     "moves": [
       {
         "id": "WRITHE",
-        "name": "のたうち",
+        "name": "Writhe",
         "intent": "Attack",
         "damage": {
           "normal": 5,
@@ -10640,7 +9623,7 @@
       },
       {
         "id": "BULK",
-        "name": "バルク",
+        "name": "Bulk",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -10672,12 +9655,12 @@
       },
       {
         "id": "DEAD",
-        "name": "死亡",
+        "name": "Dead",
         "intent": "Unknown"
       },
       {
         "id": "REATTACH",
-        "name": "再結合",
+        "name": "Reattach",
         "intent": "Heal"
       }
     ],
@@ -10697,15 +9680,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "DECIMILLIPEDE_ELITE",
-        "encounter_name": "万足ムカデ",
-        "room_type": "Elite",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "image_url": "/static/images/monsters/decimillipede_segment_front.webp"
   },
   {
@@ -10719,7 +9694,7 @@
     "moves": [
       {
         "id": "WRITHE",
-        "name": "のたうち",
+        "name": "Writhe",
         "intent": "Attack",
         "damage": {
           "normal": 5,
@@ -10729,7 +9704,7 @@
       },
       {
         "id": "BULK",
-        "name": "バルク",
+        "name": "Bulk",
         "intent": "Attack + Buff",
         "powers": [
           {
@@ -10761,12 +9736,12 @@
       },
       {
         "id": "DEAD",
-        "name": "死亡",
+        "name": "Dead",
         "intent": "Unknown"
       },
       {
         "id": "REATTACH",
-        "name": "再結合",
+        "name": "Reattach",
         "intent": "Heal"
       }
     ],
@@ -10786,20 +9761,12 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "DECIMILLIPEDE_ELITE",
-        "encounter_name": "万足ムカデ",
-        "room_type": "Elite",
-        "act": "Act 2 - Hive",
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "image_url": "/static/images/monsters/decimillipede_segment_middle.webp"
   },
   {
     "id": "MYSTERIOUS_KNIGHT",
-    "name": "謎の騎士",
+    "name": "MysteriousKnight",
     "type": "Normal",
     "min_hp": 101,
     "max_hp": null,
@@ -10808,7 +9775,7 @@
     "moves": [
       {
         "id": "WAR_CHANT",
-        "name": "戦いの歌",
+        "name": "War Chant",
         "intent": "Buff",
         "powers": [
           {
@@ -10820,7 +9787,7 @@
       },
       {
         "id": "FLAIL",
-        "name": "フレイル",
+        "name": "Flail",
         "intent": "Attack",
         "damage": {
           "normal": 9,
@@ -10830,7 +9797,7 @@
       },
       {
         "id": "RAM",
-        "name": "打ち込み",
+        "name": "Ram",
         "intent": "Attack",
         "damage": {
           "normal": 15,
@@ -10850,15 +9817,7 @@
       }
     },
     "block_values": null,
-    "encounters": [
-      {
-        "encounter_id": "MYSTERIOUS_KNIGHT_EVENT_ENCOUNTER",
-        "encounter_name": "謎の騎士",
-        "room_type": "Monster",
-        "act": null,
-        "is_weak": false
-      }
-    ],
+    "encounters": null,
     "image_url": "/static/images/monsters/flail_knight.webp"
   }
 ]

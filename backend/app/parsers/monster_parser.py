@@ -196,10 +196,18 @@ def extract_move_effects(content: str) -> dict[str, dict]:
             continue
 
         # Extract PowerCmd.Apply<PowerType>(target, amount, ...)
-        # target can be: targets, base.Creature, or a variable
+        # target can be: targets, base.Creature, or a variable.
+        #
+        # v0.104+ added an optional context argument before the target:
+        #   OLD:  PowerCmd.Apply<WeakPower>(targets, 2m, ...)
+        #   NEW:  PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 2m, ...)
+        # The `(?:new ...,)?` non-capturing group swallows the optional
+        # context so both signatures match. Without this every monster
+        # move in v0.104+ parses with powers=null (Kobaru QA on Axebot).
         powers = []
         for pm in re.finditer(
-            r"PowerCmd\.Apply<(\w+)>\(\s*([\w.]+)\s*,\s*(\d+)m?", body
+            r"PowerCmd\.Apply<(\w+)>\(\s*(?:new\s+\w+\([^)]*\)\s*,\s*)?([\w.]+)\s*,\s*(\d+)m?",
+            body,
         ):
             power_class = pm.group(1)
             target_var = pm.group(2)
@@ -213,9 +221,16 @@ def extract_move_effects(content: str) -> dict[str, dict]:
                 }
             )
 
-        # Also check for PowerCmd.Apply with variable amounts
+        # Also check for PowerCmd.Apply with variable amounts. Same
+        # v0.104+ context-arg accommodation as above. The `[^,]*?` after
+        # the amount variable name swallows trailing expressions like
+        # `BootUpStrGain * (2 - StockAmount)` — without it, expression
+        # amounts (multiplication, subtraction) match the variable but
+        # then fail on the trailing comma. Note: this finds the variable
+        # name only; resolution still uses the simple lookup table below.
         for pm in re.finditer(
-            r"PowerCmd\.Apply<(\w+)>\(\s*([\w.]+)\s*,\s*([A-Za-z_]\w*)\s*,", body
+            r"PowerCmd\.Apply<(\w+)>\(\s*(?:new\s+\w+\([^)]*\)\s*,\s*)?([\w.]+)\s*,\s*([A-Za-z_]\w*)[^,]*?,",
+            body,
         ):
             power_class = pm.group(1)
             target_var = pm.group(2)

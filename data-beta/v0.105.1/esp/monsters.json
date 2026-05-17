@@ -11,7 +11,14 @@
       {
         "id": "EBB",
         "name": "Ebb",
-        "intent": "Attack + Debuff",
+        "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "EBB",
+            "target": "player",
+            "amount": 3
+          }
+        ],
         "damage": {
           "normal": 26,
           "ascension": 32
@@ -280,6 +287,13 @@
         "id": "BOOT_UP",
         "name": "Reinicio",
         "intent": "Defend + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ],
         "block": 10
       },
       {
@@ -296,6 +310,18 @@
         "id": "HAMMER_UPPERCUT",
         "name": "Gancho contundente",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 2
+          },
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 12,
           "ascension": 14
@@ -558,7 +584,14 @@
       {
         "id": "BUFF",
         "name": "Mejora",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 15
+          }
+        ]
       },
       {
         "id": "THRASH2",
@@ -723,7 +756,14 @@
       {
         "id": "TOXIC_SPIT",
         "name": "Escupitajo tóxico",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 1
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -792,7 +832,14 @@
       {
         "id": "ROAR",
         "name": "Rugido",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -849,7 +896,14 @@
       {
         "id": "WAKE",
         "name": "Despertar",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 10
+          }
+        ]
       },
       {
         "id": "SLEEP_MOVE_2",
@@ -1038,7 +1092,14 @@
       {
         "id": "INCANTATION",
         "name": "Encantamiento",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "RITUAL",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "DARK_STRIKE",
@@ -1106,12 +1167,26 @@
       {
         "id": "STAMP",
         "name": "Pisada",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "PLOW",
+            "target": "self",
+            "amount": 150
+          }
+        ]
       },
       {
         "id": "PLOW",
         "name": "Cornada",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 18,
           "ascension": 20
@@ -1125,7 +1200,14 @@
       {
         "id": "BEAST_CRY",
         "name": "Grito bestial",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "RINGING",
+            "target": "player",
+            "amount": 1
+          }
+        ]
       },
       {
         "id": "STOMP",
@@ -1140,6 +1222,13 @@
         "id": "CRUSH",
         "name": "Aplastar",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ],
         "damage": {
           "normal": 17,
           "ascension": 19
@@ -1318,7 +1407,14 @@
       {
         "id": "GOOP",
         "name": "Moco",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -1470,6 +1566,18 @@
         "id": "BUG_STING",
         "name": "Picadura",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 2
+          },
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 6,
           "ascension": 7,
@@ -1479,7 +1587,14 @@
       {
         "id": "ADAPT",
         "name": "Adaptación",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "GUARDED_STRIKE",
@@ -1574,12 +1689,26 @@
       {
         "id": "CHARGE_UP",
         "name": "Acometida",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "REPEATER_BLAST",
         "name": "Rayo repetidor",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 7,
           "ascension": 8
@@ -1589,6 +1718,13 @@
         "id": "REPEATER_BLAST_MOVE_2",
         "name": "Repeater Blast Move 2",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 7,
           "ascension": 8
@@ -1680,7 +1816,14 @@
       {
         "id": "INCANTATION",
         "name": "Encantamiento",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "RITUAL",
+            "target": "self",
+            "amount": 5
+          }
+        ]
       },
       {
         "id": "DARK_STRIKE",
@@ -1752,6 +1895,13 @@
         "id": "BULK",
         "name": "Corpulencia",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 6,
           "ascension": 7
@@ -1761,6 +1911,13 @@
         "id": "CONSTRICT",
         "name": "Constrict",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -1903,6 +2060,108 @@
     "beta_image_url": null
   },
   {
+    "id": "DOORMAKER",
+    "name": "Doormaker",
+    "type": "Boss",
+    "min_hp": 489,
+    "max_hp": null,
+    "min_hp_ascension": 512,
+    "max_hp_ascension": null,
+    "moves": [
+      {
+        "id": "DRAMATIC_OPEN",
+        "name": "Dramatic Open",
+        "intent": "Summon"
+      },
+      {
+        "id": "HUNGER",
+        "name": "Hunger",
+        "intent": "Attack",
+        "damage": {
+          "normal": 30,
+          "ascension": 35
+        }
+      },
+      {
+        "id": "SCRUTINY",
+        "name": "Scrutiny",
+        "intent": "Attack",
+        "damage": {
+          "normal": 24,
+          "ascension": 26
+        }
+      },
+      {
+        "id": "GRASP",
+        "name": "Grasp",
+        "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "damage": {
+          "normal": 10,
+          "ascension": 11,
+          "hit_count": 2
+        }
+      }
+    ],
+    "damage_values": {
+      "Hunger": {
+        "normal": 30,
+        "ascension": 35
+      },
+      "Scrutiny": {
+        "normal": 24,
+        "ascension": 26
+      },
+      "Grasp": {
+        "normal": 10,
+        "ascension": 11,
+        "hit_count": 2
+      }
+    },
+    "block_values": null,
+    "encounters": null,
+    "innate_powers": null,
+    "attack_pattern": {
+      "type": "cycle",
+      "initial_move": "DRAMATIC_OPEN",
+      "states": [
+        {
+          "id": "DRAMATIC_OPEN_MOVE",
+          "type": "move",
+          "move_id": "DRAMATIC_OPEN",
+          "next": "HUNGER_MOVE"
+        },
+        {
+          "id": "HUNGER_MOVE",
+          "type": "move",
+          "move_id": "HUNGER",
+          "next": "SCRUTINY_MOVE"
+        },
+        {
+          "id": "SCRUTINY_MOVE",
+          "type": "move",
+          "move_id": "SCRUTINY",
+          "next": "GRASP_MOVE"
+        },
+        {
+          "id": "GRASP_MOVE",
+          "type": "move",
+          "move_id": "GRASP",
+          "next": "HUNGER_MOVE"
+        }
+      ],
+      "description": "Dramatic Open → Hunger → Scrutiny → Grasp → repeat"
+    },
+    "image_url": "/static/images/monsters/doormaker.webp",
+    "beta_image_url": "/static/images/monsters/beta/door_maker_placeholder_2.webp"
+  },
+  {
     "id": "ENTOMANCER",
     "name": "Entomante",
     "type": "Elite",
@@ -1914,7 +2173,24 @@
       {
         "id": "PHEROMONE_SPIT",
         "name": "Disparo de feromonas",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "PERSONAL_HIVE",
+            "target": "self",
+            "amount": 1
+          },
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 1
+          },
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "BEES",
@@ -2016,7 +2292,14 @@
       {
         "id": "ENRAGE",
         "name": "Cólera",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -2297,6 +2580,13 @@
         "id": "THROW_RELIC",
         "name": "Arrojar reliquia",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 9,
           "ascension": 10
@@ -2305,7 +2595,14 @@
       {
         "id": "ENRAGE",
         "name": "Cólera",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -2440,7 +2737,14 @@
       {
         "id": "WAR_CHANT",
         "name": "Canto bélico",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ]
       },
       {
         "id": "FLAIL",
@@ -2535,6 +2839,13 @@
         "id": "VULNERABLE_SPORES",
         "name": "Esporas vulnerables",
         "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "VULNERABLE",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -2544,6 +2855,13 @@
         "id": "FRAIL_SPORES",
         "name": "Esporas extenuantes",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -2643,6 +2961,13 @@
         "id": "SWIPE",
         "name": "Porrazo",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -2652,6 +2977,13 @@
         "id": "SWIPE_RANDOM",
         "name": "Swipe Random",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -2751,6 +3083,13 @@
         "id": "TACKLE",
         "name": "Embestida",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 9,
           "ascension": 11
@@ -2852,7 +3191,14 @@
       {
         "id": "FOR_THE_QUEEN",
         "name": "Por la reina",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 5
+          }
+        ]
       },
       {
         "id": "STRIKE_DOWN_EVIL",
@@ -2867,6 +3213,13 @@
         "id": "TONGUE_LASH",
         "name": "Látigo lengua",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 13,
           "ascension": 14
@@ -2985,7 +3338,14 @@
       {
         "id": "INHALE",
         "name": "Inhalación",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 7
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -3112,6 +3472,13 @@
         "id": "SHOCKING_SLAP",
         "name": "Golpe electrizante",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 13,
           "ascension": 14
@@ -3121,6 +3488,13 @@
         "id": "GALVANIC_BURST",
         "name": "Galvanic Burst",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 16,
           "ascension": 17
@@ -3204,6 +3578,13 @@
         "id": "DOUBLE_SMASH",
         "name": "Doble remate",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 6,
           "ascension": 7,
@@ -3214,6 +3595,13 @@
         "id": "HEHE",
         "name": "Jeje",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -3351,7 +3739,14 @@
       {
         "id": "HAUNT",
         "name": "Aparición",
-        "intent": "Debuff + Status"
+        "intent": "Debuff + Status",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 3
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -3436,7 +3831,14 @@
       {
         "id": "TENDERIZING_GOOP",
         "name": "Jugo de descomposición",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "TENDER",
+            "target": "player",
+            "amount": 1
+          }
+        ]
       },
       {
         "id": "BITE",
@@ -3560,6 +3962,13 @@
         "id": "PULSATE",
         "name": "Pulso",
         "intent": "Buff + Defend",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 4
+          }
+        ],
         "block": 20
       }
     ],
@@ -3784,7 +4193,14 @@
       {
         "id": "POWER_DANCE",
         "name": "Danza poderosa",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -3850,6 +4266,13 @@
         "id": "ORB_OF_FRAILTY",
         "name": "Orbe de fragilidad",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -3859,6 +4282,13 @@
         "id": "ORB_OF_WEAKNESS",
         "name": "Orbe de debilidad",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -3877,7 +4307,14 @@
       {
         "id": "RITUAL",
         "name": "Ritual sombrío",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -3977,6 +4414,13 @@
         "id": "PONDER",
         "name": "Reflexión",
         "intent": "Attack + Heal + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "heal": 30,
         "damage": {
           "normal": 11,
@@ -4104,7 +4548,14 @@
       {
         "id": "SOUL_SIPHON",
         "name": "Sinfonía anímica",
-        "intent": "Debuff + Buff"
+        "intent": "Debuff + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -4361,6 +4812,13 @@
         "id": "ADVANCED_GAS",
         "name": "Gas nocivo",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "SMOGGY",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -4459,6 +4917,13 @@
         "id": "SMASH",
         "name": "Remate",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ],
         "damage": {
           "normal": 16,
           "ascension": 18
@@ -4534,6 +4999,13 @@
         "id": "WEB_CANNON",
         "name": "Cañón de telaraña",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 9,
           "ascension": 10
@@ -4552,6 +5024,13 @@
         "id": "CURL_AND_GROW",
         "name": "Retirada fortificante",
         "intent": "Defend + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 5
+          }
+        ],
         "block": 14
       }
     ],
@@ -4737,7 +5216,14 @@
       {
         "id": "ROAR",
         "name": "Rugido",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "VULNERABLE",
+            "target": "player",
+            "amount": 3
+          }
+        ]
       },
       {
         "id": "CLAW",
@@ -4853,6 +5339,13 @@
         "id": "WINDUP",
         "name": "Dar cuerda",
         "intent": "Defend + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 5
+          }
+        ],
         "block": 15
       },
       {
@@ -4949,6 +5442,13 @@
         "id": "SUCK",
         "name": "Succión",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 4,
           "ascension": 6
@@ -5049,7 +5549,14 @@
       {
         "id": "HISS",
         "name": "Bufar",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -5208,7 +5715,14 @@
       {
         "id": "LAY_EGGS",
         "name": "Desovar",
-        "intent": "Summon"
+        "intent": "Summon",
+        "powers": [
+          {
+            "power_id": "MINION",
+            "target": "self",
+            "amount": 1
+          }
+        ]
       },
       {
         "id": "SMASH",
@@ -5223,6 +5737,13 @@
         "id": "TENDERIZER",
         "name": "Ablandador",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "VULNERABLE",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 7,
           "ascension": 8
@@ -5231,7 +5752,14 @@
       {
         "id": "NUTRITIONAL_PASTE",
         "name": "Pasta nutritiva",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -5334,12 +5862,26 @@
       {
         "id": "JUDICIAL_FLIGHT",
         "name": "Vuelo judicial",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "SOAR",
+            "target": "self",
+            "amount": 1
+          }
+        ]
       },
       {
         "id": "VERDICT",
         "name": "Veredicto",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "VULNERABLE",
+            "target": "player",
+            "amount": 4
+          }
+        ],
         "damage": {
           "normal": 33,
           "ascension": 36
@@ -5525,7 +6067,14 @@
       {
         "id": "ENLARGE",
         "name": "Crecimiento",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -5707,6 +6256,13 @@
         "id": "FAST_PUNCH",
         "name": "Puño rápido",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 5,
           "ascension": 6,
@@ -5790,12 +6346,36 @@
       {
         "id": "PUPPET_STRINGS",
         "name": "Puppet Strings",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "CHAINS_OF_BINDING",
+            "target": "player",
+            "amount": 3
+          }
+        ]
       },
       {
         "id": "YOU_ARE_MINE",
         "name": "Te tengo",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 99
+          },
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 99
+          },
+          {
+            "power_id": "VULNERABLE",
+            "target": "player",
+            "amount": 99
+          }
+        ]
       },
       {
         "id": "BURN_BRIGHT_FOR_ME",
@@ -5825,7 +6405,14 @@
       {
         "id": "ENRAGE",
         "name": "Enrage",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -5954,7 +6541,14 @@
       {
         "id": "CHARGE_UP",
         "name": "Acometida",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "LASER",
@@ -6067,7 +6661,14 @@
       {
         "id": "MORE_TEETH",
         "name": "Dientes infinitos",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -6163,6 +6764,13 @@
         "id": "BUBBLE_BURP",
         "name": "Lanzaburbujas",
         "intent": "Buff + Defend",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 1
+          }
+        ],
         "block": 7
       }
     ],
@@ -6234,7 +6842,14 @@
       {
         "id": "PRESSURIZE",
         "name": "Presurizar",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 4
+          }
+        ]
       },
       {
         "id": "JET",
@@ -6404,6 +7019,13 @@
         "id": "INERTIA",
         "name": "Inercia",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 9,
           "ascension": 11
@@ -6501,7 +7123,19 @@
       {
         "id": "LEECHING_HUG",
         "name": "Abrazo drenante",
-        "intent": "Debuff + Buff"
+        "intent": "Debuff + Buff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 3
+          },
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ]
       },
       {
         "id": "SMOTHER",
@@ -6589,7 +7223,14 @@
       {
         "id": "CONSTRICT",
         "name": "Constricción",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "CONSTRICT",
+            "target": "player",
+            "amount": 3
+          }
+        ]
       },
       {
         "id": "THWACK",
@@ -6683,6 +7324,13 @@
         "id": "OIL_SPRAY",
         "name": "Aerosol oleoso",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -6701,6 +7349,13 @@
         "id": "RAGE",
         "name": "Furia",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ],
         "damage": {
           "normal": 6,
           "ascension": 7
@@ -6788,6 +7443,13 @@
         "id": "ROLL_OUT",
         "name": "Desenrollar",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 16,
           "ascension": 18
@@ -6850,6 +7512,13 @@
         "id": "ENERGY_ORB",
         "name": "Orbe de energía",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 3,
           "ascension": 4
@@ -6992,12 +7661,26 @@
       {
         "id": "FADE",
         "name": "Desvanecimiento",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "INTANGIBLE",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "SCREAM",
         "name": "Grito",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "VULNERABLE",
+            "target": "player",
+            "amount": 3
+          }
+        ],
         "damage": {
           "normal": 13,
           "ascension": 15
@@ -7102,6 +7785,18 @@
         "id": "DRAIN_LIFE",
         "name": "Drenaje vital",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "VULNERABLE",
+            "target": "player",
+            "amount": 2
+          },
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 18,
           "ascension": 19
@@ -7200,7 +7895,14 @@
       {
         "id": "HEX",
         "name": "Maleficio",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "HEX",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "SOUL_SLASH",
@@ -7289,7 +7991,14 @@
       {
         "id": "PROTRUDING_SPIKES",
         "name": "Púas protuberantes",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "THORNS",
+            "target": "self",
+            "amount": 5
+          }
+        ]
       },
       {
         "id": "SPIKE_EXPLOSION",
@@ -7372,6 +8081,13 @@
         "id": "STAB",
         "name": "Puñalada",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 11,
           "ascension": 12
@@ -7425,6 +8141,13 @@
         "id": "THRASH",
         "name": "Despedazar",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "VIGOR",
+            "target": "self",
+            "amount": 6
+          }
+        ],
         "damage": {
           "normal": 3,
           "ascension": 4,
@@ -7439,7 +8162,14 @@
       {
         "id": "TERROR",
         "name": "Aterrorizar",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "VULNERABLE",
+            "target": "player",
+            "amount": 99
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -7510,7 +8240,19 @@
       {
         "id": "RESPAWN",
         "name": "Reanimación",
-        "intent": "Heal + Buff"
+        "intent": "Heal + Buff",
+        "powers": [
+          {
+            "power_id": "PAINFUL_STABS",
+            "target": "self",
+            "amount": 1
+          },
+          {
+            "power_id": "NEMESIS",
+            "target": "self",
+            "amount": 1
+          }
+        ]
       },
       {
         "id": "BITE",
@@ -7525,6 +8267,13 @@
         "id": "SKULL_BASH",
         "name": "Cabezazo",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "VULNERABLE",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 14,
           "ascension": 16
@@ -7560,7 +8309,14 @@
       {
         "id": "BURNING_GROWL",
         "name": "Gruñido ardiente",
-        "intent": "Status + Buff"
+        "intent": "Status + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -7692,6 +8448,13 @@
         "id": "BARRAGE",
         "name": "Descarga",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 8,
           "hit_count": 2
@@ -7770,6 +8533,13 @@
         "id": "BARRAGE",
         "name": "Descarga",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 4
+          }
+        ],
         "damage": {
           "normal": 10,
           "hit_count": 2
@@ -7848,6 +8618,13 @@
         "id": "BARRAGE",
         "name": "Descarga",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ],
         "damage": {
           "normal": 9,
           "hit_count": 2
@@ -7910,6 +8687,13 @@
         "id": "MIASMA",
         "name": "Miasma",
         "intent": "Debuff + Defend + Buff",
+        "powers": [
+          {
+            "power_id": "DEXTERITY",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "block": 8
       },
       {
@@ -7996,7 +8780,14 @@
       {
         "id": "SALIVATE",
         "name": "Salivar",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -8073,7 +8864,14 @@
       {
         "id": "DEBILITATING_SMOG",
         "name": "Niebla debilitante",
-        "intent": "Debuff + Buff"
+        "intent": "Debuff + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "EYE_LASERS",
@@ -8267,7 +9065,14 @@
       {
         "id": "FLUTTER",
         "name": "Aleteo",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "FLUTTER",
+            "target": "self",
+            "amount": 5
+          }
+        ]
       },
       {
         "id": "ESCAPE",
@@ -8371,7 +9176,14 @@
       {
         "id": "SPIKEN",
         "name": "Espina",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "THORNS",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -8633,7 +9445,14 @@
       {
         "id": "TRACK",
         "name": "Rastrear",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "HOUNDS",
@@ -8707,6 +9526,13 @@
         "id": "BURROW",
         "name": "Madriguera",
         "intent": "Buff + Defend",
+        "powers": [
+          {
+            "power_id": "BURROWED",
+            "target": "self",
+            "amount": 1
+          }
+        ],
         "block": 32
       },
       {
@@ -8818,7 +9644,14 @@
       {
         "id": "RELOAD",
         "name": "Recargar",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 1
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -9057,7 +9890,14 @@
       {
         "id": "SCREECH",
         "name": "Chillido",
-        "intent": "Debuff"
+        "intent": "Debuff",
+        "powers": [
+          {
+            "power_id": "FRAIL",
+            "target": "player",
+            "amount": 1
+          }
+        ]
       },
       {
         "id": "CALL_FOR_BACKUP",
@@ -9170,7 +10010,14 @@
       {
         "id": "PREPARE",
         "name": "Preparación",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       }
     ],
     "damage_values": {
@@ -9246,6 +10093,13 @@
         "id": "GRASPING_VINES",
         "name": "Lianas inmovilizantes",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "TANGLED",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -9337,12 +10191,31 @@
       {
         "id": "PRESSURIZE",
         "name": "Presurizar",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STEAM_ERUPTION",
+            "target": "self",
+            "amount": 15
+          }
+        ]
       },
       {
         "id": "STOMP",
         "name": "Pisotón",
         "intent": "Attack + Debuff + Buff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 1
+          },
+          {
+            "power_id": "STEAM_ERUPTION",
+            "target": "self",
+            "amount": 3
+          }
+        ],
         "damage": {
           "normal": 15,
           "ascension": 16
@@ -9352,6 +10225,13 @@
         "id": "RAM",
         "name": "Embestir",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STEAM_ERUPTION",
+            "target": "self",
+            "amount": 3
+          }
+        ],
         "damage": {
           "normal": 10,
           "ascension": 11
@@ -9360,17 +10240,38 @@
       {
         "id": "SIPHON",
         "name": "Sifón",
-        "intent": "Heal + Buff"
+        "intent": "Heal + Buff",
+        "powers": [
+          {
+            "power_id": "STEAM_ERUPTION",
+            "target": "self",
+            "amount": 3
+          }
+        ]
       },
       {
         "id": "PRESSURE_GUN",
         "name": "Pistola a presión",
-        "intent": "Attack + Buff"
+        "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STEAM_ERUPTION",
+            "target": "self",
+            "amount": 3
+          }
+        ]
       },
       {
         "id": "PRESSURE_UP",
         "name": "Aumento de presión",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STEAM_ERUPTION",
+            "target": "self",
+            "amount": 3
+          }
+        ],
         "damage": {
           "normal": 13,
           "ascension": 14
@@ -9496,7 +10397,14 @@
       {
         "id": "WRIGGLE",
         "name": "Retorcimiento",
-        "intent": "Buff + Status"
+        "intent": "Buff + Status",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ]
       },
       {
         "id": "SPAWNED",
@@ -9645,6 +10553,13 @@
         "id": "BULK",
         "name": "Corpulencia",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 6,
           "ascension": 7
@@ -9654,6 +10569,13 @@
         "id": "CONSTRICT",
         "name": "Constrict",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -9720,6 +10642,13 @@
         "id": "BULK",
         "name": "Corpulencia",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 6,
           "ascension": 7
@@ -9729,6 +10658,13 @@
         "id": "CONSTRICT",
         "name": "Constrict",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -9795,6 +10731,13 @@
         "id": "BULK",
         "name": "Corpulencia",
         "intent": "Attack + Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 2
+          }
+        ],
         "damage": {
           "normal": 6,
           "ascension": 7
@@ -9804,6 +10747,13 @@
         "id": "CONSTRICT",
         "name": "Constrict",
         "intent": "Attack + Debuff",
+        "powers": [
+          {
+            "power_id": "WEAK",
+            "target": "player",
+            "amount": 1
+          }
+        ],
         "damage": {
           "normal": 8,
           "ascension": 9
@@ -9859,7 +10809,14 @@
       {
         "id": "WAR_CHANT",
         "name": "Canto bélico",
-        "intent": "Buff"
+        "intent": "Buff",
+        "powers": [
+          {
+            "power_id": "STRENGTH",
+            "target": "self",
+            "amount": 3
+          }
+        ]
       },
       {
         "id": "FLAIL",
