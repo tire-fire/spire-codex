@@ -477,75 +477,50 @@ def get_entity_scores(request: Request, entity_type: str):
     return get_all_entity_scores(entity_type)
 
 
-# In-process cache for /stats — populated proactively by a background
-# refresher (start_stats_refresher below), not just by user requests.
-# Goal: users never wait on the DB for the common filter combos.
-# Filtered combos not on the hot list still fall through to a sync
-# read on miss; we extend _HOT_FILTER_COMBOS as new common queries
-# emerge.
-_STATS_CACHE_TTL_SECONDS = (
-    600  # 10min, generous so a refresher hiccup isn't user-visible
-)
-_stats_cache: dict[tuple, tuple[float, dict]] = {}
+# Stats reads come from the materialized `stats_summary` collection,
+# populated by a background refresher (start_stats_refresher) that
+# runs in exactly one worker via a Mongo-based lease. The endpoint
+# does a single find_one() — sub-millisecond reads, no aggregation on
+# the user path.
+#
+# Filtered combos NOT in the hot list (rare ascension/seed/username
+# filters) fall through to the live get_stats() — slow but functional.
+# In-process LRU caches those for the duration of the worker so
+# repeated rare queries still benefit.
+_STATS_FALLBACK_TTL_SECONDS = 300
+_stats_fallback_cache: dict[tuple, tuple[float, dict]] = {}
 
-# Hot filter combos to keep pre-warmed. Keys match the cache_key tuple
-# shape in get_community_stats() below: (character, win, ascension,
-# game_mode, players, username). The first row is the home-page
-# no-filter case.
-_HOT_FILTER_COMBOS: list[tuple] = [
-    (None, None, None, None, None, None),
-    ("IRONCLAD", None, None, None, None, None),
-    ("SILENT", None, None, None, None, None),
-    ("DEFECT", None, None, None, None, None),
-    ("NECROBINDER", None, None, None, None, None),
-    ("REGENT", None, None, None, None, None),
-]
-
-_REFRESH_INTERVAL_SECONDS = 30
-
-
-def _refresh_hot_stats_once() -> None:
-    """Re-run get_stats() for every hot filter combo and write the
-    result into _stats_cache. Called by both the background refresher
-    thread and the startup pre-warm."""
-    now = time.monotonic()
-    for key in _HOT_FILTER_COMBOS:
-        character, win, ascension, game_mode, players, username = key
-        try:
-            result = get_stats(
-                character=character,
-                win=win,
-                ascension=ascension,
-                game_mode=game_mode,
-                players=players,
-                username=username,
-            )
-            _stats_cache[key] = (now, result)
-        except Exception:
-            # Best-effort. Leave the previous cache entry intact on
-            # failure so users keep seeing the last-good data.
-            pass
+_REFRESHER_INTERVAL_SECONDS = 60
 
 
 def start_stats_refresher() -> None:
-    """Spawn the daemon thread that keeps _stats_cache hot.
+    """Spawn the daemon thread that keeps the materialized stats
+    collection fresh.
 
-    Each uvicorn worker runs its own. 4 workers × 6 hot filters every
-    30s = ~48 Mongo aggregations/min total, which is well within the
-    DB's budget and amortised across many user requests. Sharing via
-    Redis is a future optimisation if this becomes measurable cost.
+    Uses a Mongo-based lease so only ONE worker across the pool
+    actually runs the heavy aggregation cycle. Others spin idle
+    every refresh interval and the lease auto-rotates if the holder
+    dies.
     """
     import threading
 
     def _loop() -> None:
-        # First refresh runs immediately so cache is populated before
-        # any user request arrives. Subsequent runs are paced.
+        # Lazy import — runs_db_mongo only exists when MONGO_URL is set.
+        # If we're on the SQLite path this thread is harmless (the
+        # imports below raise; we catch and back off).
         while True:
             try:
-                _refresh_hot_stats_once()
+                from ..services.runs_db_mongo import (
+                    refresh_stats_summary,
+                    try_acquire_refresh_lease,
+                )
+
+                if try_acquire_refresh_lease():
+                    refresh_stats_summary()
             except Exception:
+                # SQLite path or transient failure — sleep and retry.
                 pass
-            time.sleep(_REFRESH_INTERVAL_SECONDS)
+            time.sleep(_REFRESHER_INTERVAL_SECONDS)
 
     threading.Thread(target=_loop, daemon=True, name="stats-refresher").start()
 
@@ -562,19 +537,46 @@ def get_community_stats(
     username: str | None = None,
 ):
     """Get aggregated run stats. Community-wide by default; pass
-    `username` to narrow to a single uploader (used by the Spire
-    Compendium desktop app for its per-user Stats tab)."""
+    `username` to narrow to a single uploader.
+
+    Read path:
+      1. Try the materialized stats_summary collection (sub-ms).
+      2. If the filter combo isn't in the hot list / hasn't been
+         materialized yet, fall through to a process-local TTL cache.
+      3. On cache miss, run the live aggregation (slow, ~5-10s).
+    """
+    # 1. Materialized view path
+    try:
+        from ..services.runs_db_mongo import read_stats_summary
+
+        materialized = read_stats_summary(
+            character=character,
+            win=win,
+            ascension=ascension,
+            game_mode=game_mode,
+            players=players,
+            username=username,
+        )
+        if materialized is not None:
+            return materialized
+    except Exception:
+        # Not on the Mongo path (SQLite fallback) — keep going.
+        pass
+
+    # 2. Process-local TTL cache for rare filter combos
     cache_key = (character, win, ascension, game_mode, players, username)
     now = time.monotonic()
-    hit = _stats_cache.get(cache_key)
-    if hit and now - hit[0] < _STATS_CACHE_TTL_SECONDS:
+    hit = _stats_fallback_cache.get(cache_key)
+    if hit and now - hit[0] < _STATS_FALLBACK_TTL_SECONDS:
         return hit[1]
-    # GC expired entries while we're touching the dict — keeps it small
-    # without a separate sweeper task.
     for k in [
-        k for k, (t, _) in _stats_cache.items() if now - t >= _STATS_CACHE_TTL_SECONDS
+        k
+        for k, (t, _) in _stats_fallback_cache.items()
+        if now - t >= _STATS_FALLBACK_TTL_SECONDS
     ]:
-        del _stats_cache[k]
+        del _stats_fallback_cache[k]
+
+    # 3. Slow path: live aggregation
     result = get_stats(
         character=character,
         win=win,
@@ -583,5 +585,5 @@ def get_community_stats(
         players=players,
         username=username,
     )
-    _stats_cache[cache_key] = (now, result)
+    _stats_fallback_cache[cache_key] = (now, result)
     return result

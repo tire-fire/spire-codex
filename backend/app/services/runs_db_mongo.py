@@ -35,12 +35,18 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from pymongo import ASCENDING, DESCENDING, MongoClient
 from pymongo.errors import DuplicateKeyError
+
+# Name of the materialized-stats collection. Read by API handlers,
+# written by one worker (whoever holds the refresh lease).
+SUMMARY_COLLECTION_NAME = "stats_summary"
+LEASE_COLLECTION_NAME = "stats_refresher_lease"
+LEASE_DURATION_SECONDS = 90
 
 # ── module state ──────────────────────────────────────────────────────────
 _data_dir = Path(os.environ.get("DATA_DIR", "/data"))
@@ -641,3 +647,139 @@ def get_stats(
             for r in potion_pu
         ],
     }
+
+
+# ── Materialized stats summary ────────────────────────────────────────────
+# get_stats() does ~8 aggregations totaling 5–15s against 9.9K docs.
+# That can't be made fast for a user-facing read at this scale. Instead,
+# a background refresher (one process across the worker pool, via a
+# Mongo lease) computes the heavy result once per minute and writes it
+# to `stats_summary`. API handlers read that single document — O(1).
+
+
+def _summary_coll():
+    return _get_collection().database[SUMMARY_COLLECTION_NAME]
+
+
+def _lease_coll():
+    return _get_collection().database[LEASE_COLLECTION_NAME]
+
+
+def _filter_key(
+    character: str | None = None,
+    win: str | None = None,
+    ascension: str | None = None,
+    game_mode: str | None = None,
+    players: str | None = None,
+    username: str | None = None,
+) -> str:
+    """Stable string key for a filter combo (used as _id in
+    stats_summary). 'global' means no filters."""
+    parts: list[str] = []
+    if character:
+        parts.append(f"character:{character.upper()}")
+    if win:
+        parts.append(f"win:{win}")
+    if ascension is not None and ascension != "":
+        parts.append(f"ascension:{ascension}")
+    if game_mode:
+        parts.append(f"game_mode:{game_mode}")
+    if players:
+        parts.append(f"players:{players}")
+    if username:
+        parts.append(f"username:{username}")
+    return "|".join(parts) if parts else "global"
+
+
+def read_stats_summary(
+    character: str | None = None,
+    win: str | None = None,
+    ascension: str | None = None,
+    game_mode: str | None = None,
+    players: str | None = None,
+    username: str | None = None,
+) -> dict | None:
+    """Read a pre-computed stats doc by filter key. Returns None if no
+    doc exists (refresher hasn't populated it yet). O(1) read."""
+    try:
+        key = _filter_key(character, win, ascension, game_mode, players, username)
+        doc = _summary_coll().find_one({"_id": key})
+        if not doc:
+            return None
+        # Strip the wrapper fields before returning to the API caller.
+        doc.pop("_id", None)
+        doc.pop("updated_at", None)
+        return doc
+    except Exception:
+        return None
+
+
+# Hot filter combos to materialize. (character, win, ascension,
+# game_mode, players, username). Refresher iterates this list and
+# writes a doc per combo. Add to it when a new common filter combo
+# emerges in production traffic.
+HOT_FILTER_COMBOS: list[dict] = [
+    {},
+    {"character": "IRONCLAD"},
+    {"character": "SILENT"},
+    {"character": "DEFECT"},
+    {"character": "NECROBINDER"},
+    {"character": "REGENT"},
+]
+
+
+def try_acquire_refresh_lease() -> bool:
+    """Atomic compare-and-set on the leader-lease doc. Returns True if
+    the calling process now holds the lease. Other workers see False
+    and skip the refresh cycle.
+
+    Lease is held for LEASE_DURATION_SECONDS (90). The refresher runs
+    every 60s, so the holder keeps re-acquiring; if it dies, another
+    worker picks it up after 90s.
+    """
+    try:
+        coll = _lease_coll()
+        now = datetime.now(timezone.utc)
+        expires = now + timedelta(seconds=LEASE_DURATION_SECONDS)
+        holder = f"{os.uname().nodename}/{os.getpid()}"
+        # find_one_and_update with upsert + the filter clause is atomic:
+        # we either insert (no doc existed) or update (lease expired or
+        # already held by us). If another worker holds an unexpired
+        # lease, the filter fails and nothing happens.
+        result = coll.find_one_and_update(
+            {
+                "_id": "stats-refresher",
+                "$or": [
+                    {"expires_at": {"$lt": now}},
+                    {"expires_at": {"$exists": False}},
+                    {"holder": holder},  # extend our own lease
+                ],
+            },
+            {"$set": {"holder": holder, "expires_at": expires}},
+            upsert=True,
+            return_document=True,
+        )
+        return result is not None and result.get("holder") == holder
+    except DuplicateKeyError:
+        # Another worker won the upsert race — they're the leader.
+        return False
+    except Exception:
+        return False
+
+
+def refresh_stats_summary() -> int:
+    """Compute every hot filter combo and write to stats_summary.
+    Returns count of docs written. Called by the leader-only loop."""
+    summary = _summary_coll()
+    written = 0
+    for filters in HOT_FILTER_COMBOS:
+        try:
+            result = get_stats(**filters)
+            key = _filter_key(**filters)
+            doc = {**result, "_id": key, "updated_at": datetime.now(timezone.utc)}
+            summary.replace_one({"_id": key}, doc, upsert=True)
+            written += 1
+        except Exception:
+            # Best-effort; if one filter combo fails, keep going.
+            pass
+    return written
