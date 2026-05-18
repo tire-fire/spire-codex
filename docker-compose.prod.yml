@@ -4,6 +4,10 @@ services:
   backend:
     image: ptrlrd/spire-codex-backend:latest
     container_name: spire-codex-backend
+    # Multiple workers so a burst of POST /api/runs (Overwolf launch
+    # backfills) doesn't serialise behind a single thread and block
+    # everything else (GET /api/runs/stats, /api/runs/list etc.).
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
     volumes:
       - ./data:/data
       - ./.secrets:/secrets:ro
