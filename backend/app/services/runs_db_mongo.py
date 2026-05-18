@@ -356,6 +356,68 @@ def _build_match(
     return m
 
 
+def _item_stats_pipeline(field: str) -> list[dict]:
+    """Per-item stats pipeline: card copies (overall, in wins, in
+    losses), distinct runs, distinct winning runs — all in one pass,
+    no $addToSet.
+
+    Pattern: dedupe (run, item) via $group, then $group by item with
+    summed counts. Avoids the memory-blowup of $addToSet on _id sets.
+    """
+    return [
+        {"$unwind": f"${field}"},
+        # First pass: each (run, item-id) becomes one doc carrying the
+        # run's win state + how many copies of the item that run has.
+        {
+            "$group": {
+                "_id": {"run": "$_id", "item": f"${field}.id"},
+                "win": {"$first": "$win"},
+                "copies": {"$sum": 1},
+            }
+        },
+        # Second pass: per item, sum across runs.
+        {
+            "$group": {
+                "_id": "$_id.item",
+                "count": {"$sum": "$copies"},  # total copies across all runs
+                "in_wins": {
+                    "$sum": {"$cond": ["$win", "$copies", 0]}
+                },  # copies in winning decks
+                "in_losses": {
+                    "$sum": {"$cond": [{"$not": "$win"}, "$copies", 0]}
+                },  # copies in losing decks
+                "total_runs_with": {"$sum": 1},  # distinct runs (one row per run)
+                "win_runs": {"$sum": {"$cond": ["$win", 1, 0]}},
+            }
+        },
+    ]
+
+
+def _scalar_item_stats_pipeline(field: str) -> list[dict]:
+    """Like _item_stats_pipeline, but for arrays of scalar strings
+    (relics, potions might be stored either way — keeping flexibility).
+    Currently unused; documents store relics + potions as objects with
+    `.id`, so _item_stats_pipeline covers it."""
+    return [
+        {"$unwind": f"${field}"},
+        {
+            "$group": {
+                "_id": {"run": "$_id", "item": f"${field}"},
+                "win": {"$first": "$win"},
+                "copies": {"$sum": 1},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id.item",
+                "count": {"$sum": "$copies"},
+                "total_runs_with": {"$sum": 1},
+                "win_runs": {"$sum": {"$cond": ["$win", 1, 0]}},
+            }
+        },
+    ]
+
+
 def get_stats(
     character: str | None = None,
     win: str | None = None,
@@ -365,7 +427,13 @@ def get_stats(
     username: str | None = None,
 ) -> dict:
     """Aggregated community stats. Mirrors the SQLite implementation's
-    response shape — frontend doesn't care which backend produced it."""
+    response shape — frontend doesn't care which backend produced it.
+
+    All branches run in ONE $facet pipeline so Mongo can read the
+    matched docs once and fan out internally. Each branch uses the
+    2-stage $group dedup pattern (no $addToSet) so it stays
+    memory-bounded.
+    """
     coll = _get_collection()
     match = _build_match(character, win, ascension, game_mode, players, username)
     match_no_char = _build_match(
@@ -386,11 +454,101 @@ def get_stats(
             },
         }
 
-    wins = coll.count_documents({**match, "win": True})
-    abandoned = coll.count_documents({**match, "was_abandoned": True})
+    # Single $facet pipeline — reads the matched docs once, computes
+    # every aggregation in parallel branches. Mongo's planner can
+    # optimise the shared $match.
+    facet = list(
+        coll.aggregate(
+            [
+                {"$match": match},
+                {
+                    "$facet": {
+                        "totals": [
+                            {
+                                "$group": {
+                                    "_id": None,
+                                    "wins": {"$sum": {"$cond": ["$win", 1, 0]}},
+                                    "abandoned": {
+                                        "$sum": {"$cond": ["$was_abandoned", 1, 0]}
+                                    },
+                                }
+                            }
+                        ],
+                        "ascensions": [
+                            {
+                                "$group": {
+                                    "_id": "$ascension",
+                                    "total": {"$sum": 1},
+                                    "wins": {"$sum": {"$cond": ["$win", 1, 0]}},
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ],
+                        "deaths": [
+                            {
+                                "$match": {
+                                    "win": False,
+                                    "killed_by": {"$ne": None},
+                                }
+                            },
+                            {"$group": {"_id": "$killed_by", "count": {"$sum": 1}}},
+                            {"$sort": {"count": -1}},
+                            {"$limit": 10},
+                        ],
+                        "pick_rates": [
+                            {"$unwind": "$card_choices"},
+                            {
+                                "$group": {
+                                    "_id": "$card_choices.card_id",
+                                    "offered": {"$sum": 1},
+                                    "picked": {
+                                        "$sum": {
+                                            "$cond": [
+                                                "$card_choices.was_picked",
+                                                1,
+                                                0,
+                                            ]
+                                        }
+                                    },
+                                }
+                            },
+                        ],
+                        "cards": _item_stats_pipeline("deck")
+                        + [{"$sort": {"count": -1}}],
+                        "relics": _item_stats_pipeline("relics")
+                        + [{"$sort": {"count": -1}}],
+                        "potions_owned": _item_stats_pipeline("potions")
+                        + [{"$sort": {"count": -1}}],
+                        # Potion choice + use telemetry needs to keep
+                        # `picked` and `used` semantics from the source
+                        # docs — separate branch (the item stats above
+                        # treats potions as a deck-like multiset).
+                        "potions_picked_used": [
+                            {"$unwind": "$potions"},
+                            {
+                                "$group": {
+                                    "_id": "$potions.id",
+                                    "picked": {
+                                        "$sum": {"$cond": ["$potions.was_picked", 1, 0]}
+                                    },
+                                    "offered": {"$sum": 1},
+                                    "used": {
+                                        "$sum": {"$cond": ["$potions.was_used", 1, 0]}
+                                    },
+                                }
+                            },
+                        ],
+                    }
+                },
+            ],
+            allowDiskUse=True,
+        )
+    )
+    result = facet[0] if facet else {}
 
-    # Per-character breakdown (always grouped — drops the character filter
-    # so the breakdown has one row per character).
+    # Per-character breakdown runs against match_no_char (drops the
+    # character filter so the breakdown has one row per character).
+    # Kept outside the $facet because the $match differs.
     char_stats = list(
         coll.aggregate(
             [
@@ -407,180 +565,16 @@ def get_stats(
         )
     )
 
-    # Card pick rates from card_choices array
-    pick_rates = list(
-        coll.aggregate(
-            [
-                {"$match": match},
-                {"$unwind": "$card_choices"},
-                {
-                    "$group": {
-                        "_id": "$card_choices.card_id",
-                        "offered": {"$sum": 1},
-                        "picked": {
-                            "$sum": {"$cond": ["$card_choices.was_picked", 1, 0]}
-                        },
-                    }
-                },
-            ]
-        )
-    )
-
-    # Cards in winning decks (filtered)
-    win_cards = list(
-        coll.aggregate(
-            [
-                {"$match": {**match, "win": True}},
-                {"$unwind": "$deck"},
-                {"$group": {"_id": "$deck.id", "count": {"$sum": 1}}},
-            ]
-        )
-    )
-    win_card_map = {r["_id"]: r["count"] for r in win_cards}
-
-    # Cards in losing decks
-    loss_cards = list(
-        coll.aggregate(
-            [
-                {"$match": {**match, "win": False}},
-                {"$unwind": "$deck"},
-                {"$group": {"_id": "$deck.id", "count": {"$sum": 1}}},
-            ]
-        )
-    )
-    loss_card_map = {r["_id"]: r["count"] for r in loss_cards}
-
-    # All cards across filtered runs
-    all_cards = list(
-        coll.aggregate(
-            [
-                {"$match": match},
-                {"$unwind": "$deck"},
-                {"$group": {"_id": "$deck.id", "count": {"$sum": 1}}},
-                {"$sort": {"count": -1}},
-            ]
-        )
-    )
-
-    # Distinct-run counts per card (win vs all)
-    win_runs_agg = list(
-        coll.aggregate(
-            [
-                {"$match": {**match, "win": True}},
-                {"$unwind": "$deck"},
-                {"$group": {"_id": "$deck.id", "runs": {"$addToSet": "$_id"}}},
-                {"$project": {"run_count": {"$size": "$runs"}}},
-            ]
-        )
-    )
-    win_runs_map = {r["_id"]: r["run_count"] for r in win_runs_agg}
-
-    all_runs_agg = list(
-        coll.aggregate(
-            [
-                {"$match": match},
-                {"$unwind": "$deck"},
-                {"$group": {"_id": "$deck.id", "runs": {"$addToSet": "$_id"}}},
-                {"$project": {"run_count": {"$size": "$runs"}}},
-            ]
-        )
-    )
-    all_runs_map = {r["_id"]: r["run_count"] for r in all_runs_agg}
-
-    # Relic stats
-    top_relics = list(
-        coll.aggregate(
-            [
-                {"$match": match},
-                {"$unwind": "$relics"},
-                {
-                    "$group": {
-                        "_id": "$relics.id",
-                        "count": {"$sum": 1},
-                        "runs": {"$addToSet": "$_id"},
-                        "win_runs_set": {
-                            "$addToSet": {"$cond": ["$win", "$_id", "$$REMOVE"]}
-                        },
-                    }
-                },
-                {
-                    "$project": {
-                        "count": 1,
-                        "total_runs_with": {"$size": "$runs"},
-                        "win_runs": {"$size": "$win_runs_set"},
-                    }
-                },
-                {"$sort": {"count": -1}},
-            ]
-        )
-    )
-
-    # Deadliest encounters
-    deaths = list(
-        coll.aggregate(
-            [
-                {
-                    "$match": {
-                        **match,
-                        "win": False,
-                        "killed_by": {"$ne": None},
-                    }
-                },
-                {"$group": {"_id": "$killed_by", "count": {"$sum": 1}}},
-                {"$sort": {"count": -1}},
-                {"$limit": 10},
-            ]
-        )
-    )
-
-    # Ascension distribution
-    asc_stats = list(
-        coll.aggregate(
-            [
-                {"$match": match},
-                {
-                    "$group": {
-                        "_id": "$ascension",
-                        "total": {"$sum": 1},
-                        "wins": {"$sum": {"$cond": ["$win", 1, 0]}},
-                    }
-                },
-                {"$sort": {"_id": 1}},
-            ]
-        )
-    )
-
-    # Potion stats
-    potion_stats = list(
-        coll.aggregate(
-            [
-                {"$match": match},
-                {"$unwind": "$potions"},
-                {
-                    "$group": {
-                        "_id": "$potions.id",
-                        "picked": {"$sum": {"$cond": ["$potions.was_picked", 1, 0]}},
-                        "offered": {"$sum": 1},
-                        "used": {"$sum": {"$cond": ["$potions.was_used", 1, 0]}},
-                        "runs": {"$addToSet": "$_id"},
-                        "win_runs_set": {
-                            "$addToSet": {"$cond": ["$win", "$_id", "$$REMOVE"]}
-                        },
-                    }
-                },
-                {
-                    "$project": {
-                        "picked": 1,
-                        "offered": 1,
-                        "used": 1,
-                        "total_runs_with": {"$size": "$runs"},
-                        "win_runs": {"$size": "$win_runs_set"},
-                    }
-                },
-                {"$sort": {"offered": -1}},
-            ]
-        )
-    )
+    totals_row = (result.get("totals") or [{}])[0]
+    wins = totals_row.get("wins", 0)
+    abandoned = totals_row.get("abandoned", 0)
+    asc_stats = result.get("ascensions", [])
+    deaths = result.get("deaths", [])
+    pick_rates = result.get("pick_rates", [])
+    cards = result.get("cards", [])
+    relics = result.get("relics", [])
+    potion_owned = {r["_id"]: r for r in result.get("potions_owned", [])}
+    potion_pu = result.get("potions_picked_used", [])
 
     return {
         "total_runs": total,
@@ -621,12 +615,12 @@ def get_stats(
             {
                 "card_id": r["_id"],
                 "count": r["count"],
-                "in_wins": win_card_map.get(r["_id"], 0),
-                "in_losses": loss_card_map.get(r["_id"], 0),
-                "win_runs": win_runs_map.get(r["_id"], 0),
-                "total_runs_with": all_runs_map.get(r["_id"], 0),
+                "in_wins": r.get("in_wins", 0),
+                "in_losses": r.get("in_losses", 0),
+                "win_runs": r.get("win_runs", 0),
+                "total_runs_with": r.get("total_runs_with", 0),
             }
-            for r in all_cards
+            for r in cards
         ],
         "pick_rates": [
             {
@@ -643,21 +637,25 @@ def get_stats(
             {
                 "relic_id": r["_id"],
                 "count": r["count"],
-                "total_runs_with": r["total_runs_with"],
-                "win_runs": r["win_runs"],
+                "total_runs_with": r.get("total_runs_with", 0),
+                "win_runs": r.get("win_runs", 0),
             }
-            for r in top_relics
+            for r in relics
         ],
         "deaths": [{"killed_by": r["_id"], "count": r["count"]} for r in deaths],
         "potion_stats": [
+            # Merge per-potion picked/used telemetry with the
+            # owned-in-deck stats so the response includes both views.
             {
                 "potion_id": r["_id"],
                 "offered": r["offered"],
                 "picked": r["picked"],
                 "used": r["used"],
-                "total_runs_with": r["total_runs_with"],
-                "win_runs": r["win_runs"],
+                "total_runs_with": potion_owned.get(r["_id"], {}).get(
+                    "total_runs_with", 0
+                ),
+                "win_runs": potion_owned.get(r["_id"], {}).get("win_runs", 0),
             }
-            for r in potion_stats
+            for r in potion_pu
         ],
     }
