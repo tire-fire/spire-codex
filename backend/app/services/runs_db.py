@@ -833,3 +833,21 @@ def get_stats(
 
 # Initialize on import
 init_db()
+
+
+# ── MongoDB dispatch ──────────────────────────────────────────────────────
+# When MONGO_URL is set in the environment, re-export the three high-level
+# entry points (submit_run, get_stats, claim_runs) from the Mongo
+# implementation. Rebinding here at the BOTTOM of the module — after the
+# SQLite defs — ensures every `from .runs_db import submit_run` (etc.)
+# elsewhere in the codebase resolves to the Mongo version. The SQLite
+# defs above still exist as fallbacks and are kept reachable via
+# get_conn() for the few routers that issue raw SQL against the legacy
+# tables during the migration window.
+if os.environ.get("MONGO_URL", "").strip():
+    # noqa: F401, F811 — these rebind module-level names defined above
+    # so callers doing `from .runs_db import submit_run` get the Mongo
+    # version when MONGO_URL is set.
+    from .runs_db_mongo import claim_runs as claim_runs  # noqa: F401
+    from .runs_db_mongo import get_stats as get_stats  # noqa: F401
+    from .runs_db_mongo import submit_run as submit_run  # noqa: F401

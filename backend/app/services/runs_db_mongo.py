@@ -1,0 +1,663 @@
+"""MongoDB implementation of the runs database.
+
+Exports the same public interface as services.runs_db so the swap is
+a feature flag, not a forklift. runs_db.py dispatches here when
+MONGO_URL is set in the environment.
+
+Document shape (one doc per player-run):
+
+    {
+        "_id": <run_hash>,
+        "username": ..., "character": ..., "win": ..., "ascension": ...,
+        "killed_by": ..., "player_count": ..., "build_id": ...,
+        "seed": ..., "run_time": ..., "floors_reached": ...,
+        "submitted_at": ISODate(...),
+        "deck": [{ "id": ..., "upgraded": ..., "enchantment": ..., "floor_added": ... }],
+        "relics": [{ "id": ..., "floor_added": ... }],
+        "potions": [{ "id": ..., "was_picked": ..., "was_used": ... }],
+        "card_choices": [{ "card_id": ..., "was_picked": ..., "floor": ... }],
+        "raw": <the full submitted JSON, for share pages>,
+    }
+
+Indexes (created on import — idempotent):
+    {character: 1}
+    {username: 1, submitted_at: -1}
+    {submitted_at: -1}
+    {character: 1, win: 1, ascension: 1}
+    {build_id: 1}
+    {"deck.id": 1}            (multikey)
+    {relics.id: 1}            (multikey)
+    {killed_by: 1}
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from pymongo import ASCENDING, DESCENDING, MongoClient
+from pymongo.errors import DuplicateKeyError
+
+# ── module state ──────────────────────────────────────────────────────────
+_data_dir = Path(os.environ.get("DATA_DIR", "/data"))
+
+_client: MongoClient | None = None
+_coll = None  # lazy — set by _get_collection
+
+
+def _get_collection():
+    """Lazily build the MongoClient + return the runs collection.
+
+    Per-process (per-worker) — pymongo manages its own connection pool
+    internally so we don't need to share across workers.
+    """
+    global _client, _coll
+    if _coll is not None:
+        return _coll
+
+    url = os.environ.get("MONGO_URL", "").strip()
+    if not url:
+        raise RuntimeError("MONGO_URL not set — runs_db_mongo imported in error")
+
+    _client = MongoClient(
+        url,
+        w="majority",
+        wtimeoutms=5000,
+        retryWrites=True,
+        connectTimeoutMS=5000,
+        serverSelectionTimeoutMS=5000,
+    )
+    # Database name comes from the connection string's default db.
+    _coll = _client.get_default_database().runs
+    _ensure_indexes(_coll)
+    return _coll
+
+
+def _ensure_indexes(coll) -> None:
+    """Create indexes if absent. Idempotent — pymongo's create_index is a
+    no-op when an equivalent index already exists."""
+    coll.create_index([("character", ASCENDING)])
+    coll.create_index([("username", ASCENDING), ("submitted_at", DESCENDING)])
+    coll.create_index([("submitted_at", DESCENDING)])
+    coll.create_index(
+        [("character", ASCENDING), ("win", ASCENDING), ("ascension", ASCENDING)]
+    )
+    coll.create_index([("build_id", ASCENDING)])
+    coll.create_index([("deck.id", ASCENDING)])
+    coll.create_index([("relics.id", ASCENDING)])
+    coll.create_index([("killed_by", ASCENDING)])
+
+
+# ── helpers (mirrors of the sqlite module) ──────────────────────────────
+def clean_id(raw_id: str) -> str:
+    """Strip CARD./RELIC./MONSTER./etc. prefixes (matches runs_db.clean_id)."""
+    for prefix in (
+        "CARD.",
+        "RELIC.",
+        "ENCHANTMENT.",
+        "MONSTER.",
+        "ENCOUNTER.",
+        "CHARACTER.",
+        "ACT.",
+        "POTION.",
+    ):
+        if raw_id.startswith(prefix):
+            return raw_id[len(prefix) :]
+    return raw_id
+
+
+def init_db():
+    """No-op for Mongo (indexes created lazily on first access). Kept for
+    import-parity with runs_db.init_db()."""
+    _get_collection()
+
+
+# ── public surface ──────────────────────────────────────────────────────
+def submit_run(data: dict, username: str | None = None) -> dict:
+    """Parse a run and store one document per player. Returns status dict
+    matching the SQLite implementation."""
+    missing: list[str] = []
+    if not data.get("players"):
+        missing.append("players")
+    if not data.get("map_point_history"):
+        missing.append("map_point_history")
+    if not isinstance(data.get("acts"), list):
+        missing.append("acts")
+    if missing:
+        return {
+            "error": f"Invalid run data — missing or empty fields: {', '.join(missing)}"
+        }
+
+    was_abandoned = bool(data.get("was_abandoned", False))
+    total_floors = sum(len(act) for act in data.get("map_point_history", []))
+    killed_by_raw = data.get("killed_by_encounter", "")
+    killed_by = (
+        clean_id(killed_by_raw)
+        if killed_by_raw and killed_by_raw != "NONE.NONE"
+        else None
+    )
+    player_count = len(data.get("players", []))
+
+    results = []
+    for player_idx, player in enumerate(data["players"]):
+        result = _submit_player_run(
+            data,
+            player,
+            player_idx,
+            was_abandoned,
+            total_floors,
+            killed_by,
+            player_count,
+            username,
+        )
+        results.append(result)
+
+    # Save the full submitted JSON for the share-run page (matches the
+    # SQLite implementation — frontend `/runs/<hash>` reads these files).
+    runs_dir = _data_dir / "runs"
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    for result in results:
+        if result.get("success") or result.get("duplicate"):
+            run_hash = result.get("run_hash", "")
+            if run_hash:
+                run_file = runs_dir / f"{run_hash}.json"
+                if not run_file.exists():
+                    try:
+                        with open(run_file, "w", encoding="utf-8") as f:
+                            json.dump(data, f, ensure_ascii=False)
+                    except Exception as e:
+                        print(f"Warning: failed to save run {run_hash}: {e}")
+
+    return results[0]
+
+
+def _submit_player_run(
+    data: dict,
+    player: dict,
+    player_idx: int,
+    was_abandoned: bool,
+    total_floors: int,
+    killed_by: str | None,
+    player_count: int,
+    username: str | None,
+) -> dict:
+    """One Mongo insert per player. The full nested structure goes into
+    a single document — no joins required at query time."""
+    seed = data.get("seed", "")
+    char_raw = player["character"]
+    start = data.get("start_time", "")
+    run_time = data.get("run_time", 0)
+    deck_size = len(player.get("deck", []))
+    key = f"{seed}:{char_raw}:{start}:{run_time}:{deck_size}:{player_idx}"
+    run_hash = hashlib.sha256(key.encode()).hexdigest()[:16]
+
+    character = clean_id(char_raw)
+
+    # Build embedded arrays.
+    deck = [
+        {
+            "id": clean_id(card["id"]),
+            "upgraded": card.get("current_upgrade_level", 0),
+            "enchantment": (
+                clean_id(card["enchantment"]["id"]) if card.get("enchantment") else None
+            ),
+            "floor_added": card.get("floor_added_to_deck"),
+        }
+        for card in player.get("deck", [])
+    ]
+    relics = [
+        {
+            "id": clean_id(relic["id"]),
+            "floor_added": relic.get("floor_added_to_deck"),
+        }
+        for relic in player.get("relics", [])
+    ]
+
+    # Walk map_point_history once to collect card-choice + potion events
+    # for THIS player.
+    card_choices: list[dict] = []
+    potion_used_set: set[str] = set()
+    potion_seen: dict[str, bool] = {}
+    player_id = player.get("id", player_idx + 1)
+    for act_floors in data.get("map_point_history", []):
+        for floor_idx, floor in enumerate(act_floors):
+            floor_num = floor_idx + 1
+            for ps in floor.get("player_stats", []):
+                if ps.get("player_id") and ps["player_id"] != player_id:
+                    continue
+                for choice in ps.get("card_choices", []):
+                    card_choices.append(
+                        {
+                            "card_id": clean_id(choice["card"]["id"]),
+                            "was_picked": bool(choice.get("was_picked", False)),
+                            "floor": floor_num,
+                        }
+                    )
+                for pc in ps.get("potion_choices", []):
+                    pid = clean_id(pc.get("choice", ""))
+                    if pid:
+                        picked = bool(pc.get("was_picked", False))
+                        potion_seen[pid] = potion_seen.get(pid, False) or picked
+                for pu in ps.get("potion_used", []):
+                    pid = clean_id(pu)
+                    if pid:
+                        potion_used_set.add(pid)
+
+    potions = [
+        {
+            "id": pid,
+            "was_picked": bool(was_picked),
+            "was_used": pid in potion_used_set,
+        }
+        for pid, was_picked in potion_seen.items()
+    ]
+
+    doc = {
+        "_id": run_hash,
+        "seed": seed,
+        "character": character,
+        "win": bool(data.get("win", False)),
+        "was_abandoned": was_abandoned,
+        "ascension": data.get("ascension", 0),
+        "game_mode": data.get("game_mode", "standard"),
+        "player_count": player_count,
+        "run_time": data.get("run_time", 0),
+        "floors_reached": total_floors,
+        "acts_completed": len(data.get("acts", [])),
+        "killed_by": killed_by,
+        "deck_size": len(deck),
+        "relic_count": len(relics),
+        "username": username,
+        "build_id": data.get("build_id"),
+        "submitted_at": datetime.now(timezone.utc),
+        "deck": deck,
+        "relics": relics,
+        "potions": potions,
+        "card_choices": card_choices,
+    }
+
+    coll = _get_collection()
+    try:
+        coll.insert_one(doc)
+    except DuplicateKeyError:
+        return {
+            "error": "This run has already been submitted",
+            "duplicate": True,
+            "run_hash": run_hash,
+        }
+
+    return {"success": True, "run_id": run_hash, "run_hash": run_hash}
+
+
+def claim_runs(username: str, hashes: list[str]) -> dict:
+    """Attach `username` to any runs whose _id matches and whose current
+    username is null/empty. Matches the SQLite implementation: never
+    overwrites an existing claim."""
+    if not hashes:
+        return {"claimed": 0, "already_claimed": 0, "unknown": 0}
+
+    coll = _get_collection()
+    existing = list(coll.find({"_id": {"$in": hashes}}, {"_id": 1, "username": 1}))
+    by_hash = {d["_id"]: d.get("username") for d in existing}
+
+    unclaimed = [h for h, u in by_hash.items() if not u]
+    already_claimed = len(by_hash) - len(unclaimed)
+    unknown = len(hashes) - len(by_hash)
+
+    if unclaimed:
+        coll.update_many(
+            {"_id": {"$in": unclaimed}, "$or": [{"username": None}, {"username": ""}]},
+            {"$set": {"username": username}},
+        )
+
+    return {
+        "claimed": len(unclaimed),
+        "already_claimed": already_claimed,
+        "unknown": unknown,
+    }
+
+
+# ── stats ────────────────────────────────────────────────────────────────
+def _build_match(
+    character: str | None,
+    win: str | None,
+    ascension: str | None,
+    game_mode: str | None,
+    players: str | None,
+    username: str | None,
+    include_character: bool = True,
+) -> dict:
+    """Build the Mongo $match clause from the filter args. Centralized so
+    each pipeline below stays consistent."""
+    m: dict[str, Any] = {}
+    if include_character and character:
+        m["character"] = character.upper()
+    if win == "true":
+        m["win"] = True
+    elif win == "false":
+        m["win"] = False
+        m["was_abandoned"] = False
+    elif win == "abandoned":
+        m["was_abandoned"] = True
+    if ascension is not None and ascension != "":
+        m["ascension"] = int(ascension)
+    if game_mode:
+        m["game_mode"] = game_mode
+    if players == "single":
+        m["player_count"] = 1
+    elif players == "multi":
+        m["player_count"] = {"$gt": 1}
+    if username:
+        m["username"] = username
+    return m
+
+
+def get_stats(
+    character: str | None = None,
+    win: str | None = None,
+    ascension: str | None = None,
+    game_mode: str | None = None,
+    players: str | None = None,
+    username: str | None = None,
+) -> dict:
+    """Aggregated community stats. Mirrors the SQLite implementation's
+    response shape — frontend doesn't care which backend produced it."""
+    coll = _get_collection()
+    match = _build_match(character, win, ascension, game_mode, players, username)
+    match_no_char = _build_match(
+        character, win, ascension, game_mode, players, username, include_character=False
+    )
+
+    total = coll.count_documents(match)
+    if total == 0:
+        return {
+            "total_runs": 0,
+            "filters": {
+                "character": character,
+                "win": win,
+                "ascension": ascension,
+                "game_mode": game_mode,
+                "players": players,
+                "username": username,
+            },
+        }
+
+    wins = coll.count_documents({**match, "win": True})
+    abandoned = coll.count_documents({**match, "was_abandoned": True})
+
+    # Per-character breakdown (always grouped — drops the character filter
+    # so the breakdown has one row per character).
+    char_stats = list(
+        coll.aggregate(
+            [
+                {"$match": match_no_char},
+                {
+                    "$group": {
+                        "_id": "$character",
+                        "total": {"$sum": 1},
+                        "wins": {"$sum": {"$cond": ["$win", 1, 0]}},
+                    }
+                },
+                {"$sort": {"total": -1}},
+            ]
+        )
+    )
+
+    # Card pick rates from card_choices array
+    pick_rates = list(
+        coll.aggregate(
+            [
+                {"$match": match},
+                {"$unwind": "$card_choices"},
+                {
+                    "$group": {
+                        "_id": "$card_choices.card_id",
+                        "offered": {"$sum": 1},
+                        "picked": {
+                            "$sum": {"$cond": ["$card_choices.was_picked", 1, 0]}
+                        },
+                    }
+                },
+            ]
+        )
+    )
+
+    # Cards in winning decks (filtered)
+    win_cards = list(
+        coll.aggregate(
+            [
+                {"$match": {**match, "win": True}},
+                {"$unwind": "$deck"},
+                {"$group": {"_id": "$deck.id", "count": {"$sum": 1}}},
+            ]
+        )
+    )
+    win_card_map = {r["_id"]: r["count"] for r in win_cards}
+
+    # Cards in losing decks
+    loss_cards = list(
+        coll.aggregate(
+            [
+                {"$match": {**match, "win": False}},
+                {"$unwind": "$deck"},
+                {"$group": {"_id": "$deck.id", "count": {"$sum": 1}}},
+            ]
+        )
+    )
+    loss_card_map = {r["_id"]: r["count"] for r in loss_cards}
+
+    # All cards across filtered runs
+    all_cards = list(
+        coll.aggregate(
+            [
+                {"$match": match},
+                {"$unwind": "$deck"},
+                {"$group": {"_id": "$deck.id", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}},
+            ]
+        )
+    )
+
+    # Distinct-run counts per card (win vs all)
+    win_runs_agg = list(
+        coll.aggregate(
+            [
+                {"$match": {**match, "win": True}},
+                {"$unwind": "$deck"},
+                {"$group": {"_id": "$deck.id", "runs": {"$addToSet": "$_id"}}},
+                {"$project": {"run_count": {"$size": "$runs"}}},
+            ]
+        )
+    )
+    win_runs_map = {r["_id"]: r["run_count"] for r in win_runs_agg}
+
+    all_runs_agg = list(
+        coll.aggregate(
+            [
+                {"$match": match},
+                {"$unwind": "$deck"},
+                {"$group": {"_id": "$deck.id", "runs": {"$addToSet": "$_id"}}},
+                {"$project": {"run_count": {"$size": "$runs"}}},
+            ]
+        )
+    )
+    all_runs_map = {r["_id"]: r["run_count"] for r in all_runs_agg}
+
+    # Relic stats
+    top_relics = list(
+        coll.aggregate(
+            [
+                {"$match": match},
+                {"$unwind": "$relics"},
+                {
+                    "$group": {
+                        "_id": "$relics.id",
+                        "count": {"$sum": 1},
+                        "runs": {"$addToSet": "$_id"},
+                        "win_runs_set": {
+                            "$addToSet": {"$cond": ["$win", "$_id", "$$REMOVE"]}
+                        },
+                    }
+                },
+                {
+                    "$project": {
+                        "count": 1,
+                        "total_runs_with": {"$size": "$runs"},
+                        "win_runs": {"$size": "$win_runs_set"},
+                    }
+                },
+                {"$sort": {"count": -1}},
+            ]
+        )
+    )
+
+    # Deadliest encounters
+    deaths = list(
+        coll.aggregate(
+            [
+                {
+                    "$match": {
+                        **match,
+                        "win": False,
+                        "killed_by": {"$ne": None},
+                    }
+                },
+                {"$group": {"_id": "$killed_by", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}},
+                {"$limit": 10},
+            ]
+        )
+    )
+
+    # Ascension distribution
+    asc_stats = list(
+        coll.aggregate(
+            [
+                {"$match": match},
+                {
+                    "$group": {
+                        "_id": "$ascension",
+                        "total": {"$sum": 1},
+                        "wins": {"$sum": {"$cond": ["$win", 1, 0]}},
+                    }
+                },
+                {"$sort": {"_id": 1}},
+            ]
+        )
+    )
+
+    # Potion stats
+    potion_stats = list(
+        coll.aggregate(
+            [
+                {"$match": match},
+                {"$unwind": "$potions"},
+                {
+                    "$group": {
+                        "_id": "$potions.id",
+                        "picked": {"$sum": {"$cond": ["$potions.was_picked", 1, 0]}},
+                        "offered": {"$sum": 1},
+                        "used": {"$sum": {"$cond": ["$potions.was_used", 1, 0]}},
+                        "runs": {"$addToSet": "$_id"},
+                        "win_runs_set": {
+                            "$addToSet": {"$cond": ["$win", "$_id", "$$REMOVE"]}
+                        },
+                    }
+                },
+                {
+                    "$project": {
+                        "picked": 1,
+                        "offered": 1,
+                        "used": 1,
+                        "total_runs_with": {"$size": "$runs"},
+                        "win_runs": {"$size": "$win_runs_set"},
+                    }
+                },
+                {"$sort": {"offered": -1}},
+            ]
+        )
+    )
+
+    return {
+        "total_runs": total,
+        "total_wins": wins,
+        "total_abandoned": abandoned,
+        "win_rate": round(wins / total * 100, 1) if total > 0 else 0,
+        "filters": {
+            "character": character,
+            "win": win,
+            "ascension": ascension,
+            "game_mode": game_mode,
+            "players": players,
+            "username": username,
+        },
+        "characters": [
+            {
+                "character": r["_id"],
+                "total": r["total"],
+                "wins": r["wins"],
+                "win_rate": round(r["wins"] / r["total"] * 100, 1)
+                if r["total"] > 0
+                else 0,
+            }
+            for r in char_stats
+        ],
+        "ascensions": [
+            {
+                "level": r["_id"],
+                "total": r["total"],
+                "wins": r["wins"],
+                "win_rate": round(r["wins"] / r["total"] * 100, 1)
+                if r["total"] > 0
+                else 0,
+            }
+            for r in asc_stats
+        ],
+        "top_cards": [
+            {
+                "card_id": r["_id"],
+                "count": r["count"],
+                "in_wins": win_card_map.get(r["_id"], 0),
+                "in_losses": loss_card_map.get(r["_id"], 0),
+                "win_runs": win_runs_map.get(r["_id"], 0),
+                "total_runs_with": all_runs_map.get(r["_id"], 0),
+            }
+            for r in all_cards
+        ],
+        "pick_rates": [
+            {
+                "card_id": r["_id"],
+                "offered": r["offered"],
+                "picked": r["picked"],
+                "pick_rate": round(r["picked"] / r["offered"] * 100, 1)
+                if r["offered"] > 0
+                else 0,
+            }
+            for r in pick_rates
+        ],
+        "top_relics": [
+            {
+                "relic_id": r["_id"],
+                "count": r["count"],
+                "total_runs_with": r["total_runs_with"],
+                "win_runs": r["win_runs"],
+            }
+            for r in top_relics
+        ],
+        "deaths": [{"killed_by": r["_id"], "count": r["count"]} for r in deaths],
+        "potion_stats": [
+            {
+                "potion_id": r["_id"],
+                "offered": r["offered"],
+                "picked": r["picked"],
+                "used": r["used"],
+                "total_runs_with": r["total_runs_with"],
+                "win_runs": r["win_runs"],
+            }
+            for r in potion_stats
+        ],
+    }
