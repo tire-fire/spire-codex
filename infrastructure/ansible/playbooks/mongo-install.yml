@@ -18,8 +18,8 @@
 #
 # Idempotent — re-running just verifies state, doesn't reset data.
 
-- name: Install MongoDB single-node replica set on secondary
-  hosts: secondary
+- name: Install MongoDB single-node replica set
+  hosts: db_origins
   gather_facts: false
   vars:
     mongo_dir: /var/www/spire-codex

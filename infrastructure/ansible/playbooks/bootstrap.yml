@@ -16,7 +16,11 @@
 # that's already there.
 
 - name: Bootstrap a fresh spire-codex origin
-  hosts: prod_origins
+  # Targets both app boxes (prod_origins) and DB-only boxes
+  # (db_origins) — the installable bits (docker, git, dirs) are the
+  # same. Specialisation happens later: deploy.yml only targets
+  # prod_origins; mongo-install.yml only targets db_origins.
+  hosts: prod_origins:db_origins
   gather_facts: true
   become: true
   tasks:

@@ -14,15 +14,27 @@
 # the origin to the Cloudflare LB pool.
 all:
   children:
+    # App origins — boxes that run FastAPI + frontend. Targeted by
+    # deploy.yml / restart.yml / sync-config.yml. Single app box after
+    # the post-Overwolf rearchitecture; the CF LB was retired and
+    # secondary was repurposed as the MongoDB host (see db_origins).
     prod_origins:
       hosts:
         primary:
           ansible_host: op://Spire Codex/AWS Credentials/Primary IP
           origin_label: spire-codex-primary
-        secondary:
-          ansible_host: op://Spire Codex/AWS Credentials/Secondary IP
-          origin_label: spire-codex-secondary
       vars:
         spire_codex_dir: /var/www/spire-codex
         prod_compose_file: docker-compose.prod.yml
         beta_compose_file: docker-compose.beta.yml
+
+    # Database origins — boxes that run MongoDB (no app containers).
+    # Targeted only by mongo-install.yml, mongo-backup.yml, etc.
+    # Lightsail firewall on each restricts port 27017 to primary's IP.
+    db_origins:
+      hosts:
+        secondary:
+          ansible_host: op://Spire Codex/AWS Credentials/Secondary IP
+          origin_label: spire-codex-db
+      vars:
+        spire_codex_dir: /var/www/spire-codex
