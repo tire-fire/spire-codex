@@ -12,15 +12,20 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { BetaVersionProvider } from "./contexts/BetaVersionContext";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 
-// Self-hosted Umami analytics. Read in the root layout (a Server
-// Component) at request time, so the values land in the SSR'd HTML
-// without needing to be baked into the Docker image at CI build time
-// via NEXT_PUBLIC_* build args. The frontend container reads UMAMI_*
-// from its runtime env (set in docker-compose.prod.yml). Leaving
-// either blank — the dev / local default — keeps the script off the
-// page so localhost traffic doesn't pollute stats.
-const UMAMI_SRC = process.env.UMAMI_SRC || "";
-const UMAMI_WEBSITE_ID = process.env.UMAMI_WEBSITE_ID || "";
+// Self-hosted Umami analytics. Both values are public-by-design — the
+// browser fetches the script + sends the website ID on every page
+// view — so there's no secret to manage. Hardcoding them as constants
+// dodges Next.js's static-prerender trap: pages exporting
+// `force-static` (most of the site) bake the layout at Docker build
+// time, when runtime env vars aren't reachable, which silently strips
+// the script tag from every prerendered page.
+//
+// Local-dev pollution is handled at the Umami side, not here — the
+// website is configured with `spire-codex.com` as its allowed domain
+// so pings from `localhost:3000` are rejected by Umami before they
+// land in the stats.
+const UMAMI_SRC = "https://analytics.spire-codex.com/script.js";
+const UMAMI_WEBSITE_ID = "715a2b92-5064-4369-9d33-cdd1c0ea8f93";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
