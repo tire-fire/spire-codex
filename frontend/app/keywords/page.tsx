@@ -3,6 +3,17 @@ import JsonLd from "@/app/components/JsonLd";
 import RichDescription from "@/app/components/RichDescription";
 import { buildCollectionPageJsonLd } from "@/lib/jsonld";
 
+// force-dynamic so the page SSRs at runtime instead of getting baked
+// into the Docker image at build time. The build container has no
+// network path to the backend, so the build-time fetch returns empty
+// (try/catch swallows the failure) and the resulting static HTML
+// permanently shows zero Game Terms until revalidate expires. CF
+// caches the runtime-rendered HTML for the s-maxage TTL set in the
+// backend's CORSStaticMiddleware, so edge perf is unaffected.
+//
+// See feedback_frontend_build_offline_backend.md — same trap caught
+// us once already on entity detail pages.
+export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 const API = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
