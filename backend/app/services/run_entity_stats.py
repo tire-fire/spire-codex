@@ -29,6 +29,8 @@ from typing import Any, Iterable
 
 from .runs_db import get_conn
 
+_USING_MONGO = bool(os.environ.get("MONGO_URL", "").strip())
+
 logger = logging.getLogger(__name__)
 
 # `RELIC.SOZU` → ("relics", "SOZU"). We strip the namespace prefix so
@@ -112,10 +114,35 @@ def _build_cache() -> None:
     new_cache: dict[tuple[str, str], dict[str, Any]] = {}
     new_totals = {"total_runs": 0, "total_wins": 0}
 
-    with get_conn() as conn:
-        rows = conn.execute(
-            "SELECT run_hash, character, win, submitted_at FROM runs"
-        ).fetchall()
+    # Source of truth depends on which DB the app is using. Either way
+    # we end up with an iterable of (run_hash, character, win, submitted_at).
+    if _USING_MONGO:
+        from .runs_db_mongo import _get_collection
+
+        coll = _get_collection()
+        rows = list(
+            coll.find(
+                {},
+                {"_id": 1, "character": 1, "win": 1, "submitted_at": 1},
+            )
+        )
+        # Normalise to a common dict-like shape so the loop below
+        # doesn't have to branch.
+        rows = [
+            {
+                "run_hash": d["_id"],
+                "character": d.get("character") or "",
+                "win": bool(d.get("win")),
+                "submitted_at": d.get("submitted_at"),
+            }
+            for d in rows
+        ]
+    else:
+        with get_conn() as conn:
+            rows = conn.execute(
+                "SELECT run_hash, character, win, submitted_at FROM runs"
+            ).fetchall()
+            rows = [dict(r) for r in rows]
 
     for row in rows:
         new_totals["total_runs"] += 1
@@ -125,6 +152,10 @@ def _build_cache() -> None:
         character = _strip_character_prefix(row["character"])
         is_win = bool(row["win"])
         submitted = row["submitted_at"]
+        # Mongo returns datetimes; SQLite returns ISO strings. Normalise
+        # to ISO string so the max() comparison below sorts correctly.
+        if submitted is not None and hasattr(submitted, "isoformat"):
+            submitted = submitted.isoformat()
 
         path = _RUNS_DIR / f"{run_hash}.json"
         if not path.exists():
