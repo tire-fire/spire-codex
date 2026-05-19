@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
@@ -10,6 +11,16 @@ import { Suspense } from "react";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { BetaVersionProvider } from "./contexts/BetaVersionContext";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
+
+// Self-hosted Umami analytics. Read in the root layout (a Server
+// Component) at request time, so the values land in the SSR'd HTML
+// without needing to be baked into the Docker image at CI build time
+// via NEXT_PUBLIC_* build args. The frontend container reads UMAMI_*
+// from its runtime env (set in docker-compose.prod.yml). Leaving
+// either blank — the dev / local default — keeps the script off the
+// page so localhost traffic doesn't pollute stats.
+const UMAMI_SRC = process.env.UMAMI_SRC || "";
+const UMAMI_WEBSITE_ID = process.env.UMAMI_WEBSITE_ID || "";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -74,6 +85,14 @@ export default function RootLayout({
             </BetaVersionProvider>
           </Suspense>
         </LanguageProvider>
+        {UMAMI_SRC && UMAMI_WEBSITE_ID && (
+          <Script
+            src={UMAMI_SRC}
+            data-website-id={UMAMI_WEBSITE_ID}
+            strategy="afterInteractive"
+            defer
+          />
+        )}
       </body>
     </html>
   );

@@ -49,3 +49,15 @@ MONGO_URL=op://Spire Codex/MongoDB/connection-string
 # TURSO_URL=op://Spire Codex/Turso/url
 # TURSO_AUTH_TOKEN=op://Spire Codex/Turso/token
 # TURSO_LOCAL_REPLICA=/data/runs-replica.db
+
+# Umami self-hosted analytics. Top two are read by the frontend
+# container at SSR time (not bundled into the client at build) so
+# changing them is a recreate-not-rebuild operation. Until the
+# website is created in the Umami UI, leave `website_id` blank in 1P
+# — the layout guards against partial config and won't emit the
+# script tag.
+# Bottom two are consumed by docker-compose.umami.yml only.
+UMAMI_SRC=https://analytics.spire-codex.com/script.js
+UMAMI_WEBSITE_ID=op://Spire Codex/Umami/website_id
+UMAMI_DB_PASSWORD=op://Spire Codex/Umami/db_password
+UMAMI_APP_SECRET=op://Spire Codex/Umami/app_secret

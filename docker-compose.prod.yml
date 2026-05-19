@@ -83,6 +83,11 @@ services:
     environment:
       - API_INTERNAL_URL=http://spire-codex-backend:8000
       - NEXT_PUBLIC_SITE_URL=https://spire-codex.com
+      # Self-hosted Umami tracker. Read by app/layout.tsx at SSR time
+      # — no rebuild needed when these values change. Leaving either
+      # blank keeps the analytics script off the page entirely.
+      - UMAMI_SRC=${UMAMI_SRC:-}
+      - UMAMI_WEBSITE_ID=${UMAMI_WEBSITE_ID:-}
     networks:
       - nginx_web-network
     logging:

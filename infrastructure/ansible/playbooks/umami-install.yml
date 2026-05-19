@@ -1,0 +1,116 @@
+---
+# One-shot install for self-hosted Umami analytics on the DO box.
+#
+# Complete the steps below in order. Each runs in seconds; the only
+# wait is at step 5 (you log in to a web UI).
+#
+# 1. Cloudflare DNS — add CNAME `analytics` → `spire-codex.com`
+#    (proxied / orange cloud). Verify:
+#      dig +short analytics.spire-codex.com
+#    should return CF anycast IPs.
+#
+# 2. 1Password (Spire Codex vault) — create a new item "Umami" with:
+#      - `db_password`  — random 32+ chars (Postgres password)
+#      - `app_secret`   — random 64+ chars (Umami session signer +
+#                         visitor-IP hash salt)
+#      - `website_id`   — leave blank for now (filled in at step 6)
+#    Use the 1P desktop generator; symbols are fine.
+#
+# 3. Render the updated nginx config (it now has an
+#    `analytics.spire-codex.com` server block) + render .env (it
+#    references the three Umami fields above):
+#      ./bin/do-ansible playbooks/sync-config.yml      --limit do_origin
+#      ./bin/do-ansible playbooks/sync-secrets-do.yml  --limit do_origin
+#
+# 4. Run THIS playbook:
+#      ./bin/do-ansible playbooks/umami-install.yml --limit do_origin
+#    It pulls the images, brings the Umami + Postgres containers up,
+#    and waits for the /api/heartbeat endpoint to return 200.
+#
+# 5. First login (one-time) — open https://analytics.spire-codex.com:
+#      - Default creds: admin / umami.  Change the password
+#        immediately (Settings → Profile → Change Password). Store
+#        the new password in 1P under `Umami` → `admin_password`.
+#      - Websites → Add Website.  Name: spire-codex.  Domain:
+#        spire-codex.com.  Save.
+#      - Open the website, click "Tracking code" — copy the UUID from
+#        the `data-website-id` attribute. Paste into 1P → Umami →
+#        website_id.
+#
+# 6. Re-render .env (now with website_id filled in) + recreate the
+#    frontend so the tracker script starts emitting on SSR'd HTML:
+#      ./bin/do-ansible playbooks/sync-secrets-do.yml --limit do_origin
+#      ./bin/do-ansible playbooks/deploy.yml          --limit do_origin
+#
+# Re-running this playbook is idempotent — `docker compose up -d` is
+# a no-op when nothing changed.
+
+- name: Install Umami self-hosted analytics
+  hosts: digital_ocean
+  gather_facts: false
+  become: true
+
+  vars:
+    umami_dir: "{{ spire_codex_dir }}"
+    compose_file: docker-compose.umami.yml
+
+  tasks:
+    - name: Sanity-check that sync-secrets-do.yml has been run (UMAMI_* in .env)
+      shell: grep -q '^UMAMI_DB_PASSWORD=' {{ umami_dir }}/.env && grep -q '^UMAMI_APP_SECRET=' {{ umami_dir }}/.env
+      changed_when: false
+      failed_when: false
+      register: env_check
+
+    - name: Bail if UMAMI_* env vars are missing from .env
+      fail:
+        msg: |
+          UMAMI_DB_PASSWORD and/or UMAMI_APP_SECRET not present in {{ umami_dir }}/.env.
+          Run `./bin/do-ansible playbooks/sync-secrets-do.yml --limit do_origin` first.
+          That renders the .env from files/.env.tpl (which now references
+          op://Spire Codex/Umami/db_password + /app_secret).
+      when: env_check.rc != 0
+
+    - name: Ensure umami-data dir exists on host
+      file:
+        path: "{{ umami_dir }}/umami-data"
+        state: directory
+        owner: "999"
+        group: "999"
+        mode: "0700"
+
+    - name: Pull umami + postgres images
+      command: docker compose -f {{ compose_file }} pull
+      args:
+        chdir: "{{ umami_dir }}"
+      register: pull_result
+      changed_when: "'Pulled' in pull_result.stdout"
+
+    - name: Start the Umami stack
+      command: docker compose -f {{ compose_file }} up -d
+      args:
+        chdir: "{{ umami_dir }}"
+      register: up
+      changed_when: "'Started' in up.stderr or 'Created' in up.stderr"
+
+    - name: Wait for Umami to be ready (HTTP 200 from nginx → umami)
+      uri:
+        url: "http://localhost/api/heartbeat"
+        headers:
+          Host: "analytics.spire-codex.com"
+        status_code: 200
+      register: heartbeat
+      retries: 20
+      delay: 3
+      until: heartbeat.status == 200
+
+    - name: Done — next steps
+      debug:
+        msg: |
+          Umami is up on analytics.spire-codex.com.
+
+          Manual follow-up (see playbook header):
+            1. Log in (default: admin/umami) — change password immediately.
+            2. Add Website "spire-codex" (domain: spire-codex.com).
+            3. Copy the data-website-id UUID into 1P → Umami → website_id.
+            4. Run sync-secrets-do.yml + deploy.yml to load UMAMI_WEBSITE_ID
+               + UMAMI_SRC into the frontend container.

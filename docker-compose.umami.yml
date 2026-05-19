@@ -1,0 +1,79 @@
+name: spire-codex-umami
+
+# Self-hosted Umami analytics — privacy-friendly page-view tracker.
+# Runs alongside the spire-codex stack on DO; nginx proxies
+# analytics.spire-codex.com → umami:3000. Postgres is on its own
+# internal network so the public-facing nginx_web-network never sees
+# it.
+#
+# First-time setup is in `infrastructure/ansible/playbooks/umami-install.yml`
+# and the manual steps (DNS record, admin password rotation, website
+# registration) are documented at the top of that playbook.
+
+services:
+  umami:
+    # The `postgresql-latest` tag is the postgres-flavored Umami image —
+    # pinned by tag rather than digest to ease minor upgrades. Umami's
+    # release cadence is monthly and breaking changes are rare.
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: umami
+    restart: unless-stopped
+    depends_on:
+      umami-postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_TYPE: postgresql
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@umami-postgres:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET}
+      # Daily salt rotation on the visitor-IP hash. Combined with
+      # Umami's default of not storing raw IPs, this gives one-day
+      # anonymous visitor identity without any cookie consent banner.
+      HASH_SALT: ${UMAMI_APP_SECRET}
+      # Default 3000 inside the container; nginx_web-network DNS gives
+      # `umami:3000` to the nginx proxy.
+      PORT: 3000
+    networks:
+      - nginx_web-network
+      - umami-db
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  umami-postgres:
+    # 15 chosen for long support window; Umami is happy on 13+.
+    image: postgres:15-alpine
+    container_name: umami-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
+    volumes:
+      - ./umami-data:/var/lib/postgresql/data
+    # Isolated network — only the umami container needs Postgres
+    # access. Keeps it off `nginx_web-network` so a misconfigured
+    # public proxy can't accidentally expose the DB.
+    networks:
+      - umami-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  # Shared with the spire-codex compose project so nginx can reach
+  # umami:3000 by service-name DNS. Created by playbooks/nginx-install.yml.
+  nginx_web-network:
+    external: true
+  # Private to this compose project.
+  umami-db:
+    driver: bridge

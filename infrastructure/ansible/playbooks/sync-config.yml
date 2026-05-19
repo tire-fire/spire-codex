@@ -9,7 +9,9 @@
 # Idempotent — re-running with no changes is a no-op.
 
 - name: Sync nginx config + QA assets to all prod origins
-  hosts: prod_origins
+  # Both Lightsail prod_origins (legacy) and the DigitalOcean origin
+  # share the same nginx template. Target both via `--limit` per run.
+  hosts: prod_origins:digital_ocean
   gather_facts: false
   tasks:
     # Fetch the metrics-monitor allow-list IP from 1Password. Used by
