@@ -342,13 +342,17 @@ def _build_match(
     m: dict[str, Any] = {}
     if include_character and character:
         m["character"] = character.upper()
+    # ETL'd docs store win/was_abandoned as 0/1 integers (from the
+    # legacy SQLite schema), while submit_run on the new code path
+    # stores them as true/false booleans. Strict-equal filters miss
+    # half the data — match both forms with $in.
     if win == "true":
-        m["win"] = True
+        m["win"] = {"$in": [True, 1]}
     elif win == "false":
-        m["win"] = False
-        m["was_abandoned"] = False
+        m["win"] = {"$in": [False, 0]}
+        m["was_abandoned"] = {"$in": [False, 0]}
     elif win == "abandoned":
-        m["was_abandoned"] = True
+        m["was_abandoned"] = {"$in": [True, 1]}
     if ascension is not None and ascension != "":
         m["ascension"] = int(ascension)
     if game_mode:
@@ -514,7 +518,13 @@ def get_stats(
 
     deaths = agg(
         [
-            {"$match": {**match, "win": False, "killed_by": {"$ne": None}}},
+            {
+                "$match": {
+                    **match,
+                    "win": {"$in": [False, 0]},
+                    "killed_by": {"$ne": None},
+                }
+            },
             {"$group": {"_id": "$killed_by", "count": {"$sum": 1}}},
             {"$sort": {"count": -1}},
             {"$limit": 10},
@@ -882,10 +892,10 @@ def list_runs(
     if character:
         q["character"] = character.upper()
     if win == "true":
-        q["win"] = True
+        q["win"] = {"$in": [True, 1]}
     elif win == "false":
-        q["win"] = False
-        q["was_abandoned"] = False
+        q["win"] = {"$in": [False, 0]}
+        q["was_abandoned"] = {"$in": [False, 0]}
     if username:
         q["username"] = {"$regex": username, "$options": "i"}
     if seed:
@@ -926,7 +936,8 @@ def leaderboard(
 ) -> dict:
     """Wins-only leaderboard. Mirrors the /api/runs/leaderboard SQLite path."""
     coll = _get_collection()
-    q: dict[str, Any] = {"win": True}
+    # ETL'd docs store win as 0/1 int; submit_run stores bool. Match both.
+    q: dict[str, Any] = {"win": {"$in": [True, 1]}}
     if character:
         q["character"] = character.upper()
 
@@ -966,7 +977,7 @@ def get_run_rank(run_hash: str, category: str = "fastest") -> dict:
     if category == "highest_ascension":
         ahead = coll.count_documents(
             {
-                "win": True,
+                "win": {"$in": [True, 1]},
                 "character": row["character"],
                 "$or": [
                     {"ascension": {"$gt": row.get("ascension", 0)}},
@@ -980,7 +991,7 @@ def get_run_rank(run_hash: str, category: str = "fastest") -> dict:
     else:
         ahead = coll.count_documents(
             {
-                "win": True,
+                "win": {"$in": [True, 1]},
                 "character": row["character"],
                 "run_time": {"$lt": row.get("run_time", 0)},
             }
