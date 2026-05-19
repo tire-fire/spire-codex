@@ -3,9 +3,16 @@
 from prometheus_client import Counter, Gauge, Histogram
 
 # ── HTTP / Traffic ────────────────────────────────────────────
+# multiprocess_mode='livesum': under uvicorn --workers N, every worker
+# tracks its own in-flight gauge value. We want the fleet total, so
+# the multiproc collector sums each worker's value at scrape time and
+# ignores files from dead workers. Without an explicit mode, the
+# prometheus_client multiproc collector refuses to register the gauge
+# at all.
 requests_in_flight = Gauge(
     "spire_codex_requests_in_flight",
     "Number of requests currently being processed",
+    multiprocess_mode="livesum",
 )
 
 response_size = Histogram(

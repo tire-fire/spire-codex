@@ -7,7 +7,23 @@ services:
     # Multiple workers so a burst of POST /api/runs (Overwolf launch
     # backfills) doesn't serialise behind a single thread and block
     # everything else (GET /api/runs/stats, /api/runs/list etc.).
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+    #
+    # The shell wrapper sets up prometheus_client's multiprocess
+    # collector dir before uvicorn forks workers: each worker writes
+    # its counters into per-pid files under PROMETHEUS_MULTIPROC_DIR,
+    # and /metrics aggregates across them. Without this, each scrape
+    # returns one random worker's view, which Prometheus reads as a
+    # counter reset on every cross-worker bounce — `rate()` then
+    # multiplies by 4-ish and dashboards show wildly inflated traffic.
+    # The dir must be empty at boot so we don't include stale files
+    # from previously-exited worker pids.
+    command:
+      - sh
+      - -c
+      - >-
+        mkdir -p "$$PROMETHEUS_MULTIPROC_DIR" &&
+        rm -rf "$$PROMETHEUS_MULTIPROC_DIR"/* &&
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
     volumes:
       - ./data:/data
       - ./.secrets:/secrets:ro
@@ -37,6 +53,18 @@ services:
       # path. Falls through to local /data/runs.db SQLite otherwise
       # (the current state while the migration is in progress).
       - MONGO_URL=${MONGO_URL:-}
+      # prometheus_client multiprocess mode. Set in the env (not the
+      # CMD) so it's exported into every worker as a real env var
+      # before prometheus_client is imported. The dir is recreated +
+      # cleaned by the CMD shell wrapper above.
+      #
+      # Side effect: prometheus_client disables its built-in per-process
+      # collectors (process_cpu_seconds_total, process_resident_memory_bytes,
+      # gc, platform) under multiproc, because they only make sense
+      # per-pid. Any Grafana panel reading those metrics must switch
+      # to node_exporter (`node_cpu_*`, `node_memory_*`) or cAdvisor
+      # (`container_cpu_*`, `container_memory_*`).
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/prom_multiproc
     networks:
       - nginx_web-network
     logging:
