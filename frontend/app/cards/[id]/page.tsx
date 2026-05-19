@@ -4,6 +4,11 @@ import { stripTags, stripTagsFlat, buildLanguageAlternates} from "@/lib/seo";
 import JsonLd from "@/app/components/JsonLd";
 import { buildDetailPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
 
+// 1h ISR — card data only changes on deploy. Without this, Next.js
+// treats `params: Promise<...>` + async page as dynamic and serves
+// `Cache-Control: no-store`, which makes CF refuse to cache.
+export const revalidate = 3600;
+
 const API_INTERNAL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_PUBLIC = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_API_URL || "";
 
