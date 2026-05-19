@@ -819,3 +819,192 @@ def refresh_stats_summary() -> int:
             # Best-effort; if one filter combo fails, keep going.
             pass
     return written
+
+
+# ── Run listing / leaderboard / rank / versions / shared ─────────────────
+# These mirror the inline get_conn() callers in routers/runs.py that
+# previously ran raw SQL. Router dispatches here when MONGO_URL is set.
+
+
+def _projection_row() -> dict:
+    """Fields to return for /list and /leaderboard rows. Excludes the
+    big nested arrays (deck/relics/etc.) to keep responses small."""
+    return {
+        "_id": 1,
+        "character": 1,
+        "win": 1,
+        "was_abandoned": 1,
+        "ascension": 1,
+        "game_mode": 1,
+        "run_time": 1,
+        "floors_reached": 1,
+        "deck_size": 1,
+        "relic_count": 1,
+        "killed_by": 1,
+        "username": 1,
+        "submitted_at": 1,
+        "build_id": 1,
+    }
+
+
+def _row_to_dict(doc: dict) -> dict:
+    """Strip Mongo's _id wrapper into the run_hash field the API expects."""
+    if not doc:
+        return doc
+    out = {**doc}
+    out["run_hash"] = out.pop("_id")
+    # Coerce booleans to int (0/1) for backward compat with the SQLite
+    # response shape that the frontend consumed historically.
+    for k in ("win", "was_abandoned"):
+        if k in out and isinstance(out[k], bool):
+            out[k] = int(out[k])
+    # submitted_at: stringify datetimes to ISO for JSON
+    if "submitted_at" in out and out["submitted_at"] is not None:
+        sa = out["submitted_at"]
+        if hasattr(sa, "isoformat"):
+            out["submitted_at"] = sa.isoformat()
+    return out
+
+
+def list_runs(
+    character: str | None = None,
+    win: str | None = None,
+    username: str | None = None,
+    seed: str | None = None,
+    sort: str | None = None,
+    build_id: str | None = None,
+    page: int = 1,
+    limit: int = 50,
+) -> dict:
+    """Paginated, filterable run list. Mirrors the /api/runs/list SQLite path."""
+    coll = _get_collection()
+    q: dict[str, Any] = {}
+    if character:
+        q["character"] = character.upper()
+    if win == "true":
+        q["win"] = True
+    elif win == "false":
+        q["win"] = False
+        q["was_abandoned"] = False
+    if username:
+        q["username"] = {"$regex": username, "$options": "i"}
+    if seed:
+        q["seed"] = {"$regex": seed, "$options": "i"}
+    if build_id:
+        q["build_id"] = build_id
+
+    sort_map = {
+        "time_asc": [("run_time", 1)],
+        "time_desc": [("run_time", -1)],
+        "ascension_desc": [("ascension", -1), ("run_time", 1)],
+        "date": [("submitted_at", -1)],
+    }
+    sort_clause = sort_map.get(sort or "date", [("submitted_at", -1)])
+
+    total = coll.count_documents(q)
+    per_page = min(limit, 100)
+    offset = (max(page, 1) - 1) * per_page
+    cursor = (
+        coll.find(q, _projection_row()).sort(sort_clause).skip(offset).limit(per_page)
+    )
+    runs = [_row_to_dict(r) for r in cursor]
+
+    return {
+        "runs": runs,
+        "total": total,
+        "page": max(page, 1),
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page,
+    }
+
+
+def leaderboard(
+    category: str = "fastest",
+    character: str | None = None,
+    page: int = 1,
+    limit: int = 50,
+) -> dict:
+    """Wins-only leaderboard. Mirrors the /api/runs/leaderboard SQLite path."""
+    coll = _get_collection()
+    q: dict[str, Any] = {"win": True}
+    if character:
+        q["character"] = character.upper()
+
+    if category == "highest_ascension":
+        sort_clause = [("ascension", -1), ("run_time", 1)]
+    else:
+        sort_clause = [("run_time", 1)]
+
+    total = coll.count_documents(q)
+    per_page = min(limit, 100)
+    offset = (max(page, 1) - 1) * per_page
+    cursor = (
+        coll.find(q, _projection_row()).sort(sort_clause).skip(offset).limit(per_page)
+    )
+    runs = [_row_to_dict(r) for r in cursor]
+
+    return {
+        "runs": runs,
+        "total": total,
+        "page": max(page, 1),
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page,
+        "category": category,
+    }
+
+
+def get_run_rank(run_hash: str, category: str = "fastest") -> dict:
+    """Rank of a single winning run within its character's leaderboard."""
+    coll = _get_collection()
+    row = coll.find_one(
+        {"_id": run_hash},
+        {"win": 1, "character": 1, "run_time": 1, "ascension": 1},
+    )
+    if not row or not row.get("win"):
+        return {"rank": None}
+
+    if category == "highest_ascension":
+        ahead = coll.count_documents(
+            {
+                "win": True,
+                "character": row["character"],
+                "$or": [
+                    {"ascension": {"$gt": row.get("ascension", 0)}},
+                    {
+                        "ascension": row.get("ascension", 0),
+                        "run_time": {"$lt": row.get("run_time", 0)},
+                    },
+                ],
+            }
+        )
+    else:
+        ahead = coll.count_documents(
+            {
+                "win": True,
+                "character": row["character"],
+                "run_time": {"$lt": row.get("run_time", 0)},
+            }
+        )
+    return {"rank": ahead + 1, "category": category}
+
+
+def distinct_build_ids() -> list[str]:
+    """Distinct build_id values from submitted runs, newest first."""
+    coll = _get_collection()
+    return sorted([v for v in coll.distinct("build_id") if v], reverse=True)
+
+
+def get_username_for_hash(run_hash: str) -> str | None:
+    """Look up the username associated with a single run hash."""
+    doc = _get_collection().find_one({"_id": run_hash}, {"username": 1})
+    return (doc or {}).get("username")
+
+
+def find_sibling_hashes(run_hash: str) -> list[str]:
+    """For a multiplayer run, find sibling player runs (same seed)."""
+    coll = _get_collection()
+    row = coll.find_one({"_id": run_hash}, {"seed": 1})
+    if not row or not row.get("seed"):
+        return []
+    siblings = coll.find({"seed": row["seed"], "_id": {"$ne": run_hash}}, {"_id": 1})
+    return [s["_id"] for s in siblings]

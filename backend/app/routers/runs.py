@@ -190,6 +190,20 @@ def list_runs(
     limit: int = 50,
 ):
     """List submitted runs with optional filters, sorting, and pagination."""
+    if os.environ.get("MONGO_URL", "").strip():
+        from ..services.runs_db_mongo import list_runs as _list_runs_mongo
+
+        return _list_runs_mongo(
+            character=character,
+            win=win,
+            username=username,
+            seed=seed,
+            sort=sort,
+            build_id=build_id,
+            page=page,
+            limit=limit,
+        )
+
     from ..services.runs_db import get_conn
 
     with get_conn() as conn:
@@ -259,6 +273,11 @@ def get_leaderboard(
     limit: int = 50,
 ):
     """Leaderboard for winning runs. Categories: fastest, highest_ascension."""
+    if os.environ.get("MONGO_URL", "").strip():
+        from ..services.runs_db_mongo import leaderboard as _lb_mongo
+
+        return _lb_mongo(category=category, character=character, page=page, limit=limit)
+
     from ..services.runs_db import get_conn
 
     with get_conn() as conn:
@@ -315,6 +334,11 @@ def get_run_rank(request: Request, run_hash: str, category: str = "fastest"):
     Returns `{"rank": None}` for losses, missing hashes, or abandoned runs so
     the caller can render "DNF" / "—" uniformly.
     """
+    if os.environ.get("MONGO_URL", "").strip():
+        from ..services.runs_db_mongo import get_run_rank as _rank_mongo
+
+        return _rank_mongo(run_hash=run_hash, category=category)
+
     from ..services.runs_db import get_conn
 
     with get_conn() as conn:
@@ -354,6 +378,11 @@ def get_run_rank(request: Request, run_hash: str, category: str = "fastest"):
 @router.get("/versions", tags=["Runs"])
 def get_run_versions(request: Request):
     """Return distinct build_id values from submitted runs."""
+    if os.environ.get("MONGO_URL", "").strip():
+        from ..services.runs_db_mongo import distinct_build_ids
+
+        return {"versions": distinct_build_ids()}
+
     from ..services.runs_db import get_conn
 
     with get_conn() as conn:
@@ -377,9 +406,19 @@ def get_shared_run(run_hash: str, request: Request):
     SQLite runs row. Without merging, /shared dropped usernames entirely
     even though /api/runs/list happily reported them.
     """
-    from ..services.runs_db import get_conn
+    using_mongo = bool(os.environ.get("MONGO_URL", "").strip())
 
     def _attach_username(blob: dict) -> dict:
+        if using_mongo:
+            from ..services.runs_db_mongo import get_username_for_hash
+
+            name = get_username_for_hash(run_hash)
+            if name:
+                blob["username"] = name
+            return blob
+
+        from ..services.runs_db import get_conn
+
         with get_conn() as conn:
             row = conn.execute(
                 "SELECT username FROM runs WHERE run_hash = ?", (run_hash,)
@@ -392,32 +431,46 @@ def get_shared_run(run_hash: str, request: Request):
     if cached is not None:
         return _attach_username(json.loads(cached))
 
-    # Fallback for multiplayer: find the run in DB, get its seed/start_time,
-    # then look for any sibling player's file with the same seed
-    with get_conn() as conn:
-        row = conn.execute(
-            "SELECT seed, character FROM runs WHERE run_hash = ?", (run_hash,)
-        ).fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="Run not found")
-        # Find sibling hashes from the same seed
-        siblings = conn.execute(
-            "SELECT run_hash FROM runs WHERE seed = ? AND run_hash != ?",
-            (row["seed"], run_hash),
-        ).fetchall()
-        for sib in siblings:
-            sib_file = _data_dir / "runs" / f"{sib['run_hash']}.json"
-            if sib_file.exists():
-                # Copy for future lookups
-                import shutil
+    # Fallback for multiplayer: find sibling player runs by seed.
+    if using_mongo:
+        from ..services.runs_db_mongo import find_sibling_hashes
 
-                run_file = _data_dir / "runs" / f"{run_hash}.json"
-                shutil.copy2(sib_file, run_file)
-                # Bust the cached miss so the just-copied file is served
-                # on this and subsequent requests.
-                _load_run_blob.cache_clear()
-                with open(run_file, "r", encoding="utf-8") as f:
-                    return _attach_username(json.load(f))
+        siblings = find_sibling_hashes(run_hash)
+        if not siblings:
+            # Differentiate "no such run" vs "no sibling has a file" — if
+            # the hash is unknown to the DB entirely, that's a 404.
+            from ..services.runs_db_mongo import _get_collection
+
+            row = _get_collection().find_one({"_id": run_hash}, {"_id": 1})
+            if not row:
+                raise HTTPException(status_code=404, detail="Run not found")
+    else:
+        from ..services.runs_db import get_conn
+
+        with get_conn() as conn:
+            row = conn.execute(
+                "SELECT seed, character FROM runs WHERE run_hash = ?", (run_hash,)
+            ).fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Run not found")
+            siblings = [
+                r["run_hash"]
+                for r in conn.execute(
+                    "SELECT run_hash FROM runs WHERE seed = ? AND run_hash != ?",
+                    (row["seed"], run_hash),
+                ).fetchall()
+            ]
+
+    for sib_hash in siblings:
+        sib_file = _data_dir / "runs" / f"{sib_hash}.json"
+        if sib_file.exists():
+            import shutil
+
+            run_file = _data_dir / "runs" / f"{run_hash}.json"
+            shutil.copy2(sib_file, run_file)
+            _load_run_blob.cache_clear()
+            with open(run_file, "r", encoding="utf-8") as f:
+                return _attach_username(json.load(f))
 
     raise HTTPException(status_code=404, detail="Run data not available")
 
