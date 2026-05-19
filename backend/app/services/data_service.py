@@ -3,9 +3,12 @@
 import json
 import os
 import re
+import time
 from pathlib import Path
 from functools import lru_cache
 from contextvars import ContextVar
+
+from ..metrics import data_load_duration
 
 DATA_DIR = Path(
     os.environ.get("DATA_DIR", Path(__file__).resolve().parents[3] / "data")
@@ -36,15 +39,23 @@ def _get_version() -> str | None:
 
 @lru_cache(maxsize=2048)
 def _load_json_versioned(lang: str, entity: str, version: str | None) -> list[dict]:
-    """Load a parsed JSON data file, keyed by (lang, entity, version) for caching."""
+    """Load a parsed JSON data file, keyed by (lang, entity, version) for caching.
+
+    The timing here only fires on cache misses — `@lru_cache` short-circuits
+    repeat calls before this body runs. So `spire_codex_data_load_seconds`
+    measures cold-load cost (disk read + JSON parse), not hot-cache hits.
+    """
     base = _resolve_base(version)
     filepath = base / lang / f"{entity}.json"
     if not filepath.exists():
         filepath = base / DEFAULT_LANG / f"{entity}.json"
     if not filepath.exists():
         return []
+    start = time.perf_counter()
     with open(filepath, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    data_load_duration.labels(entity_type=entity).observe(time.perf_counter() - start)
+    return data
 
 
 def _load_json(lang: str, entity: str) -> list[dict]:

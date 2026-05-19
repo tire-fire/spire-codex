@@ -35,12 +35,55 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from pymongo import ASCENDING, DESCENDING, MongoClient
 from pymongo.errors import DuplicateKeyError
+
+from ..metrics import db_operations, db_operation_duration
+
+
+@contextmanager
+def _timed_op(operation: str, collection: str = "runs"):
+    """Increment db_operations + observe latency for a Mongo op.
+
+    `spire_codex_db_operations_total` and `spire_codex_db_operation_seconds`
+    were originally wired to SQLite calls. The Mongo migration deleted
+    those call sites but left the metric defs in place; this restores
+    them under Mongo semantics. The `table` label is repurposed for the
+    collection name. Use only at public-function entry points — wrapping
+    every pymongo call would explode label cardinality without giving
+    more signal than coarse op-level p95s.
+    """
+    start = time.perf_counter()
+    try:
+        yield
+    finally:
+        elapsed = time.perf_counter() - start
+        db_operations.labels(operation=operation, table=collection).inc()
+        db_operation_duration.labels(operation=operation).observe(elapsed)
+
+
+def _instrument(operation: str, collection: str = "runs"):
+    """Decorator: wrap a function body in `_timed_op` for one-line
+    instrumentation of public service entry points. Lets us tag each
+    function with its op name + collection without indenting bodies."""
+
+    def deco(fn):
+        def wrapped(*a, **kw):
+            with _timed_op(operation, collection):
+                return fn(*a, **kw)
+
+        wrapped.__name__ = fn.__name__
+        wrapped.__doc__ = fn.__doc__
+        return wrapped
+
+    return deco
+
 
 # Name of the materialized-stats collection. Read by API handlers,
 # written by one worker (whoever holds the refresh lease).
@@ -123,6 +166,7 @@ def init_db():
 
 
 # ── public surface ──────────────────────────────────────────────────────
+@_instrument("submit_run")
 def submit_run(data: dict, username: str | None = None) -> dict:
     """Parse a run and store one document per player. Returns status dict
     matching the SQLite implementation."""
@@ -299,6 +343,7 @@ def _submit_player_run(
     return {"success": True, "run_id": run_hash, "run_hash": run_hash}
 
 
+@_instrument("claim_runs")
 def claim_runs(username: str, hashes: list[str]) -> dict:
     """Attach `username` to any runs whose _id matches and whose current
     username is null/empty. Matches the SQLite implementation: never
@@ -443,6 +488,7 @@ def _scalar_item_stats_pipeline(field: str) -> list[dict]:
     ]
 
 
+@_instrument("get_stats")
 def get_stats(
     character: str | None = None,
     win: str | None = None,
@@ -746,6 +792,7 @@ def _filter_key(
     return "|".join(parts) if parts else "global"
 
 
+@_instrument("read_stats_summary", collection="stats_summary")
 def read_stats_summary(
     character: str | None = None,
     win: str | None = None,
@@ -822,6 +869,7 @@ def try_acquire_refresh_lease() -> bool:
         return False
 
 
+@_instrument("refresh_stats_summary", collection="stats_summary")
 def refresh_stats_summary() -> int:
     """Compute every hot filter combo and write to stats_summary.
     Returns count of docs written. Called by the leader-only loop."""
@@ -885,6 +933,7 @@ def _row_to_dict(doc: dict) -> dict:
     return out
 
 
+@_instrument("list_runs")
 def list_runs(
     character: str | None = None,
     win: str | None = None,
@@ -945,6 +994,7 @@ def list_runs(
     }
 
 
+@_instrument("leaderboard")
 def leaderboard(
     category: str = "fastest",
     character: str | None = None,
@@ -997,6 +1047,7 @@ def leaderboard(
     }
 
 
+@_instrument("get_run_rank")
 def get_run_rank(run_hash: str, category: str = "fastest") -> dict:
     """Rank of a single winning run within its character's leaderboard."""
     coll = _get_collection()
@@ -1038,12 +1089,14 @@ def distinct_build_ids() -> list[str]:
     return sorted([v for v in coll.distinct("build_id") if v], reverse=True)
 
 
+@_instrument("get_username_for_hash")
 def get_username_for_hash(run_hash: str) -> str | None:
     """Look up the username associated with a single run hash."""
     doc = _get_collection().find_one({"_id": run_hash}, {"username": 1})
     return (doc or {}).get("username")
 
 
+@_instrument("find_sibling_hashes")
 def find_sibling_hashes(run_hash: str) -> list[str]:
     """For a multiplayer run, find sibling player runs (same seed)."""
     coll = _get_collection()
