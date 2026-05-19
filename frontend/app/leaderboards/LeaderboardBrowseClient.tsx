@@ -17,6 +17,14 @@ function displayName(id: string): string {
   return cleanId(id).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// The compendium uses the in-game canonical name ("The Ironclad") on
+// detail pages, but it bloats the leaderboard rows. Strip a leading
+// English "The " for the leaderboard display only; localized names
+// from non-English locales pass through untouched.
+function stripThe(name: string): string {
+  return name.replace(/^the\s+/i, "");
+}
+
 function formatTime(s: number): string {
   const m = Math.floor(s / 60);
   const sec = s % 60;
@@ -67,10 +75,25 @@ interface BrowseRun {
 }
 
 type Tab = "fastest" | "highest_ascension" | "browse";
+type Mode = "single" | "multi";
+// `gameMode` mirrors the backend `game_mode` column. Empty string = no
+// filter (all modes). Default is "standard" since custom-seed and daily
+// runs aren't time-comparable to the canonical ladder.
+type GameMode = "" | "standard" | "daily" | "custom";
 
 function tabFromParam(value: string | null): Tab {
   if (value === "browse" || value === "highest_ascension") return value;
   return "fastest";
+}
+
+function modeFromParam(value: string | null): Mode {
+  return value === "multi" ? "multi" : "single";
+}
+
+function gameModeFromParam(value: string | null): GameMode {
+  if (value === "daily" || value === "custom" || value === "") return value;
+  if (value === "all") return "";
+  return "standard";
 }
 
 export default function LeaderboardBrowseClient() {
@@ -82,6 +105,12 @@ export default function LeaderboardBrowseClient() {
   // Recent Runs "View more →" pointing at `?tab=browse`) land on the
   // right tab. Defaults to fastest when no/invalid value supplied.
   const [tab, setTab] = useState<Tab>(() => tabFromParam(searchParams.get("tab")));
+  // Single-player vs multiplayer split. Backend tags each run document
+  // with `player_count`; the API exposes `?players=single|multi` on
+  // /api/runs/leaderboard and /api/runs/list. Default to single since
+  // most submissions today are SP.
+  const [mode, setMode] = useState<Mode>(() => modeFromParam(searchParams.get("mode")));
+  const [gameMode, setGameMode] = useState<GameMode>(() => gameModeFromParam(searchParams.get("game_mode")));
 
   // --- Leaderboard state ---
   const [lbChar, setLbChar] = useState("");
@@ -133,7 +162,7 @@ export default function LeaderboardBrowseClient() {
   }
 
   // Reset leaderboard page when filters change
-  useEffect(() => { setLbPage(1); }, [tab, lbChar]);
+  useEffect(() => { setLbPage(1); }, [tab, lbChar, mode, gameMode]);
 
   // Fetch leaderboard (only when on a leaderboard tab)
   useEffect(() => {
@@ -141,6 +170,8 @@ export default function LeaderboardBrowseClient() {
     setLbLoading(true);
     const params = new URLSearchParams();
     params.set("category", tab);
+    params.set("players", mode);
+    if (gameMode) params.set("game_mode", gameMode);
     if (lbChar) params.set("character", lbChar);
     params.set("page", String(lbPage));
     params.set("limit", "20");
@@ -162,15 +193,17 @@ export default function LeaderboardBrowseClient() {
         setLbTotalPages(0);
       })
       .finally(() => setLbLoading(false));
-  }, [tab, lbChar, lbPage]);
+  }, [tab, lbChar, lbPage, mode, gameMode]);
 
   // Reset browse page when filters change
-  useEffect(() => { setBrowsePage(1); }, [browseChar, browseWin, browseUser, browseSeed, browseBuildId, browseSort]);
+  useEffect(() => { setBrowsePage(1); }, [browseChar, browseWin, browseUser, browseSeed, browseBuildId, browseSort, mode, gameMode]);
 
   // Fetch browse runs (only when on browse tab)
   useEffect(() => {
     if (tab !== "browse") return;
     const params = new URLSearchParams();
+    params.set("players", mode);
+    if (gameMode) params.set("game_mode", gameMode);
     if (browseChar) params.set("character", browseChar);
     if (browseWin) params.set("win", browseWin);
     if (browseUser) params.set("username", browseUser);
@@ -186,7 +219,7 @@ export default function LeaderboardBrowseClient() {
         setBrowseTotalPages(data.total_pages || 0);
       })
       .catch(() => {});
-  }, [tab, browseChar, browseWin, browseUser, browseSeed, browseBuildId, browseSort, browsePage]);
+  }, [tab, browseChar, browseWin, browseUser, browseSeed, browseBuildId, browseSort, browsePage, mode, gameMode]);
 
   const TABS: { key: Tab; label: string; shortLabel: string }[] = [
     { key: "fastest", label: t("Fastest Wins", lang), shortLabel: t("Fastest", lang) },
@@ -198,7 +231,55 @@ export default function LeaderboardBrowseClient() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-[var(--accent-gold)] mb-6">{t("Leaderboards", lang)}</h1>
+      <h1 className="text-3xl font-bold text-[var(--accent-gold)] mb-4">{t("Leaderboards", lang)}</h1>
+
+      {/* Single vs Multi mode toggle — these are tracked separately in
+          the runs collection (player_count == 1 vs > 1) and a fast
+          multiplayer run isn't directly comparable to a fast solo run
+          (parallel rooms, shared encounters, etc.), so the leaderboards
+          read from disjoint pools. */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="inline-flex gap-1 p-1 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)]">
+          {(["single", "multi"] as Mode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`px-4 py-1.5 text-sm font-medium rounded transition-colors ${
+                mode === m
+                  ? "bg-[var(--accent-gold)] text-[var(--bg-primary)]"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              {m === "single" ? t("Single Player", lang) : t("Multiplayer", lang)}
+            </button>
+          ))}
+        </div>
+
+        {/* Game-mode pill row. Default is "standard" — custom-seed and
+            daily runs aren't comparable to the canonical pool (different
+            seed pool / different rules), so we surface them as opt-in
+            ladders. Empty value = no filter (show all modes). */}
+        <div className="inline-flex gap-1 p-1 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)]">
+          {([
+            { value: "standard" as GameMode, label: t("Standard", lang) },
+            { value: "daily" as GameMode, label: t("Daily", lang) },
+            { value: "custom" as GameMode, label: t("Custom", lang) },
+            { value: "" as GameMode, label: t("All Modes", lang) },
+          ]).map(({ value, label }) => (
+            <button
+              key={value || "all"}
+              onClick={() => setGameMode(value)}
+              className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
+                gameMode === value
+                  ? "bg-[var(--accent-gold)] text-[var(--bg-primary)]"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-[var(--border-subtle)]">
@@ -258,14 +339,14 @@ export default function LeaderboardBrowseClient() {
                 }
               >
                 <img
-                  src={`${API}/static/images/characters/char_select_${ch.toLowerCase()}.webp`}
+                  src={`${API}/static/images/characters/character_icon_${ch.toLowerCase()}.webp`}
                   alt=""
                   aria-hidden
                   className="w-6 h-6 object-contain flex-shrink-0"
                   loading="lazy"
                   crossOrigin="anonymous"
                 />
-                <span className="hidden sm:inline text-sm">{charName(ch)}</span>
+                <span className="hidden sm:inline text-sm">{stripThe(charName(ch))}</span>
               </button>
             ))}
           </div>
@@ -296,7 +377,7 @@ export default function LeaderboardBrowseClient() {
                       // name so the per-character accent stays consistent
                       // across locales.
                       const englishName = displayName(`CHARACTER.${entry.character}`);
-                      const localizedName = charName(entry.character);
+                      const localizedName = stripThe(charName(entry.character));
                       const charColor = CHARACTER_COLORS[englishName] || "var(--text-primary)";
                       return (
                         <tr
@@ -352,7 +433,7 @@ export default function LeaderboardBrowseClient() {
             >
               <option value="">{t("All Characters", lang)}</option>
               {CHARACTERS.map((ch) => (
-                <option key={ch} value={ch.toUpperCase()}>{charName(ch)}</option>
+                <option key={ch} value={ch.toUpperCase()}>{stripThe(charName(ch))}</option>
               ))}
             </select>
 
@@ -430,7 +511,7 @@ export default function LeaderboardBrowseClient() {
                         {r.win ? "W" : r.was_abandoned ? "A" : "L"}
                       </span>
                       <span className="text-sm text-[var(--text-primary)] truncate">
-                        {charName(r.character)}
+                        {stripThe(charName(r.character))}
                       </span>
                       <span className="text-xs text-[var(--text-muted)] shrink-0">A{r.ascension}</span>
                       {r.username && (

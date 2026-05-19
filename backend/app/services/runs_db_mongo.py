@@ -676,8 +676,14 @@ def get_stats(
             }
             for r in relics
         ],
-        "deaths": [{"killed_by": r["_id"], "count": r["count"]} for r in deaths],
-        "potion_stats": [
+        # Frontend (StatsClient.tsx) and the SQLite path use the keys
+        # `deadliest` (entries shaped as {encounter, count}) and
+        # `top_potions` (entries with a precomputed pick_rate). The
+        # initial Mongo port introduced `deaths` + `killed_by` and
+        # `potion_stats` without pick_rate; the field-name mismatch
+        # silently rendered "0 potions" and a blank deadliest panel.
+        "deadliest": [{"encounter": r["_id"], "count": r["count"]} for r in deaths],
+        "top_potions": [
             # Merge per-potion picked/used telemetry with the
             # owned-in-deck stats so the response includes both views.
             {
@@ -689,6 +695,9 @@ def get_stats(
                     "total_runs_with", 0
                 ),
                 "win_runs": potion_owned.get(r["_id"], {}).get("win_runs", 0),
+                "pick_rate": round(r["picked"] / r["offered"] * 100, 1)
+                if r["offered"] > 0
+                else 0,
             }
             for r in potion_pu
         ],
@@ -883,6 +892,8 @@ def list_runs(
     seed: str | None = None,
     sort: str | None = None,
     build_id: str | None = None,
+    players: str | None = None,
+    game_mode: str | None = None,
     page: int = 1,
     limit: int = 50,
 ) -> dict:
@@ -902,6 +913,12 @@ def list_runs(
         q["seed"] = {"$regex": seed, "$options": "i"}
     if build_id:
         q["build_id"] = build_id
+    if players == "single":
+        q["player_count"] = 1
+    elif players == "multi":
+        q["player_count"] = {"$gt": 1}
+    if game_mode:
+        q["game_mode"] = game_mode
 
     sort_map = {
         "time_asc": [("run_time", 1)],
@@ -931,15 +948,31 @@ def list_runs(
 def leaderboard(
     category: str = "fastest",
     character: str | None = None,
+    players: str | None = None,
+    game_mode: str | None = None,
     page: int = 1,
     limit: int = 50,
 ) -> dict:
-    """Wins-only leaderboard. Mirrors the /api/runs/leaderboard SQLite path."""
+    """Wins-only leaderboard. Mirrors the /api/runs/leaderboard SQLite path.
+
+    `players` segregates single-player (player_count == 1) from
+    multiplayer (player_count > 1) so a fast 5-room MP run doesn't
+    sit alongside a fast solo speedrun in the same ladder.
+    `game_mode` further filters to standard/daily/custom — custom seeds
+    in particular invalidate speedrun comparisons, so the frontend
+    surfaces this explicitly and defaults to standard.
+    """
     coll = _get_collection()
     # ETL'd docs store win as 0/1 int; submit_run stores bool. Match both.
     q: dict[str, Any] = {"win": {"$in": [True, 1]}}
     if character:
         q["character"] = character.upper()
+    if players == "single":
+        q["player_count"] = 1
+    elif players == "multi":
+        q["player_count"] = {"$gt": 1}
+    if game_mode:
+        q["game_mode"] = game_mode
 
     if category == "highest_ascension":
         sort_clause = [("ascension", -1), ("run_time", 1)]

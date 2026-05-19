@@ -186,6 +186,8 @@ def list_runs(
     seed: str | None = None,
     sort: str | None = None,
     build_id: str | None = None,
+    players: str | None = None,
+    game_mode: str | None = None,
     page: int = 1,
     limit: int = 50,
 ):
@@ -200,6 +202,8 @@ def list_runs(
             seed=seed,
             sort=sort,
             build_id=build_id,
+            players=players,
+            game_mode=game_mode,
             page=page,
             limit=limit,
         )
@@ -225,6 +229,13 @@ def list_runs(
         if build_id:
             conditions.append("build_id = ?")
             params.append(build_id)
+        if players == "single":
+            conditions.append("player_count = 1")
+        elif players == "multi":
+            conditions.append("player_count > 1")
+        if game_mode:
+            conditions.append("game_mode = ?")
+            params.append(game_mode)
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
         # Sort options
@@ -269,14 +280,33 @@ def get_leaderboard(
     request: Request,
     category: str = "fastest",
     character: str | None = None,
+    players: str | None = None,
+    game_mode: str | None = None,
     page: int = 1,
     limit: int = 50,
 ):
-    """Leaderboard for winning runs. Categories: fastest, highest_ascension."""
+    """Leaderboard for winning runs.
+
+    Categories: `fastest`, `highest_ascension`.
+    `players`: `single` (player_count == 1) or `multi` (player_count > 1).
+    `game_mode`: `standard`, `daily`, or `custom`. Custom runs ride on
+    custom seeds so their times aren't comparable to the standard
+    ladder; the frontend defaults to `standard` and exposes mode
+    explicitly so users can opt into the other pools.
+    Single-player and multiplayer runs aren't directly comparable, so the
+    frontend reads them as disjoint pools.
+    """
     if os.environ.get("MONGO_URL", "").strip():
         from ..services.runs_db_mongo import leaderboard as _lb_mongo
 
-        return _lb_mongo(category=category, character=character, page=page, limit=limit)
+        return _lb_mongo(
+            category=category,
+            character=character,
+            players=players,
+            game_mode=game_mode,
+            page=page,
+            limit=limit,
+        )
 
     from ..services.runs_db import get_conn
 
@@ -286,6 +316,16 @@ def get_leaderboard(
         if character:
             conditions.append("character = ?")
             params.append(character.upper())
+        # SQLite fallback stores player_count from the post-Mongo era; pre-existing
+        # rows default to 1 via runs_db.py's schema, so the single filter is safe
+        # even on legacy data.
+        if players == "single":
+            conditions.append("player_count = 1")
+        elif players == "multi":
+            conditions.append("player_count > 1")
+        if game_mode:
+            conditions.append("game_mode = ?")
+            params.append(game_mode)
         where = "WHERE " + " AND ".join(conditions)
 
         if category == "highest_ascension":
