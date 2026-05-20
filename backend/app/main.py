@@ -13,6 +13,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from pathlib import Path
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from .routers import (
     cards,
@@ -120,6 +121,19 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# Without SlowAPIMiddleware, slowapi's `default_limits` is a no-op
+# — it only applies to routes that explicitly use `@limiter.limit()`.
+# Roughly 70/85 routes (every entity GET route, exports, news, mechanics
+# pages) had no throttle at all before this middleware landed: a scraper
+# could hit /api/cards or /api/exports/{lang} in a tight loop and the
+# only resistance was the box's actual CPU and bandwidth.
+#
+# Adding the middleware applies the limiter's `default_limits` to every
+# request before it reaches the route handler. Routes that already have
+# a `@limiter.limit(...)` decorator keep their explicit limit (slowapi
+# uses the tightest applicable limit per request); the middleware just
+# closes the unthrottled-by-default gap.
+app.add_middleware(SlowAPIMiddleware)
 
 
 # Pre-warm the per-entity run-stats cache in a background thread on

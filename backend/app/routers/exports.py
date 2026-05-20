@@ -1,14 +1,24 @@
 import io
 import zipfile
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
+from slowapi import Limiter
 
-from ..dependencies import VALID_LANGUAGES
+from ..dependencies import VALID_LANGUAGES, client_ip
 from ..metrics import data_exports
 from ..services.data_service import DATA_DIR
 
 router = APIRouter(prefix="/api/exports", tags=["Exports"])
+
+# Per-language export builds a multi-file zip (15+ JSON files, 1-3 MB
+# compressed) on every request. CPU cost is the deflate pass — roughly
+# 20-100ms each — plus the egress bytes. Way too expensive to fall
+# under the global 300/min default. 10/hour per real IP is plenty for
+# legitimate "give me a snapshot of the eng locale" use; anything
+# higher and you're either scraping or you should be using the JSON
+# endpoints directly.
+limiter = Limiter(key_func=client_ip)
 
 ENTITY_FILES = [
     "cards",
@@ -31,7 +41,8 @@ ENTITY_FILES = [
 
 
 @router.get("/{lang}")
-def export_language(lang: str):
+@limiter.limit("10/hour")
+def export_language(lang: str, request: Request):
     if lang not in VALID_LANGUAGES:
         lang = "eng"
     buf = io.BytesIO()
