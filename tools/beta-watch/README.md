@@ -24,24 +24,34 @@ from scratch — `last-buildid` is only updated on full success.
 ## One-time setup
 
 ```bash
-# 1. Cache Steam Guard auth (interactive, only required once per machine)
-~/Steam/steamcmd.sh +login YOUR_USERNAME YOUR_PASSWORD
-# Enter your Steam Guard code when prompted; SteamCMD remembers the session.
+# 1. Cache Steam Guard auth — interactive, ONE TIME per machine.
+#    SteamCMD writes a session token to ~/Library/Application Support/Steam
+#    so future headless runs only need the username (no password).
+~/Steam/steamcmd.sh +login YOUR_USERNAME
+# Enter your password and Steam Guard code at the prompts, then type `quit`.
+# From now on, `+login YOUR_USERNAME` alone works.
 
-# 2. Opt the Steam account into the StS2 beta branch via the regular Steam
-#    GUI: StS2 → Properties → Betas → pick the beta branch from the dropdown.
+# 2. Opt the Steam account into the public-beta branch via the regular Steam
+#    GUI: StS2 → Properties → Betas → pick `public-beta` from the dropdown.
 
-# 3. Populate 1Password items in the "Spire Codex" vault:
-#    - Steam item with fields: username, password
-#    - Discord Webhooks item with field: beta-watch (webhook URL)
+# 3. Scaffold the local config file:
+./tools/beta-watch/install.sh
+# First run creates ~/.spire-codex/beta-watch/config.env (a template) and
+# exits. Edit it to set STEAM_USER and DISCORD_URL, then re-run install.sh.
 
-# 4. Beta branch defaults to "public-beta" (what Mega Crit uses). If they
-#    rename it, set SPIRE_BETA_BRANCH in the launchd plist's
-#    EnvironmentVariables block, or edit watch.sh's default.
+# 4. Generate a Discord webhook (if you want pings): in your Discord
+#    channel → Edit Channel → Integrations → Webhooks → New Webhook →
+#    Copy Webhook URL. Paste into config.env's DISCORD_URL.
 
-# 5. Install the launchd job
+# 5. Re-run install.sh — this time it loads the launchd plist.
 ./tools/beta-watch/install.sh
 ```
+
+The config file at `~/.spire-codex/beta-watch/config.env` lives outside the
+git repo, so it can't be committed by accident and `git pull` can never
+overwrite it. The earlier design used the 1Password CLI but `op` prompts
+for Touch ID when the desktop app auto-locks, which kills unattended
+launchd runs.
 
 ## Useful commands
 
