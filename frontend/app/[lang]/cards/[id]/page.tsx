@@ -4,6 +4,7 @@ import { stripTags, stripTagsFlat, clipMetaDescription, SITE_NAME, SITE_URL } fr
 import JsonLd from "@/app/components/JsonLd";
 import { buildDetailPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
 import { isValidLang, LANG_HREFLANG, LANG_NAMES, LANG_GAME_NAME, SUPPORTED_LANGS, type LangCode } from "@/lib/languages";
+import { redirectMissingEntity } from "@/lib/redirect-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,7 @@ export default async function Page({ params }: Props) {
   const langCode = lang as LangCode;
   let jsonLd = null;
   let card = null;
+  let apiUnreachable = false;
   try {
     const res = await fetch(`${API_INTERNAL}/api/cards/${id}?lang=${lang}`);
     if (res.ok) {
@@ -74,7 +76,10 @@ export default async function Page({ params }: Props) {
         { question: `What type of card is ${card.name}?`, answer: `${card.name} is a ${card.rarity} ${card.type} card for ${card.color}.` },
       ])];
     }
-  } catch {}
+  } catch {
+    apiUnreachable = true;
+  }
+  if (!card && !apiUnreachable) redirectMissingEntity("cards", id, lang);
   return (
     <>
       {jsonLd && <JsonLd data={jsonLd} />}

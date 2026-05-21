@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, buildLanguageAlternates } from "@/lib/seo";
 import JsonLd from "@/app/components/JsonLd";
 import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd } from "@/lib/jsonld";
 import AncientsClient from "./AncientsClient";
@@ -13,6 +13,10 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
+  alternates: {
+    canonical: "/ancients",
+    languages: buildLanguageAlternates("/ancients"),
+  },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,

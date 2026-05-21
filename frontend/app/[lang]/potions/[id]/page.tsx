@@ -4,6 +4,7 @@ import { stripTags, SITE_NAME, SITE_URL, stripTagsFlat, clipMetaDescription } fr
 import JsonLd from "@/app/components/JsonLd";
 import { buildDetailPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
 import { isValidLang, LANG_HREFLANG, LANG_NAMES, LANG_GAME_NAME, SUPPORTED_LANGS, type LangCode } from "@/lib/languages";
+import { redirectMissingEntity } from "@/lib/redirect-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,7 @@ export default async function Page({ params }: Props) {
   const langCode = lang as LangCode;
   let jsonLd = null;
   let data = null;
+  let apiUnreachable = false;
   try {
     const res = await fetch(`${API_INTERNAL}/api/potions/${id}?lang=${lang}`);
     if (res.ok) {
@@ -69,7 +71,10 @@ export default async function Page({ params }: Props) {
         { question: `How rare is ${name}?`, answer: `${name} is a ${data.rarity} potion.` },
       ])];
     }
-  } catch {}
+  } catch {
+    apiUnreachable = true;
+  }
+  if (!data && !apiUnreachable) redirectMissingEntity("potions", id, lang);
   return (
     <>
       {jsonLd && <JsonLd data={jsonLd} />}

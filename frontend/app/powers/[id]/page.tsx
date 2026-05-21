@@ -3,6 +3,7 @@ import PowerDetail from "./PowerDetail";
 import { stripTags, stripTagsFlat, clipMetaDescription, buildLanguageAlternates, SITE_NAME, SITE_URL } from "@/lib/seo";
 import JsonLd from "@/app/components/JsonLd";
 import { buildDetailPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
+import { redirectMissingEntity } from "@/lib/redirect-helpers";
 
 const API_INTERNAL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_PUBLIC = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_API_URL || "";
@@ -43,6 +44,7 @@ export default async function Page({ params }: Props) {
   const { id } = await params;
   let jsonLd = null;
   let power = null;
+  let apiUnreachable = false;
   try {
     const res = await fetch(`${API_INTERNAL}/api/powers/${id}`);
     if (res.ok) {
@@ -66,7 +68,10 @@ export default async function Page({ params }: Props) {
       ];
       jsonLd = [...detailJsonLd, buildFAQPageJsonLd(faqQuestions)];
     }
-  } catch {}
+  } catch {
+    apiUnreachable = true;
+  }
+  if (!power && !apiUnreachable) redirectMissingEntity("powers", id);
   return (
     <>
       {jsonLd && <JsonLd data={jsonLd} />}

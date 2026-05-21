@@ -4,6 +4,7 @@ import { stripTags, SITE_NAME, SITE_URL, stripTagsFlat, clipMetaDescription } fr
 import JsonLd from "@/app/components/JsonLd";
 import { buildDetailPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
 import { isValidLang, LANG_HREFLANG, LANG_NAMES, LANG_GAME_NAME, SUPPORTED_LANGS, type LangCode } from "@/lib/languages";
+import { redirectMissingEntity } from "@/lib/redirect-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,7 @@ export default async function Page({ params }: Props) {
   const langCode = lang as LangCode;
   let jsonLd = null;
   let data = null;
+  let apiUnreachable = false;
   try {
     const res = await fetch(`${API_INTERNAL}/api/powers/${id}?lang=${lang}`);
     if (res.ok) {
@@ -69,7 +71,10 @@ export default async function Page({ params }: Props) {
         { question: `Is ${name} a buff or debuff?`, answer: `${name} is a ${data.power_type || "power"} in Slay the Spire 2.` },
       ])];
     }
-  } catch {}
+  } catch {
+    apiUnreachable = true;
+  }
+  if (!data && !apiUnreachable) redirectMissingEntity("powers", id, lang);
   return (
     <>
       {jsonLd && <JsonLd data={jsonLd} />}

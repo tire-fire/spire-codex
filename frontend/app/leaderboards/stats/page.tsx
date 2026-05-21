@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import JsonLd from "@/app/components/JsonLd";
 import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd } from "@/lib/jsonld";
-import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, buildLanguageAlternates } from "@/lib/seo";
 import StatsClient from "./StatsClient";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,10 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
+  alternates: {
+    canonical: "/leaderboards/stats",
+    languages: buildLanguageAlternates("/leaderboards/stats"),
+  },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,

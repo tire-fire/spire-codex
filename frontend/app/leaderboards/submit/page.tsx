@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import JsonLd from "@/app/components/JsonLd";
 import { buildBreadcrumbJsonLd } from "@/lib/jsonld";
-import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, buildLanguageAlternates } from "@/lib/seo";
 import SubmitRunClient from "./SubmitRunClient";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,10 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
+  alternates: {
+    canonical: "/leaderboards/submit",
+    languages: buildLanguageAlternates("/leaderboards/submit"),
+  },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,

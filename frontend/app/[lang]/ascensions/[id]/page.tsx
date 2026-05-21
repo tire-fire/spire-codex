@@ -4,6 +4,7 @@ import { stripTags, stripTagsFlat, clipMetaDescription, DEFAULT_OG_IMAGE, SITE_N
 import JsonLd from "@/app/components/JsonLd";
 import { buildDetailPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
 import { isValidLang, LANG_HREFLANG, LANG_NAMES, LANG_GAME_NAME, SUPPORTED_LANGS, type LangCode } from "@/lib/languages";
+import { redirectMissingEntity } from "@/lib/redirect-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,7 @@ export default async function Page({ params }: Props) {
   if (!isValidLang(lang)) return null;
   let jsonLd = null;
   let asc = null;
+  let apiUnreachable = false;
   try {
     const res = await fetch(`${API_INTERNAL}/api/ascensions/${id}?lang=${lang}`);
     if (res.ok) {
@@ -76,7 +78,10 @@ export default async function Page({ params }: Props) {
       ]);
       jsonLd = [...detailJsonLd, faqJsonLd];
     }
-  } catch {}
+  } catch {
+    apiUnreachable = true;
+  }
+  if (!asc && !apiUnreachable) redirectMissingEntity("ascensions", id, lang);
   return (
     <>
       {jsonLd && <JsonLd data={jsonLd} />}

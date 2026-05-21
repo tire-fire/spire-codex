@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import JsonLd from "@/app/components/JsonLd";
+import { redirectMissingEntity } from "@/lib/redirect-helpers";
 import RichDescription from "@/app/components/RichDescription";
 import { buildDetailPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
 import { stripTags, stripTagsFlat, clipMetaDescription, SITE_NAME, SITE_URL } from "@/lib/seo";
@@ -108,7 +108,10 @@ export default async function LangBadgePage({ params }: Props) {
   const langCode = lang as LangCode;
 
   const badge = await fetchBadge(id, lang);
-  if (!badge) notFound();
+  // Unknown badge ID → 308 back to the badges hub (locale-prefixed)
+  // instead of serving a hard 404. See `redirectMissingEntity` for the
+  // SEO reasoning.
+  if (!badge) redirectMissingEntity("badges", id, lang);
 
   const desc = stripTags(badge.description);
   const detailJsonLd = buildDetailPageJsonLd({
