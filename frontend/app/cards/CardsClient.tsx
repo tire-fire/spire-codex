@@ -26,6 +26,7 @@ const colorOptions = [
   { label: "Necrobinder", value: "necrobinder" },
   { label: "Regent", value: "regent" },
   { label: "Colorless", value: "colorless" },
+  { label: "Event", value: "event" },
   { label: "Token", value: "token" },
   { label: "Curse", value: "curse" },
 ];
