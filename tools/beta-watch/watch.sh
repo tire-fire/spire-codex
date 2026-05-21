@@ -34,15 +34,24 @@ fail() { log "FATAL: $*"; exit "${2:-1}"; }
 
 log "==== beta-watch tick ===="
 
-# --- 1. Pull credentials from 1Password ---
-# Stored at:
-#   op://Spire Codex/Steam/username
-#   op://Spire Codex/Steam/password
-#   op://Spire Codex/Discord Webhooks/beta-watch  (Discord notify URL)
-if ! command -v op >/dev/null; then fail "op CLI not on PATH" 2; fi
-STEAM_USER=$(op read "op://Spire Codex/Steam/username" 2>>"$LOG") || fail "op read steam user" 2
-STEAM_PASS=$(op read "op://Spire Codex/Steam/password" 2>>"$LOG") || fail "op read steam pass" 2
-DISCORD_URL=$(op read "op://Spire Codex/Discord Webhooks/beta-watch" 2>>"$LOG" || echo "")
+# --- 1. Source credentials from a local config file ---
+# Lives at $STATE_DIR/config.env, outside the git repo — so it can't be
+# committed by accident and `git pull` can never overwrite it. The original
+# design used the 1Password CLI but `op` prompts for Touch ID when the
+# desktop app auto-locks, which kills unattended launchd runs.
+#
+# Expected vars in config.env:
+#   STEAM_USER="yourSteamUsername"
+#   DISCORD_URL="https://discord.com/api/webhooks/..."   # optional
+#
+# (No Steam password needed — SteamCMD caches a session token from the
+# one-time interactive login, see README.)
+CONFIG="$STATE_DIR/config.env"
+[ -f "$CONFIG" ] || fail "config missing: $CONFIG (see README setup step)" 2
+# shellcheck source=/dev/null
+source "$CONFIG"
+: "${STEAM_USER:?STEAM_USER not set in $CONFIG}"
+DISCORD_URL="${DISCORD_URL:-}"
 
 # --- 2. Have SteamCMD sync the beta branch ---
 # `validate` ensures partial downloads from the prior run get fixed.
@@ -52,7 +61,7 @@ DISCORD_URL=$(op read "op://Spire Codex/Discord Webhooks/beta-watch" 2>>"$LOG" |
 log "running steamcmd app_update for app $APP_ID beta=$BETA_BRANCH"
 if ! "$STEAMCMD" \
     +force_install_dir "$DOWNLOAD_DIR" \
-    +login "$STEAM_USER" "$STEAM_PASS" \
+    +login "$STEAM_USER" \
     +app_update "$APP_ID" -beta "$BETA_BRANCH" validate \
     +quit >> "$LOG" 2>&1; then
   fail "steamcmd failed (see $LOG)" 2
