@@ -576,6 +576,13 @@ def get_encounter_stats(
         pipeline.append({"$match": act_match})
     pipeline.extend(
         [
+            # After unwinding acts, map_point_history is a LIST of
+            # locations. We need to unwind that list before we can read
+            # per-location fields (player_stats, rooms) — without this
+            # step every downstream `$map_point_history.*` reference
+            # silently resolves to the list-of-list projection and the
+            # pipeline produces zero rows.
+            {"$unwind": "$map_point_history"},
             # Locations within an act carry player_stats[] + rooms[]. We
             # compute the damage-taken total across all players here
             # because rooms[] doesn't carry damage; player_stats[] does.
