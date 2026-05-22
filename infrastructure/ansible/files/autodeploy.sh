@@ -38,18 +38,40 @@ fi
 
 log "==== change detected: ${BEFORE:0:8} -> ${AFTER:0:8} ===="
 
-# Pull + restart. `--force-recreate` ensures the container picks up the
-# new image even if compose thinks the config is unchanged.
-docker compose -f "$COMPOSE_FILE" pull backend frontend >> "$LOG" 2>&1
-docker compose -f "$COMPOSE_FILE" up -d --force-recreate backend frontend >> "$LOG" 2>&1
+# Detect whether this is a news-only update. The compose file mounts
+# ./data:/data into the backend, so the news API reads directly from the
+# host's data/news/*.json on each request — no rebuild, no restart
+# needed. Skipping the container recreate here saves ~30s of downtime
+# for a class of updates (Steam news mirror refreshes, beta-watch
+# ingests where only the news file changed) that happen frequently.
+#
+# Anything outside data/news/ — code, other data files, images,
+# frontend, infra — still needs the full recreate to take effect.
+CHANGED=$(git diff --name-only "$BEFORE..$AFTER")
+NON_NEWS=$(echo "$CHANGED" | grep -v '^data/news/' | grep -v '^$' || true)
 
-# Settle. 5s is enough for FastAPI startup; longer waits don't help.
-sleep 5
-
-if docker compose -f "$COMPOSE_FILE" logs --tail 50 backend 2>/dev/null | grep -q "Spire Codex API ready"; then
-  log "✓ backend ready"
+if [ -z "$NON_NEWS" ]; then
+  log "news-only update ($(echo "$CHANGED" | wc -l | tr -d ' ') file(s)) — skipping container recreate"
+  RECREATE=0
 else
-  log "✗ backend did NOT log 'Spire Codex API ready' — manual check required"
+  log "full deploy ($(echo "$NON_NEWS" | wc -l | tr -d ' ') non-news file(s))"
+  RECREATE=1
+fi
+
+if [ "$RECREATE" = "1" ]; then
+  # Pull + restart. `--force-recreate` ensures the container picks up
+  # the new image even if compose thinks the config is unchanged.
+  docker compose -f "$COMPOSE_FILE" pull backend frontend >> "$LOG" 2>&1
+  docker compose -f "$COMPOSE_FILE" up -d --force-recreate backend frontend >> "$LOG" 2>&1
+
+  # Settle. 5s is enough for FastAPI startup; longer waits don't help.
+  sleep 5
+
+  if docker compose -f "$COMPOSE_FILE" logs --tail 50 backend 2>/dev/null | grep -q "Spire Codex API ready"; then
+    log "✓ backend ready"
+  else
+    log "✗ backend did NOT log 'Spire Codex API ready' — manual check required"
+  fi
 fi
 
 # Purge Cloudflare cache. Without this, /news + /api/news + sitemap.xml
