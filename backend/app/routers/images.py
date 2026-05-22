@@ -17,25 +17,38 @@ VERSION_RE = re.compile(r"^v\d+\.\d+\.\d+(?:-beta)?$")
 
 
 def _available_beta_versions() -> list[str]:
-    """All v* subdirs of static/images/beta/, sorted newest-first."""
+    """All selectable values for the /images version dropdown.
+
+    `main` is always offered as the first option — it maps to the stable
+    image tree (`static/images/cards/`, etc.) so users can grab whatever
+    is currently in the production game alongside any archived beta.
+    """
+    options = ["main"]
     if not BETA_DIR.is_dir():
-        return []
+        return options
     versions = [
         p.name for p in BETA_DIR.iterdir() if p.is_dir() and VERSION_RE.match(p.name)
     ]
     # Newest first so the dropdown defaults sensibly.
-    return sorted(
-        versions,
-        key=lambda v: [int(x) for x in v.lstrip("v").split("-")[0].split(".")],
-        reverse=True,
+    options.extend(
+        sorted(
+            versions,
+            key=lambda v: [int(x) for x in v.lstrip("v").split("-")[0].split(".")],
+            reverse=True,
+        )
     )
+    return options
 
 
 def _resolve_beta_version(version: str | None) -> str | None:
     """Validate `version` if given; otherwise resolve to whatever `latest` points at.
 
-    Returns None if there's no beta tree at all (fresh install).
+    Returns "main" when the caller explicitly asked for the stable tree,
+    a `vX.Y.Z` string when asking for a specific beta archive, or None
+    if there's no beta tree at all (fresh install).
     """
+    if version == "main":
+        return "main"
     if version:
         if not VERSION_RE.match(version):
             raise HTTPException(
@@ -51,7 +64,7 @@ def _resolve_beta_version(version: str | None) -> str | None:
         # readlink returns just the target (e.g. "v0.106.0"), not an absolute path.
         return latest.readlink().name
     # Fallback: pick the highest version directory if `latest` symlink is missing.
-    versions = _available_beta_versions()
+    versions = [v for v in _available_beta_versions() if v != "main"]
     return versions[0] if versions else None
 
 
@@ -202,13 +215,21 @@ def _get_images_for_category(
 
     _display_name, base_path, recursive, explicit_files = CATEGORIES[category_id]
 
-    # For per-version beta categories, redirect to the versioned subdir.
+    # For per-version beta categories, redirect to the right tree.
     # `version` is resolved upstream; we only swap the path here.
+    # - "main" → drop the `beta/` prefix so we read from the stable tree
+    #   (e.g. `beta/cards` → `cards`). Lets users grab current production
+    #   assets via the same dropdown that lists archived betas.
+    # - "vX.Y.Z" → splice into the versioned beta subdir
+    #   (e.g. `beta/cards` → `beta/v0.106.0/cards`).
     if category_id.startswith("beta-") and base_path.startswith("beta/"):
         if version is None:
             return []  # no beta versions on disk yet
         rest = base_path[len("beta/") :]
-        base_path = f"beta/{version}/{rest}"
+        if version == "main":
+            base_path = rest
+        else:
+            base_path = f"beta/{version}/{rest}"
 
     dir_path = IMAGES_DIR / base_path
 
