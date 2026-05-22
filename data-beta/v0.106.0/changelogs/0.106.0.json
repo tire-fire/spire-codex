@@ -1,0 +1,1203 @@
+{
+  "app_id": 2868840,
+  "game_version": "0.106.0",
+  "build_id": "",
+  "tag": "0.106.0",
+  "date": "2026-05-21",
+  "title": "Beta v0.106.0",
+  "from_ref": "data-beta/v0.105.1/eng",
+  "to_ref": "data-beta/v0.106.0/eng",
+  "summary": {
+    "added": 3,
+    "removed": 2,
+    "changed": 38
+  },
+  "categories": [
+    {
+      "id": "cards",
+      "name": "Cards",
+      "old_count": 577,
+      "new_count": 577,
+      "added": [
+        {
+          "id": "SCARE",
+          "name": "Scare",
+          "cost": 0,
+          "type": "Skill",
+          "rarity": "Uncommon"
+        }
+      ],
+      "removed": [
+        {
+          "id": "FOLLOW_THROUGH",
+          "name": "Follow Through"
+        }
+      ],
+      "changed": [
+        {
+          "id": "ASTRAL_PULSE",
+          "name": "Astral Pulse",
+          "changes": [
+            {
+              "field": "damage",
+              "old": "14",
+              "new": "6"
+            },
+            {
+              "field": "description",
+              "old": "Deal 14 damage to ALL enemies.",
+              "new": "Deal 6 damage to ALL enemies twice."
+            },
+            {
+              "field": "description_raw",
+              "old": "Deal {Damage:diff()} damage to ALL enemies.",
+              "new": "Deal {Damage:diff()} damage to ALL enemies twice."
+            },
+            {
+              "field": "hit_count",
+              "old": "none",
+              "new": "2"
+            },
+            {
+              "field": "upgrade.damage",
+              "old": "+4",
+              "new": "+2"
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Deal 18 damage to ALL enemies.",
+              "new": "Deal 8 damage to ALL enemies twice."
+            },
+            {
+              "field": "vars.Damage",
+              "old": "14",
+              "new": "6"
+            }
+          ]
+        },
+        {
+          "id": "DEATH_MARCH",
+          "name": "Death March",
+          "changes": [
+            {
+              "field": "description",
+              "old": "Deal 8 damage.\nDeals 3 additional damage for each card drawn during your turn.",
+              "new": "Deal 8 damage.\nDeals 4 additional damage for each card drawn during your turn."
+            },
+            {
+              "field": "upgrade.extradamage",
+              "old": "+1",
+              "new": "+2"
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Deal 8 damage.\nDeals 4 additional damage for each card drawn during your turn.",
+              "new": "Deal 8 damage.\nDeals 6 additional damage for each card drawn during your turn."
+            },
+            {
+              "field": "vars.ExtraDamage",
+              "old": "3",
+              "new": "4"
+            }
+          ]
+        },
+        {
+          "id": "DEBILITATE",
+          "name": "Debilitate",
+          "changes": [
+            {
+              "field": "description",
+              "old": "Deal 10 damage.\n[gold]Vulnerable[/gold] and [gold]Weak[/gold] are twice as ef...",
+              "new": "Deal 10 damage.\n[gold]Vulnerable[/gold] and [gold]Weak[/gold] are twice as ef..."
+            },
+            {
+              "field": "powers_applied[0].amount",
+              "old": "3",
+              "new": "2"
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Deal 12 damage.\n[gold]Vulnerable[/gold] and [gold]Weak[/gold] are twice as ef...",
+              "new": "Deal 12 damage.\n[gold]Vulnerable[/gold] and [gold]Weak[/gold] are twice as ef..."
+            },
+            {
+              "field": "vars.Debilitate",
+              "old": "3",
+              "new": "2"
+            },
+            {
+              "field": "vars.DebilitatePower",
+              "old": "3",
+              "new": "2"
+            }
+          ]
+        },
+        {
+          "id": "EXTERMINATE",
+          "name": "Exterminate",
+          "changes": [
+            {
+              "field": "description",
+              "old": "Deal 3 damage 4 times to ALL enemies.",
+              "new": "Deal 3 damage to ALL enemies 4 times."
+            },
+            {
+              "field": "description_raw",
+              "old": "Deal {Damage:diff()} damage {Repeat:diff()} times to ALL enemies.",
+              "new": "Deal {Damage:diff()} damage to ALL enemies {Repeat:diff()} times."
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Deal 4 damage 4 times to ALL enemies.",
+              "new": "Deal 4 damage to ALL enemies 4 times."
+            }
+          ]
+        },
+        {
+          "id": "FASTEN",
+          "name": "Fasten",
+          "changes": [
+            {
+              "field": "description",
+              "old": "Gain an additional 5 [gold]Block[/gold] from Defend cards.",
+              "new": "Gain an additional 4 [gold]Block[/gold] from Defend cards."
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Gain an additional 7 [gold]Block[/gold] from Defend cards.",
+              "new": "Gain an additional 6 [gold]Block[/gold] from Defend cards."
+            },
+            {
+              "field": "vars.ExtraBlock",
+              "old": "5",
+              "new": "4"
+            }
+          ]
+        },
+        {
+          "id": "FURNACE",
+          "name": "Furnace",
+          "changes": [
+            {
+              "field": "description",
+              "old": "At the start of your turn, [gold]Forge[/gold] 4.",
+              "new": "At the start of your turn, [gold]Forge[/gold] 5."
+            },
+            {
+              "field": "upgrade_description",
+              "old": "At the start of your turn, [gold]Forge[/gold] 6.",
+              "new": "At the start of your turn, [gold]Forge[/gold] 7."
+            },
+            {
+              "field": "vars.Forge",
+              "old": "4",
+              "new": "5"
+            }
+          ]
+        },
+        {
+          "id": "FUSION",
+          "name": "Fusion",
+          "changes": [
+            {
+              "field": "cost",
+              "old": "2",
+              "new": "1"
+            },
+            {
+              "field": "keywords[0]",
+              "old": "none",
+              "new": "Exhaust"
+            },
+            {
+              "field": "keywords_key[0]",
+              "old": "none",
+              "new": "Exhaust"
+            },
+            {
+              "field": "upgrade.cost",
+              "old": "1",
+              "new": "none"
+            },
+            {
+              "field": "upgrade.remove_exhaust",
+              "old": "none",
+              "new": "yes"
+            }
+          ]
+        },
+        {
+          "id": "HOWL_FROM_BEYOND",
+          "name": "Howl from Beyond",
+          "changes": [
+            {
+              "field": "description",
+              "old": "Deal 16 damage to ALL enemies.\nAt the start of your turn, if this is in your ...",
+              "new": "Deal 16 damage to ALL enemies.\nAt the end of your turn, if this is in your [g..."
+            },
+            {
+              "field": "description_raw",
+              "old": "Deal {Damage:diff()} damage to ALL enemies.\nAt the start of your turn, if thi...",
+              "new": "Deal {Damage:diff()} damage to ALL enemies.\nAt the end of your turn, if this ..."
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Deal 21 damage to ALL enemies.\nAt the start of your turn, if this is in your ...",
+              "new": "Deal 21 damage to ALL enemies.\nAt the end of your turn, if this is in your [g..."
+            }
+          ]
+        },
+        {
+          "id": "LEADING_STRIKE",
+          "name": "Leading Strike",
+          "changes": [
+            {
+              "field": "compendium_order",
+              "old": "102",
+              "new": "101"
+            }
+          ]
+        },
+        {
+          "id": "MINION_SACRIFICE",
+          "name": "Minion Sacrifice",
+          "changes": [
+            {
+              "field": "block",
+              "old": "9",
+              "new": "8"
+            },
+            {
+              "field": "description",
+              "old": "Gain 9 [gold]Block[/gold].",
+              "new": "Gain 8 [gold]Block[/gold]."
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Gain 12 [gold]Block[/gold].",
+              "new": "Gain 11 [gold]Block[/gold]."
+            },
+            {
+              "field": "vars.Block",
+              "old": "9",
+              "new": "8"
+            }
+          ]
+        },
+        {
+          "id": "PIERCING_WAIL",
+          "name": "Piercing Wail",
+          "changes": [
+            {
+              "field": "compendium_order",
+              "old": "103",
+              "new": "102"
+            }
+          ]
+        },
+        {
+          "id": "POISONED_STAB",
+          "name": "Poisoned Stab",
+          "changes": [
+            {
+              "field": "compendium_order",
+              "old": "104",
+              "new": "103"
+            }
+          ]
+        },
+        {
+          "id": "POUNCE",
+          "name": "Pounce",
+          "changes": [
+            {
+              "field": "damage",
+              "old": "12",
+              "new": "14"
+            },
+            {
+              "field": "description",
+              "old": "Deal 12 damage.\nThe next Skill you play costs 0 [energy:1].",
+              "new": "Deal 14 damage.\nThe next Skill you play costs 0 [energy:1]."
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Deal 18 damage.\nThe next Skill you play costs 0 [energy:1].",
+              "new": "Deal 20 damage.\nThe next Skill you play costs 0 [energy:1]."
+            },
+            {
+              "field": "vars.Damage",
+              "old": "12",
+              "new": "14"
+            }
+          ]
+        },
+        {
+          "id": "PREDATOR",
+          "name": "Predator",
+          "changes": [
+            {
+              "field": "compendium_order",
+              "old": "139",
+              "new": "104"
+            },
+            {
+              "field": "rarity",
+              "old": "Uncommon",
+              "new": "Common"
+            },
+            {
+              "field": "rarity_key",
+              "old": "Uncommon",
+              "new": "Common"
+            }
+          ]
+        },
+        {
+          "id": "REFLEX",
+          "name": "Reflex",
+          "changes": [
+            {
+              "field": "compendium_order",
+              "old": "140",
+              "new": "139"
+            }
+          ]
+        },
+        {
+          "id": "SHATTER",
+          "name": "Shatter",
+          "changes": [
+            {
+              "field": "damage",
+              "old": "11",
+              "new": "7"
+            },
+            {
+              "field": "description",
+              "old": "Deal 11 damage to ALL enemies.\n[gold]Evoke[/gold] all of your Orbs twice.",
+              "new": "Deal 7 damage to ALL enemies.\n[gold]Evoke[/gold] all of your Orbs twice."
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Deal 15 damage to ALL enemies.\n[gold]Evoke[/gold] all of your Orbs twice.",
+              "new": "Deal 11 damage to ALL enemies.\n[gold]Evoke[/gold] all of your Orbs twice."
+            },
+            {
+              "field": "vars.Damage",
+              "old": "11",
+              "new": "7"
+            }
+          ]
+        },
+        {
+          "id": "SYNTHESIS",
+          "name": "Synthesis",
+          "changes": [
+            {
+              "field": "damage",
+              "old": "12",
+              "new": "14"
+            },
+            {
+              "field": "description",
+              "old": "Deal 12 damage.\nThe next Power you play costs 0 [energy:1].",
+              "new": "Deal 14 damage.\nThe next Power you play costs 0 [energy:1]."
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Deal 18 damage.\nThe next Power you play costs 0 [energy:1].",
+              "new": "Deal 20 damage.\nThe next Power you play costs 0 [energy:1]."
+            },
+            {
+              "field": "vars.Damage",
+              "old": "12",
+              "new": "14"
+            }
+          ]
+        },
+        {
+          "id": "THE_SEALED_THRONE",
+          "name": "The Sealed Throne",
+          "changes": [
+            {
+              "field": "upgrade.add_innate",
+              "old": "yes",
+              "new": "none"
+            },
+            {
+              "field": "upgrade.cost",
+              "old": "none",
+              "new": "0"
+            }
+          ]
+        },
+        {
+          "id": "UNRELENTING",
+          "name": "Unrelenting",
+          "changes": [
+            {
+              "field": "damage",
+              "old": "12",
+              "new": "14"
+            },
+            {
+              "field": "description",
+              "old": "Deal 12 damage.\nThe next Attack you play costs 0 [energy:1].",
+              "new": "Deal 14 damage.\nThe next Attack you play costs 0 [energy:1]."
+            },
+            {
+              "field": "upgrade_description",
+              "old": "Deal 18 damage.\nThe next Attack you play costs 0 [energy:1].",
+              "new": "Deal 20 damage.\nThe next Attack you play costs 0 [energy:1]."
+            },
+            {
+              "field": "vars.Damage",
+              "old": "12",
+              "new": "14"
+            }
+          ]
+        },
+        {
+          "id": "WITHER",
+          "name": "Wither",
+          "changes": [
+            {
+              "field": "cost",
+              "old": "1",
+              "new": "-1"
+            },
+            {
+              "field": "damage",
+              "old": "2",
+              "new": "3"
+            },
+            {
+              "field": "description",
+              "old": "At the end of your turn, if this is in your [gold]Hand[/gold], take 2 damage.",
+              "new": "At the end of your turn, if this is in your [gold]Hand[/gold], take 3 damage."
+            },
+            {
+              "field": "keywords[0]",
+              "old": "Exhaust",
+              "new": "Unplayable"
+            },
+            {
+              "field": "keywords[1]",
+              "old": "Retain",
+              "new": "none"
+            },
+            {
+              "field": "keywords_key[0]",
+              "old": "Exhaust",
+              "new": "Unplayable"
+            },
+            {
+              "field": "keywords_key[1]",
+              "old": "Retain",
+              "new": "none"
+            },
+            {
+              "field": "upgrade.damage",
+              "old": "none",
+              "new": "+3"
+            },
+            {
+              "field": "upgrade_description",
+              "old": "none",
+              "new": "At the end of your turn, if this is in your [gold]Hand[/gold], take 6 damage."
+            },
+            {
+              "field": "vars.Damage",
+              "old": "2",
+              "new": "3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "relics",
+      "name": "Relics",
+      "old_count": 296,
+      "new_count": 296,
+      "changed": [
+        {
+          "id": "JEWELED_MASK",
+          "name": "Jeweled Mask",
+          "changes": [
+            {
+              "field": "description",
+              "old": "At the start of combat put a random Power from your [gold]Draw Pile[/gold] in...",
+              "new": "At the start of each combat, put a random Power from your [gold]Draw Pile[/go..."
+            },
+            {
+              "field": "description_raw",
+              "old": "At the start of combat put a random Power from your [gold]Draw Pile[/gold] in...",
+              "new": "At the start of each combat, put a random Power from your [gold]Draw Pile[/go..."
+            }
+          ]
+        },
+        {
+          "id": "LOST_WISP",
+          "name": "Lost Wisp",
+          "changes": [
+            {
+              "field": "description",
+              "old": "Whenever you play a [gold]Power[/gold], deal [blue]8[/blue] damage to ALL ene...",
+              "new": "Whenever you play a Power, deal [blue]8[/blue] damage to ALL enemies."
+            },
+            {
+              "field": "description_raw",
+              "old": "Whenever you play a [gold]Power[/gold], deal [blue]{Damage}[/blue] damage to ...",
+              "new": "Whenever you play a Power, deal [blue]{Damage}[/blue] damage to ALL enemies."
+            }
+          ]
+        },
+        {
+          "id": "SCROLL_BOXES",
+          "name": "Scroll Boxes",
+          "changes": [
+            {
+              "field": "description",
+              "old": "Upon pickup, lose all [gold]Gold[/gold] and choose [blue]1[/blue] of [blue]2[...",
+              "new": "Upon pickup, choose [blue]1[/blue] of [blue]2[/blue] packs of cards to add to..."
+            },
+            {
+              "field": "description_raw",
+              "old": "Upon pickup, lose all [gold]Gold[/gold] and choose [blue]1[/blue] of [blue]2[...",
+              "new": "Upon pickup, choose [blue]1[/blue] of [blue]2[/blue] packs of cards to add to..."
+            }
+          ]
+        },
+        {
+          "id": "SILKEN_TRESS",
+          "name": "Silken Tress",
+          "changes": [
+            {
+              "field": "description",
+              "old": "[gold]Enchant[/gold] all cards in the first card reward with [purple]Glam[/pu...",
+              "new": "Upon pickup, lose all [gold]Gold[/gold]. [gold]Enchant[/gold] all cards in th..."
+            },
+            {
+              "field": "description_raw",
+              "old": "[gold]Enchant[/gold] all cards in the first card reward with [purple]Glam[/pu...",
+              "new": "Upon pickup, lose all [gold]Gold[/gold]. [gold]Enchant[/gold] all cards in th..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "monsters",
+      "name": "Monsters",
+      "old_count": 116,
+      "new_count": 115,
+      "removed": [
+        {
+          "id": "DOORMAKER",
+          "name": "Doormaker"
+        }
+      ],
+      "changed": [
+        {
+          "id": "AEONGLASS",
+          "name": "Aeonglass",
+          "changes": [
+            {
+              "field": "moves[EBB].intent",
+              "old": "Attack + Buff",
+              "new": "Attack + Debuff"
+            },
+            {
+              "field": "moves[INCREASING_INTENSITY].intent",
+              "old": "Buff + Defend",
+              "new": "Status + Buff + Defend"
+            }
+          ]
+        },
+        {
+          "id": "HAUNTED_SHIP",
+          "name": "Haunted Ship",
+          "changes": [
+            {
+              "field": "attack_pattern.description",
+              "old": "Starts with Haunt",
+              "new": "Haunt → Swipe → Stomp → repeat"
+            },
+            {
+              "field": "attack_pattern.states[HAUNT_MOVE].next",
+              "old": "RAND",
+              "new": "SWIPE_MOVE"
+            },
+            {
+              "field": "attack_pattern.states[RAMMING_SPEED_MOVE].id",
+              "old": "RAMMING_SPEED_MOVE",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[RAMMING_SPEED_MOVE].move_id",
+              "old": "RAMMING_SPEED",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[RAMMING_SPEED_MOVE].next",
+              "old": "RAND",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[RAMMING_SPEED_MOVE].type",
+              "old": "move",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[RAND].id",
+              "old": "RAND",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[RAND].type",
+              "old": "random",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[STOMP_MOVE].next",
+              "old": "RAND",
+              "new": "SWIPE_MOVE"
+            },
+            {
+              "field": "attack_pattern.states[SWIPE_MOVE].next",
+              "old": "RAND",
+              "new": "STOMP_MOVE"
+            },
+            {
+              "field": "attack_pattern.type",
+              "old": "random",
+              "new": "cycle"
+            },
+            {
+              "field": "damage_values.RammingSpeed.ascension",
+              "old": "11",
+              "new": "none"
+            },
+            {
+              "field": "damage_values.RammingSpeed.normal",
+              "old": "10",
+              "new": "none"
+            },
+            {
+              "field": "moves[RAMMING_SPEED].damage.ascension",
+              "old": "11",
+              "new": "none"
+            },
+            {
+              "field": "moves[RAMMING_SPEED].damage.normal",
+              "old": "10",
+              "new": "none"
+            },
+            {
+              "field": "moves[RAMMING_SPEED].id",
+              "old": "RAMMING_SPEED",
+              "new": "none"
+            },
+            {
+              "field": "moves[RAMMING_SPEED].intent",
+              "old": "Attack",
+              "new": "none"
+            },
+            {
+              "field": "moves[RAMMING_SPEED].name",
+              "old": "Ramming Speed",
+              "new": "none"
+            }
+          ]
+        },
+        {
+          "id": "INFESTED_PRISM",
+          "name": "Infested Prism",
+          "changes": [
+            {
+              "field": "damage_values.Jab.ascension",
+              "old": "24",
+              "new": "17"
+            },
+            {
+              "field": "damage_values.Jab.normal",
+              "old": "22",
+              "new": "15"
+            },
+            {
+              "field": "damage_values.Pulsate.ascension",
+              "old": "none",
+              "new": "10"
+            },
+            {
+              "field": "damage_values.Pulsate.normal",
+              "old": "none",
+              "new": "8"
+            },
+            {
+              "field": "damage_values.Radiate.ascension",
+              "old": "18",
+              "new": "13"
+            },
+            {
+              "field": "damage_values.Radiate.normal",
+              "old": "16",
+              "new": "11"
+            },
+            {
+              "field": "damage_values.Whirlwind.ascension",
+              "old": "10",
+              "new": "6"
+            },
+            {
+              "field": "damage_values.Whirlwind.normal",
+              "old": "9",
+              "new": "5"
+            },
+            {
+              "field": "min_hp",
+              "old": "200",
+              "new": "161"
+            },
+            {
+              "field": "min_hp_ascension",
+              "old": "215",
+              "new": "171"
+            },
+            {
+              "field": "moves[JAB].damage.ascension",
+              "old": "24",
+              "new": "17"
+            },
+            {
+              "field": "moves[JAB].damage.normal",
+              "old": "22",
+              "new": "15"
+            },
+            {
+              "field": "moves[PULSATE].damage.ascension",
+              "old": "none",
+              "new": "10"
+            },
+            {
+              "field": "moves[PULSATE].damage.normal",
+              "old": "none",
+              "new": "8"
+            },
+            {
+              "field": "moves[PULSATE].intent",
+              "old": "Buff + Defend",
+              "new": "Attack + Buff + Defend"
+            },
+            {
+              "field": "moves[PULSATE].powers[0].amount",
+              "old": "4",
+              "new": "2"
+            },
+            {
+              "field": "moves[PULSATE].powers[0].power_id",
+              "old": "STRENGTH",
+              "new": "VITAL_SPARK"
+            },
+            {
+              "field": "moves[RADIATE].block",
+              "old": "16",
+              "new": "11"
+            },
+            {
+              "field": "moves[RADIATE].damage.ascension",
+              "old": "18",
+              "new": "13"
+            },
+            {
+              "field": "moves[RADIATE].damage.normal",
+              "old": "16",
+              "new": "11"
+            },
+            {
+              "field": "moves[WHIRLWIND].damage.ascension",
+              "old": "10",
+              "new": "6"
+            },
+            {
+              "field": "moves[WHIRLWIND].damage.normal",
+              "old": "9",
+              "new": "5"
+            }
+          ]
+        },
+        {
+          "id": "PARAFRIGHT",
+          "name": "Parafright",
+          "changes": [
+            {
+              "field": "encounters[0].act",
+              "old": "none",
+              "new": "Act 2 - Hive"
+            },
+            {
+              "field": "encounters[0].encounter_id",
+              "old": "none",
+              "new": "THE_OBSCURA_NORMAL"
+            },
+            {
+              "field": "encounters[0].encounter_name",
+              "old": "none",
+              "new": "The Obscura"
+            },
+            {
+              "field": "encounters[0].is_weak",
+              "old": "none",
+              "new": "no"
+            },
+            {
+              "field": "encounters[0].room_type",
+              "old": "none",
+              "new": "Monster"
+            }
+          ]
+        },
+        {
+          "id": "PUNCH_CONSTRUCT",
+          "name": "Punch Construct",
+          "changes": [
+            {
+              "field": "attack_pattern.states[FAST_PUNCH_MOVE].next",
+              "old": "READY_MOVE",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[READY_MOVE].next",
+              "old": "STRONG_PUNCH_MOVE",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[STRONG_PUNCH_MOVE].next",
+              "old": "FAST_PUNCH_MOVE",
+              "new": "READY_MOVE"
+            },
+            {
+              "field": "moves[FAST_PUNCH].powers[0].power_id",
+              "old": "WEAK",
+              "new": "FRAIL"
+            }
+          ]
+        },
+        {
+          "id": "SKULKING_COLONY",
+          "name": "Skulking Colony",
+          "changes": [
+            {
+              "field": "attack_pattern.description",
+              "old": "Smash → Zoom → Inertia → Piercing Stabs → repeat",
+              "new": "Zoom → Zoom Move 2 → Inertia → Piercing Stabs → repeat"
+            },
+            {
+              "field": "attack_pattern.initial_move",
+              "old": "SMASH",
+              "new": "ZOOM"
+            },
+            {
+              "field": "attack_pattern.states[PIERCING_STABS_MOVE].next",
+              "old": "SMASH_MOVE",
+              "new": "ZOOM_MOVE"
+            },
+            {
+              "field": "attack_pattern.states[SMASH_MOVE].id",
+              "old": "SMASH_MOVE",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[SMASH_MOVE].move_id",
+              "old": "SMASH",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[SMASH_MOVE].next",
+              "old": "ZOOM_MOVE",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[SMASH_MOVE].type",
+              "old": "move",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[ZOOM_MOVE].next",
+              "old": "INERTIA_MOVE",
+              "new": "ZOOM_MOVE_2"
+            },
+            {
+              "field": "attack_pattern.states[ZOOM_MOVE_2].id",
+              "old": "none",
+              "new": "ZOOM_MOVE_2"
+            },
+            {
+              "field": "attack_pattern.states[ZOOM_MOVE_2].move_id",
+              "old": "none",
+              "new": "ZOOM_MOVE_2"
+            },
+            {
+              "field": "attack_pattern.states[ZOOM_MOVE_2].next",
+              "old": "none",
+              "new": "INERTIA_MOVE"
+            },
+            {
+              "field": "attack_pattern.states[ZOOM_MOVE_2].type",
+              "old": "none",
+              "new": "move"
+            },
+            {
+              "field": "damage_values.Smash.ascension",
+              "old": "13",
+              "new": "none"
+            },
+            {
+              "field": "damage_values.Smash.normal",
+              "old": "12",
+              "new": "none"
+            },
+            {
+              "field": "min_hp",
+              "old": "70",
+              "new": "75"
+            },
+            {
+              "field": "min_hp_ascension",
+              "old": "75",
+              "new": "80"
+            },
+            {
+              "field": "moves[SMASH].damage.ascension",
+              "old": "13",
+              "new": "none"
+            },
+            {
+              "field": "moves[SMASH].damage.normal",
+              "old": "12",
+              "new": "none"
+            },
+            {
+              "field": "moves[SMASH].id",
+              "old": "SMASH",
+              "new": "none"
+            },
+            {
+              "field": "moves[SMASH].intent",
+              "old": "Attack",
+              "new": "none"
+            },
+            {
+              "field": "moves[SMASH].name",
+              "old": "Smash",
+              "new": "none"
+            },
+            {
+              "field": "moves[ZOOM].block",
+              "old": "10",
+              "new": "none"
+            },
+            {
+              "field": "moves[ZOOM].intent",
+              "old": "Attack + Defend",
+              "new": "Attack"
+            },
+            {
+              "field": "moves[ZOOM_MOVE_2].damage.ascension",
+              "old": "none",
+              "new": "16"
+            },
+            {
+              "field": "moves[ZOOM_MOVE_2].damage.normal",
+              "old": "none",
+              "new": "14"
+            },
+            {
+              "field": "moves[ZOOM_MOVE_2].id",
+              "old": "none",
+              "new": "ZOOM_MOVE_2"
+            },
+            {
+              "field": "moves[ZOOM_MOVE_2].intent",
+              "old": "none",
+              "new": "Attack"
+            },
+            {
+              "field": "moves[ZOOM_MOVE_2].name",
+              "old": "none",
+              "new": "Zoom Move 2"
+            }
+          ]
+        },
+        {
+          "id": "TOUGH_EGG",
+          "name": "Tough Egg",
+          "changes": [
+            {
+              "field": "attack_pattern.description",
+              "old": "Always uses HATCH",
+              "new": "Always uses Hatch"
+            },
+            {
+              "field": "moves[HATCH].name",
+              "old": "HATCH",
+              "new": "Hatch"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "encounters",
+      "name": "Encounters",
+      "old_count": 87,
+      "new_count": 87,
+      "changed": [
+        {
+          "id": "THE_OBSCURA_NORMAL",
+          "name": "The Obscura",
+          "changes": [
+            {
+              "field": "monsters[PARAFRIGHT].id",
+              "old": "none",
+              "new": "PARAFRIGHT"
+            },
+            {
+              "field": "monsters[PARAFRIGHT].name",
+              "old": "none",
+              "new": "Parafright"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "events",
+      "name": "Events",
+      "old_count": 66,
+      "new_count": 66,
+      "changed": [
+        {
+          "id": "NEOW",
+          "name": "Neow",
+          "changes": [
+            {
+              "field": "relics[12]",
+              "old": "SILKEN_TRESS",
+              "new": "SCROLL_BOXES"
+            },
+            {
+              "field": "relics[26]",
+              "old": "SILVER_CRUCIBLE",
+              "new": "SILKEN_TRESS"
+            },
+            {
+              "field": "relics[27]",
+              "old": "SCROLL_BOXES",
+              "new": "SILVER_CRUCIBLE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "powers",
+      "name": "Powers",
+      "old_count": 257,
+      "new_count": 258,
+      "added": [
+        {
+          "id": "TAINTED",
+          "name": "Tainted",
+          "type": "Debuff"
+        }
+      ],
+      "changed": [
+        {
+          "id": "CONSUMING_SHADOW",
+          "name": "Consuming Shadow",
+          "changes": [
+            {
+              "field": "description_raw",
+              "old": "At the end of your turn, [gold]Evoke[/gold] your {Amount:plural:|[blue]{}[/bl...",
+              "new": "At the end of your turn, [gold]Evoke[/gold] your {Amount:plural:|[blue]{}[/bl..."
+            }
+          ]
+        },
+        {
+          "id": "HIGH_VOLTAGE",
+          "name": "High Voltage",
+          "changes": [
+            {
+              "field": "description",
+              "old": "At the start of [gold]this creature's[/gold] turn, it gains [blue][Amount][/b...",
+              "new": "At the end of [gold]this creature's[/gold] turn, it gains [blue][Amount][/blu..."
+            },
+            {
+              "field": "description_raw",
+              "old": "At the start of [gold]{OwnerName}'s[/gold] turn, it gains [blue]{Amount}[/blu...",
+              "new": "At the end of [gold]{OwnerName}'s[/gold] turn, it gains [blue]{Amount}[/blue]..."
+            }
+          ]
+        },
+        {
+          "id": "TERRITORIAL",
+          "name": "Territorial",
+          "changes": [
+            {
+              "field": "description",
+              "old": "At the end of its turn, gains [blue]1[/blue] [gold]Strength[/gold].",
+              "new": "At the end of [gold]this creature's[/gold] turn, it gains [blue][Amount][/blu..."
+            },
+            {
+              "field": "description_raw",
+              "old": "none",
+              "new": "At the end of [gold]{OwnerName}'s[/gold] turn, it gains [blue]{Amount}[/blue]..."
+            }
+          ]
+        },
+        {
+          "id": "VITAL_SPARK",
+          "name": "Vital Spark",
+          "changes": [
+            {
+              "field": "description",
+              "old": "The first time [gold]this creature[/gold] takes Attack damage each turn, the ...",
+              "new": "ALL [gold]Skills[/gold] are [gold]Tainted[/gold] [blue]2[/blue]."
+            },
+            {
+              "field": "description_raw",
+              "old": "The first time [gold]{OwnerName}[/gold] takes Attack damage each turn, the at...",
+              "new": "none"
+            }
+          ]
+        },
+        {
+          "id": "WITHERING_PRESENCE",
+          "name": "Withering Presence",
+          "changes": [
+            {
+              "field": "description",
+              "old": "Every [blue]4[/blue] non-Status cards you play, add a [gold]Wither[/gold] to ...",
+              "new": "Every [blue]6[/blue] cards you play, add a [gold]Wither[/gold] to your [gold]..."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "afflictions",
+      "name": "Afflictions",
+      "old_count": 6,
+      "new_count": 7,
+      "added": [
+        {
+          "id": "TAINTED",
+          "name": "Tainted"
+        }
+      ]
+    }
+  ]
+}

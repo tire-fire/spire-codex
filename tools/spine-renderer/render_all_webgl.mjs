@@ -13,8 +13,15 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE = path.resolve(__dirname, "../..");
-const ANIM_ROOT = path.join(BASE, "extraction/raw/animations");
-const OUTPUT_ROOT = path.join(BASE, "backend/static/images/renders");
+// Override with ANIM_ROOT=extraction/beta/raw/animations env var to render
+// a beta ingest's skeletons against the same output tree. Default stays
+// the stable branch so day-to-day stable renders keep working unchanged.
+const ANIM_ROOT = process.env.ANIM_ROOT
+  ? path.resolve(process.env.ANIM_ROOT)
+  : path.join(BASE, "extraction/raw/animations");
+const OUTPUT_ROOT = process.env.OUTPUT_ROOT
+  ? path.resolve(process.env.OUTPUT_ROOT)
+  : path.join(BASE, "backend/static/images/renders");
 
 const OUTPUT_SIZE = 512;
 const IDLE_NAMES = ["idle_loop", "idle", "Idle_loop", "Idle", "rest_idle", "rest_loop", "loop", "animation"];
