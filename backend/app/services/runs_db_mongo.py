@@ -488,6 +488,197 @@ def _scalar_item_stats_pipeline(field: str) -> list[dict]:
     ]
 
 
+@_instrument("get_encounter_stats")
+def get_encounter_stats(
+    acts: list[int] | None = None,
+    room_types: list[str] | None = None,
+    multiplayer: str | None = None,
+    page: int = 1,
+    limit: int = 50,
+) -> dict:
+    """Per-encounter aggregation over submitted runs.
+
+    Walks each run's `map_point_history` (array of acts → array of rooms),
+    yields one entry per combat room, and groups by encounter id with a
+    per-character breakdown.
+
+    Filters:
+      * `acts` — restrict to specific act numbers (1, 2, 3). None = all.
+      * `room_types` — restrict to "monster" / "elite" / "boss". None = all.
+      * `multiplayer` — "only" / "exclude" / None (no filter). Multiplayer
+        detection uses `player_count > 1` since the run docs are one per
+        player and `player_count` is denormalized at submit time.
+
+    Pagination is applied AFTER grouping (we always compute all
+    encounters then slice), since the total ordering by sample size is
+    what determines the page contents.
+
+    Each returned row carries enough numbers to populate the listing's
+    primary columns (total runs that encountered it, fatal count, avg
+    damage, avg turns) plus a `characters` map shaped
+    `{IRONCLAD: {total, fatal, ...}, SILENT: {...}, ...}` for the
+    expanded per-character sub-table.
+
+    Fatal detection: a run "died here" when the run's `killed_by` field
+    matches the encounter id. This is an approximation — the same enemy
+    type can appear earlier in the same run and we'd attribute the death
+    to all instances. PR #266's extract logic narrows this to the *last*
+    matching room; we settle for the simpler heuristic here since the
+    distinction only matters for repeat enemy IDs in long runs (rare).
+    """
+    coll = _get_collection()
+
+    # Build the pre-unwind run-level match. Keep this as cheap as possible
+    # — we burn an unwind per room afterward, so any filter that can be
+    # applied to the run as a whole saves multiplicative downstream cost.
+    run_match: dict = {}
+    if multiplayer == "only":
+        run_match["player_count"] = {"$gt": 1}
+    elif multiplayer == "exclude":
+        run_match["player_count"] = {"$lte": 1}
+
+    room_match: dict = {
+        "map_point_history.room_type": {"$in": ["monster", "elite", "boss"]}
+    }
+    if room_types:
+        room_match["map_point_history.room_type"] = {"$in": room_types}
+
+    # `act_idx` is 0-based from $unwind's includeArrayIndex. We expose
+    # `act` as 1-based in the response since that's what /api/acts uses.
+    act_match: dict = {}
+    if acts:
+        act_match["act_idx"] = {"$in": [a - 1 for a in acts]}
+
+    # Fatal detection: a room is "fatal" if its model_id matches the
+    # run's killed_by AND the run did not win. `$cond` keeps this in the
+    # aggregation rather than a post-pass.
+    pipeline: list[dict] = [
+        {"$match": run_match} if run_match else {"$match": {}},
+        {
+            "$project": {
+                "character": 1,
+                "killed_by": 1,
+                "win": 1,
+                "map_point_history": 1,
+            }
+        },
+        {"$unwind": {"path": "$map_point_history", "includeArrayIndex": "act_idx"}},
+    ]
+    if act_match:
+        pipeline.append({"$match": act_match})
+    pipeline.extend(
+        [
+            {"$unwind": "$map_point_history"},
+            {"$match": room_match},
+            {
+                "$group": {
+                    "_id": {
+                        "encounter": "$map_point_history.model_id",
+                        "act": {"$add": ["$act_idx", 1]},
+                        "room_type": "$map_point_history.room_type",
+                        "character": "$character",
+                    },
+                    "total": {"$sum": 1},
+                    "fatal": {
+                        "$sum": {
+                            "$cond": [
+                                {
+                                    "$and": [
+                                        {
+                                            "$eq": [
+                                                "$map_point_history.model_id",
+                                                "$killed_by",
+                                            ]
+                                        },
+                                        {"$in": ["$win", [False, 0]]},
+                                    ]
+                                },
+                                1,
+                                0,
+                            ],
+                        }
+                    },
+                    "total_damage": {
+                        "$sum": {"$ifNull": ["$map_point_history.damage_taken", 0]}
+                    },
+                    "total_turns": {
+                        "$sum": {"$ifNull": ["$map_point_history.turns_taken", 0]}
+                    },
+                }
+            },
+            # Collapse the per-character buckets up into per-encounter rows
+            # so the page-size limit applies to encounters, not (encounter,
+            # character) pairs. Each encounter carries a `characters` map.
+            {
+                "$group": {
+                    "_id": {
+                        "encounter": "$_id.encounter",
+                        "act": "$_id.act",
+                        "room_type": "$_id.room_type",
+                    },
+                    "total": {"$sum": "$total"},
+                    "fatal": {"$sum": "$fatal"},
+                    "total_damage": {"$sum": "$total_damage"},
+                    "total_turns": {"$sum": "$total_turns"},
+                    "characters": {
+                        "$push": {
+                            "character": "$_id.character",
+                            "total": "$total",
+                            "fatal": "$fatal",
+                            "total_damage": "$total_damage",
+                            "total_turns": "$total_turns",
+                        }
+                    },
+                }
+            },
+            {"$sort": {"total": -1}},
+        ]
+    )
+
+    rows = list(coll.aggregate(pipeline, allowDiskUse=True))
+
+    page = max(page, 1)
+    limit = max(min(limit, 200), 1)
+    total_encounters = len(rows)
+    start = (page - 1) * limit
+    sliced = rows[start : start + limit]
+
+    def _shape_row(r: dict) -> dict:
+        n = r["total"] or 0
+        return {
+            "encounter_id": r["_id"]["encounter"],
+            "act": r["_id"]["act"],
+            "room_type": r["_id"]["room_type"],
+            "total": n,
+            "fatal": r["fatal"],
+            "avg_damage": round(r["total_damage"] / n, 1) if n else 0,
+            "avg_turns": round(r["total_turns"] / n, 2) if n else 0,
+            "characters": [
+                {
+                    "character": c["character"],
+                    "total": c["total"],
+                    "fatal": c["fatal"],
+                    "avg_damage": round(c["total_damage"] / c["total"], 1)
+                    if c["total"]
+                    else 0,
+                    "avg_turns": round(c["total_turns"] / c["total"], 2)
+                    if c["total"]
+                    else 0,
+                }
+                for c in sorted(r["characters"], key=lambda x: -(x["total"] or 0))
+                if c["character"]
+            ],
+        }
+
+    return {
+        "encounters": [_shape_row(r) for r in sliced],
+        "page": page,
+        "limit": limit,
+        "total": total_encounters,
+        "has_next": start + limit < total_encounters,
+    }
+
+
 @_instrument("get_stats")
 def get_stats(
     character: str | None = None,

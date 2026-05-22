@@ -419,6 +419,60 @@ def get_run_rank(request: Request, run_hash: str, category: str = "fastest"):
         return {"rank": ahead + 1, "category": category}
 
 
+@router.get("/encounter-stats", tags=["Runs"])
+@limiter.limit("60/minute")
+def get_encounter_stats_endpoint(
+    request: Request,
+    act: str | None = None,
+    room_type: str | None = None,
+    multiplayer: str | None = None,
+    page: int = 1,
+    limit: int = 50,
+):
+    """Per-encounter aggregation over submitted runs.
+
+    Query params:
+      * `act` — comma-separated list of acts to include (e.g. `1,2`).
+        Omit for all.
+      * `room_type` — comma-separated list of room types
+        (`monster,elite,boss`). Omit for all.
+      * `multiplayer` — `only` returns multiplayer-only runs,
+        `exclude` removes multiplayer runs, omit for both.
+      * `page` (default 1) + `limit` (default 50, max 200) — pagination
+        applied after aggregation, sorted by sample size descending.
+
+    Each row contains the encounter's total appearances, fatal count,
+    avg damage taken, avg turns, plus a `characters` array with the
+    same fields scoped per character. Returns `{encounters, page,
+    limit, total, has_next}`. Mongo-only (returns empty when MONGO_URL
+    is unset for local dev).
+    """
+    if not os.environ.get("MONGO_URL", "").strip():
+        return {
+            "encounters": [],
+            "page": page,
+            "limit": limit,
+            "total": 0,
+            "has_next": False,
+        }
+
+    from ..services.runs_db_mongo import get_encounter_stats as _get_encounter_stats
+
+    acts = [int(a) for a in act.split(",") if a.strip().isdigit()] if act else None
+    room_types = (
+        [r.strip().lower() for r in room_type.split(",") if r.strip()]
+        if room_type
+        else None
+    )
+    return _get_encounter_stats(
+        acts=acts,
+        room_types=room_types,
+        multiplayer=multiplayer,
+        page=page,
+        limit=limit,
+    )
+
+
 @router.get("/versions", tags=["Runs"])
 def get_run_versions(request: Request):
     """Return distinct build_id values from submitted runs."""

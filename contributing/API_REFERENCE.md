@@ -66,6 +66,7 @@ All data endpoints accept `?lang=` (default: `eng`). Rate limited to 60 req/min 
 | `GET /api/runs/shared/{hash}` | GET | Retrieve a shared run by hash. Response merges `username` from `runs.db` so the shared-run page can render "by {username}" without a second round trip. |
 | `GET /api/runs/leaderboard` | GET | Ranked wins-only leaderboard. Filters: `category` (`fastest`, `highest_ascension`), `character`, `page`, `limit` |
 | `GET /api/runs/scores/{type}` | GET | Codex Score per entity. `type` ∈ `cards` / `relics` / `potions`. Returns `{ id, score (0–100), tier (S/A/B/C/D/F), wins, losses, n }[]`. Bayesian-shrunk win rate; pre-warmed on FastAPI startup. See `services/run_entity_stats.py` and `/leaderboards/scoring` for the formula. |
+| `GET /api/runs/encounter-stats` | GET | Per-encounter aggregation. Query params: `act` (comma-separated 1/2/3), `room_type` (comma-separated monster/elite/boss), `multiplayer` (`only`/`exclude`), `page`, `limit` (max 200, default 50). Returns `{ encounters: [{ encounter_id, act, room_type, total, fatal, avg_damage, avg_turns, characters: [{ character, total, fatal, avg_damage, avg_turns }] }], page, limit, total, has_next }`. Mongo-only; returns empty when no Mongo backend is configured. |
 | `GET /api/runs/versions` | GET | Distinct `build_id` values across submitted runs — powers the version filter dropdown |
 
 ## Utility
