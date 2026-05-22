@@ -1,19 +1,12 @@
 # spire-codex Ansible
 
-Playbooks for managing the DigitalOcean prod box (FastAPI + Next.js + Mongo client) plus the secondary Lightsail box (MongoDB). One-shot deploys, hourly auto-deploy installer, beta-site management, and the housekeeping toolkit.
+Playbooks for managing the DigitalOcean prod box (FastAPI + Next.js + nginx + co-located MongoDB). One-shot deploys, hourly auto-deploy installer, beta-site management, and the housekeeping toolkit.
 
-Everything sensitive (SSH keys, usernames, IPs, third-party credentials) lives in 1Password and is fetched at runtime via the wrapper scripts. Nothing secret or identifying lands in git.
+Everything sensitive (SSH keys, usernames, IPs, third-party credentials) lives in 1Password and is fetched at runtime via the wrapper script. Nothing secret or identifying lands in git.
 
-## Hosts
+## Host
 
-The post-Overwolf-launch rearchitecture left two boxes:
-
-| Group | Host | Role |
-|---|---|---|
-| `prod_origins` | DigitalOcean (`primary`) | All app containers — stable + beta backend, stable + beta frontend, nginx, Litestream |
-| `db_origins` | Lightsail (`secondary`) | MongoDB only; firewall restricted to `primary`'s IP on 27017 |
-
-The Cloudflare load balancer was retired with the migration — `spire-codex.com` and `beta.spire-codex.com` both DNS to the single DO box.
+Single DigitalOcean droplet (`primary`). Runs everything: stable + beta backend containers, stable + beta frontend containers, nginx, Litestream, and Mongo (co-located, talks to the backend over the private IP). Both `spire-codex.com` and `beta.spire-codex.com` DNS to this box. The Cloudflare load balancer was retired with the migration and the previous AWS Lightsail hosts are gone.
 
 ## Setup (one-time)
 
@@ -33,16 +26,11 @@ The Cloudflare load balancer was retired with the migration — `spire-codex.com
    ./bin/do-ansible playbooks/ping.yml
    ```
 
-## Wrappers
+## Wrapper
 
-Two thin wrappers in `bin/`. Both render `inventory.yml` from `inventory.yml.tpl` at runtime (via `op inject` resolving origin IPs from 1Password), fetch the right SSH key + username, and exec `ansible-playbook`. Tempfiles wipe on any exit.
+`bin/do-ansible` renders `inventory.yml` from `inventory.yml.tpl` (via `op inject` resolving the DO IP from 1Password), fetches the SSH key + username from `op://Spire Codex/Digital Ocean/private key` + `Digital Ocean Credentials/user` into tempfiles, and exec's `ansible-playbook`. Tempfiles wipe on any exit.
 
-| Wrapper | Key + user | When to use |
-|---|---|---|
-| `bin/do-ansible` | `op://Spire Codex/Digital Ocean/private key` + `Digital Ocean Credentials/user` | Anything against the DO prod box (default for all day-to-day ops) |
-| `bin/op-ansible` | `op://Spire Codex/AWS/private key` + `AWS Credentials/user` | Anything against the Lightsail MongoDB host (mongo-install, mongo-backup) |
-
-`do-ansible` is just `op-ansible` with the env vars swapped to point at the DO 1P items. Most of the time you want `do-ansible`.
+> `bin/op-ansible` still exists as a generic wrapper but the legacy AWS Lightsail items it referenced are gone. Don't use it.
 
 > Touch ID gotcha: when the desktop app auto-locks, `op` calls block waiting for a touch. Unattended runs (cron, CI) cannot resolve `op://` refs. That's why the autodeploy cron (below) sources its credentials from a plain `/etc/spire-codex/cf-purge.env` on the box instead of 1Password.
 
@@ -74,13 +62,11 @@ Two thin wrappers in `bin/`. Both render `inventory.yml` from `inventory.yml.tpl
 | `backup.yml` | Snapshot runs.db + runs/ + guides/ before a risky migration |
 | `fetch-runs-db.yml` | Pull atomic SQLite snapshots from the DO box (uses `sqlite3 .backup`) |
 | `dr-restore.yml` | Restore a backup tarball (destructive; requires `confirm=yes`) |
-| `audit-lightsail.yml` | Read-only audit of what's still on the old Lightsail box |
-
-### Mongo (secondary Lightsail)
+### Mongo (co-located on the DO box)
 
 | Playbook | When |
 |---|---|
-| `mongo-install.yml` | Provision the Mongo host |
+| `mongo-install.yml` | Provision the Mongo daemon (re-run safe; useful when bootstrapping a replacement box) |
 | `mongo-backup.yml` | Snapshot the Mongo data dir |
 
 ### Housekeeping
@@ -143,8 +129,7 @@ The autodeploy cron handles both stacks on each tick — manual beta deploys are
 
 ## Common gotchas
 
-- **`bin/op-ansible` against the DO box will fail** — wrong SSH key. Use `bin/do-ansible`.
-- **Plain `ansible-playbook ...` fails** — `remote_user` isn't set in `ansible.cfg`. Always go through a wrapper.
+- **Plain `ansible-playbook ...` fails** — `remote_user` isn't set in `ansible.cfg`. Always go through `bin/do-ansible`.
 - **Container name conflict on beta deploy** — if a previous `up -d` was interrupted, you'll see `Container "/xxx_spire-codex-beta-backend" is already in use`. Fix with `docker rm -f spire-codex-beta-backend` on the box, then re-run the deploy.
 - **nginx Docker DNS gotcha** — the beta nginx block uses a static `proxy_pass` to the container name. Do not switch to the `set $var ... resolver` pattern — it pins to a stale Docker DNS entry after a container recreate.
 
@@ -156,8 +141,8 @@ infrastructure/ansible/
 ├── inventory.yml.tpl        # Origin IPs as op:// refs, resolved at render
 ├── inventory.yml            # gitignored — rendered by the wrapper
 ├── bin/
-│   ├── do-ansible           # DigitalOcean wrapper (default)
-│   └── op-ansible           # AWS/Lightsail wrapper (for Mongo box)
+│   ├── do-ansible           # DigitalOcean wrapper (use this)
+│   └── op-ansible           # Generic wrapper (legacy; the AWS items it pointed at are gone)
 ├── files/
 │   ├── .env.tpl
 │   ├── litestream.yml.tpl
@@ -177,7 +162,6 @@ infrastructure/ansible/
 │   ├── backup.yml
 │   ├── fetch-runs-db.yml
 │   ├── dr-restore.yml
-│   ├── audit-lightsail.yml
 │   ├── mongo-install.yml
 │   ├── mongo-backup.yml
 │   ├── clean-disk.yml
