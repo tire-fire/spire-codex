@@ -1,0 +1,18 @@
+---
+- hosts: prod_origins
+  gather_facts: false
+  tasks:
+    - become: true
+      shell: |
+        docker exec spire-codex-backend python3 -c "
+        from collections import Counter
+        from app.services.runs_db_mongo import _get_collection
+        c = _get_collection()
+        kb = Counter()
+        for doc in c.find({'win': False, 'killed_by': {'\$exists': True, '\$ne': None}}, {'killed_by': 1}).limit(2000):
+            kb[doc.get('killed_by')] += 1
+        for k, n in kb.most_common(15):
+            print(f'  {k}: {n}')
+        "
+      register: out
+    - debug: { var: out.stdout_lines }

@@ -545,11 +545,14 @@ def get_encounter_stats(
     elif multiplayer == "exclude":
         run_match["player_count"] = {"$lte": 1}
 
-    room_match: dict = {
-        "map_point_history.room_type": {"$in": ["monster", "elite", "boss"]}
-    }
-    if room_types:
-        room_match["map_point_history.room_type"] = {"$in": room_types}
+    # Each `map_point_history[act][location]` is a LOCATION dict carrying
+    # `player_stats[]` (per-player damage_taken etc.) + `rooms[]` (the
+    # actual encounter, with `model_id`/`room_type`/`turns_taken`). The
+    # previous shape assumed rooms were one level shallower, which is
+    # why the aggregation silently returned zero rows. See
+    # _oneoff-inspect-mph2.yml for the real shape.
+    rooms_filter = list(room_types) if room_types else ["monster", "elite", "boss"]
+    room_match: dict = {"map_point_history.rooms.room_type": {"$in": rooms_filter}}
 
     # `act_idx` is 0-based from $unwind's includeArrayIndex. We expose
     # `act` as 1-based in the response since that's what /api/acts uses.
@@ -557,9 +560,6 @@ def get_encounter_stats(
     if acts:
         act_match["act_idx"] = {"$in": [a - 1 for a in acts]}
 
-    # Fatal detection: a room is "fatal" if its model_id matches the
-    # run's killed_by AND the run did not win. `$cond` keeps this in the
-    # aggregation rather than a post-pass.
     pipeline: list[dict] = [
         {"$match": run_match} if run_match else {"$match": {}},
         {
@@ -576,14 +576,74 @@ def get_encounter_stats(
         pipeline.append({"$match": act_match})
     pipeline.extend(
         [
-            {"$unwind": "$map_point_history"},
+            # Locations within an act carry player_stats[] + rooms[]. We
+            # compute the damage-taken total across all players here
+            # because rooms[] doesn't carry damage; player_stats[] does.
+            # In practice each location has 1 room, so attributing
+            # location_damage to that room is accurate.
+            {
+                "$addFields": {
+                    "location_damage": {
+                        "$sum": {
+                            "$map": {
+                                "input": {
+                                    "$ifNull": [
+                                        "$map_point_history.player_stats",
+                                        [],
+                                    ]
+                                },
+                                "as": "ps",
+                                "in": {"$ifNull": ["$$ps.damage_taken", 0]},
+                            }
+                        }
+                    }
+                }
+            },
+            {"$unwind": "$map_point_history.rooms"},
             {"$match": room_match},
+            # Strip the "ENCOUNTER." prefix from model_id so the
+            # response uses the same bare id format as `killed_by`
+            # (CORPSE_SLUGS_WEAK rather than ENCOUNTER.CORPSE_SLUGS_WEAK).
+            # This also lets the fatal-match comparison work directly.
+            {
+                "$addFields": {
+                    "encounter_id": {
+                        "$let": {
+                            "vars": {"m": "$map_point_history.rooms.model_id"},
+                            "in": {
+                                "$cond": [
+                                    {
+                                        "$eq": [
+                                            {
+                                                "$substrCP": [
+                                                    "$$m",
+                                                    0,
+                                                    10,
+                                                ]
+                                            },
+                                            "ENCOUNTER.",
+                                        ]
+                                    },
+                                    {
+                                        "$substrCP": [
+                                            "$$m",
+                                            10,
+                                            {"$strLenCP": "$$m"},
+                                        ]
+                                    },
+                                    "$$m",
+                                ]
+                            },
+                        }
+                    }
+                }
+            },
             {
                 "$group": {
                     "_id": {
-                        "encounter": "$map_point_history.model_id",
+                        "encounter": "$encounter_id",
                         "act": {"$add": ["$act_idx", 1]},
-                        "room_type": "$map_point_history.room_type",
+                        "room_type": "$map_point_history.rooms.room_type",
                         "character": "$character",
                     },
                     "total": {"$sum": 1},
@@ -594,7 +654,7 @@ def get_encounter_stats(
                                     "$and": [
                                         {
                                             "$eq": [
-                                                "$map_point_history.model_id",
+                                                "$encounter_id",
                                                 "$killed_by",
                                             ]
                                         },
@@ -606,11 +666,9 @@ def get_encounter_stats(
                             ],
                         }
                     },
-                    "total_damage": {
-                        "$sum": {"$ifNull": ["$map_point_history.damage_taken", 0]}
-                    },
+                    "total_damage": {"$sum": {"$ifNull": ["$location_damage", 0]}},
                     "total_turns": {
-                        "$sum": {"$ifNull": ["$map_point_history.turns_taken", 0]}
+                        "$sum": {"$ifNull": ["$map_point_history.rooms.turns_taken", 0]}
                     },
                 }
             },
