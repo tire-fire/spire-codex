@@ -390,10 +390,18 @@ def list_image_categories(request: Request, version: str | None = None):
 
     `version=v0.106.0` scopes the `beta-*` categories to that ingest;
     omit to use whatever `beta/latest` points at.
+
+    When `version=main`, the `beta-*` categories are skipped entirely —
+    they'd duplicate the stable categories (Cards, Monsters, etc.) that
+    already render from the same on-disk tree, making the page's total
+    counts misleading.
     """
     resolved_version = _resolve_beta_version(version)
+    skip_beta_categories = resolved_version == "main"
     result = []
     for cat_id, (display_name, *_) in CATEGORIES.items():
+        if skip_beta_categories and cat_id.startswith("beta-"):
+            continue
         all_files = _get_images_for_category(cat_id, resolved_version)
         display_images = _dedupe_for_gallery(all_files)
         result.append(
