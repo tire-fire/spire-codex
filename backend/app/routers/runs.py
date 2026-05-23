@@ -29,7 +29,7 @@ limiter = Limiter(key_func=get_remote_address)
 MAX_BODY_SIZE = 512 * 1024  # 512 KB
 
 
-@lru_cache(maxsize=2048)
+@lru_cache(maxsize=256)
 def _load_run_blob(run_hash: str) -> str | None:
     """Read a run JSON file once and serve from memory thereafter.
 
