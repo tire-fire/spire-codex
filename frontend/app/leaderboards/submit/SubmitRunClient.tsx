@@ -6,6 +6,7 @@ import { useLangPrefix } from "@/lib/use-lang-prefix";
 import { useLanguage } from "@/app/contexts/LanguageContext";
 import { t } from "@/lib/ui-translations";
 import { IS_BETA } from "@/lib/seo";
+import RunFileHelp from "@/app/components/RunFileHelp";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -353,14 +354,6 @@ export default function SubmitRunClient() {
           </p>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-2 sm:gap-3">
-            <a
-              href="https://www.overwolf.com/app/ptrlrd-spire_codex"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-lg text-sm font-medium bg-[var(--accent-gold)] text-[var(--bg-primary)] hover:opacity-90 transition-opacity"
-            >
-              Download Overwolf Companion App
-            </a>
             <label className="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-lg text-sm font-medium bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-accent)] hover:bg-[var(--bg-card-hover)] transition-colors cursor-pointer">
               {t("Choose Files", lang)}
               <input
@@ -376,30 +369,8 @@ export default function SubmitRunClient() {
             </label>
           </div>
 
-          {/* File paths — kept visible (not collapsed) so users can find
-              their .run files without digging through a disclosure. */}
-          <div className="mt-4 pt-4 border-t border-[var(--border-subtle)] text-left text-xs text-[var(--text-muted)] space-y-1.5">
-            <p className="text-[var(--text-secondary)] mb-2">
-              {t("Your .run files live here:", lang)}
-            </p>
-            <div>
-              <strong className="text-[var(--text-secondary)] block sm:inline">Windows</strong>
-              <code className="block sm:inline sm:ml-1 mt-0.5 sm:mt-0 bg-[var(--bg-primary)] px-1.5 py-0.5 rounded break-all">
-                %AppData%/SlayTheSpire2/steam/&lt;steamid&gt;/profile1/saves/history
-              </code>
-            </div>
-            <div>
-              <strong className="text-[var(--text-secondary)] block sm:inline">macOS</strong>
-              <code className="block sm:inline sm:ml-1 mt-0.5 sm:mt-0 bg-[var(--bg-primary)] px-1.5 py-0.5 rounded break-all">
-                ~/Library/Application Support/SlayTheSpire2/steam/&lt;steamid&gt;/profile1/saves/history
-              </code>
-            </div>
-            <div>
-              <strong className="text-[var(--text-secondary)] block sm:inline">Linux / Steam Deck</strong>
-              <code className="block sm:inline sm:ml-1 mt-0.5 sm:mt-0 bg-[var(--bg-primary)] px-1.5 py-0.5 rounded break-all">
-                ~/.local/share/SlayTheSpire2/steam/&lt;steamid&gt;/profile1/saves/history
-              </code>
-            </div>
+          <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+            <RunFileHelp />
           </div>
           {uploadProgress && (
             <div className="mt-4">
