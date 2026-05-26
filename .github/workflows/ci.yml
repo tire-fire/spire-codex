@@ -99,6 +99,8 @@ jobs:
         with:
           context: ./backend
           push: true
+          cache-from: type=registry,ref=ptrlrd/spire-codex-backend:buildcache
+          cache-to: type=registry,ref=ptrlrd/spire-codex-backend:buildcache,mode=max
           tags: |
             ptrlrd/spire-codex-backend:latest
             ptrlrd/spire-codex-backend:${{ github.sha }}
@@ -109,6 +111,8 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
+          cache-from: type=registry,ref=ptrlrd/spire-codex-frontend:buildcache
+          cache-to: type=registry,ref=ptrlrd/spire-codex-frontend:buildcache,mode=max
           build-args: |
             NEXT_PUBLIC_API_URL=
             NEXT_PUBLIC_SITE_URL=https://spire-codex.com
@@ -140,6 +144,8 @@ jobs:
         with:
           context: ./backend
           push: true
+          cache-from: type=registry,ref=ptrlrd/spire-codex-backend:buildcache-beta
+          cache-to: type=registry,ref=ptrlrd/spire-codex-backend:buildcache-beta,mode=max
           tags: |
             ptrlrd/spire-codex-backend:beta
             ptrlrd/spire-codex-backend:beta-${{ github.sha }}
@@ -150,6 +156,8 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
+          cache-from: type=registry,ref=ptrlrd/spire-codex-frontend:buildcache-beta
+          cache-to: type=registry,ref=ptrlrd/spire-codex-frontend:buildcache-beta,mode=max
           build-args: |
             NEXT_PUBLIC_API_URL=
             NEXT_PUBLIC_SITE_URL=https://beta.spire-codex.com
@@ -181,6 +189,8 @@ jobs:
         with:
           context: ./backend
           push: true
+          cache-from: type=registry,ref=ptrlrd/spire-codex-backend:buildcache-staging
+          cache-to: type=registry,ref=ptrlrd/spire-codex-backend:buildcache-staging,mode=max
           tags: |
             ptrlrd/spire-codex-backend:staging
             ptrlrd/spire-codex-backend:staging-${{ github.sha }}
@@ -191,6 +201,8 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
+          cache-from: type=registry,ref=ptrlrd/spire-codex-frontend:buildcache-staging
+          cache-to: type=registry,ref=ptrlrd/spire-codex-frontend:buildcache-staging,mode=max
           build-args: |
             NEXT_PUBLIC_API_URL=
             NEXT_PUBLIC_SITE_URL=https://staging.spire-codex.com
