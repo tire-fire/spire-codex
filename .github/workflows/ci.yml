@@ -194,6 +194,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=
             NEXT_PUBLIC_SITE_URL=https://staging.spire-codex.com
+            NEXT_PUBLIC_CDN_URL=https://cdn.spire-codex.com
           tags: |
             ptrlrd/spire-codex-frontend:staging
             ptrlrd/spire-codex-frontend:staging-${{ github.sha }}
