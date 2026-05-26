@@ -171,9 +171,7 @@ async def callback(request: Request):
         if existing_user and not existing_user.get("discord_id"):
             result = link_discord(existing_user["_id"], discord_id)
             if result.get("error"):
-                return RedirectResponse(
-                    f"{base}/settings?error={result['error']}"
-                )
+                return RedirectResponse(f"{base}/settings?error={result['error']}")
             if email and not existing_user.get("email"):
                 _update_email(existing_user["_id"], email)
             user = existing_user
