@@ -194,6 +194,29 @@ export default function Navbar() {
             </span>
           </Link>
 
+          <div className="hidden lg:flex items-center gap-2 ml-2">
+            <a
+              href="https://discord.gg/xMsTBeh"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+              aria-label="Discord"
+            >
+              <DiscordIcon className="w-5 h-5" />
+            </a>
+            <a
+              href="https://www.patreon.com/cw/SpireCodex"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+              aria-label="Patreon"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14.82 2.41c3.96 0 7.18 3.24 7.18 7.21 0 3.96-3.22 7.18-7.18 7.18-3.97 0-7.21-3.22-7.21-7.18 0-3.97 3.24-7.21 7.21-7.21M2 21.6h3.5V2.41H2V21.6z" />
+              </svg>
+            </a>
+          </div>
+
           {/* Desktop nav — lg+ only. Single-row mega-menu pattern: each
               group button opens a multi-column panel below the row. Pure
               CSS toggle (`group-hover` + `group-focus-within`) so keyboard
