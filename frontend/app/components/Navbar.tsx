@@ -93,16 +93,8 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "https://ko-fi.com/yitsy", label: "Ko-fi" },
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },
-    ],
-  },
-  {
-    label: "Contact",
-    links: [
       { href: "https://discord.gg/xMsTBeh", label: "Discord" },
       { href: "https://github.com/ptrlrd/spire-codex", label: "GitHub" },
-      // Hash anchor (no leading slash): Footer listens for `#feedback`
-      // and opens the existing feedback modal in place, so the link
-      // works on any page without a full-page nav back to home.
       { href: "#feedback", label: "Feedback" },
       { href: "mailto:media@spire-codex.com", label: "Email" },
     ],
