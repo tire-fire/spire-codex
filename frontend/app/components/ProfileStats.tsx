@@ -22,6 +22,21 @@ interface EntityInfo {
   image_url: string | null;
 }
 
+interface PersonalBest {
+  run_hash: string;
+  character: string;
+  run_time: number;
+  ascension: number;
+  floors_reached: number;
+}
+
+interface PersonalBests {
+  fastest_solo?: PersonalBest;
+  fastest_multi?: PersonalBest;
+  highest_ascension?: PersonalBest;
+  fastest_daily?: PersonalBest;
+}
+
 interface Stats {
   total_runs: number;
   total_wins?: number;
@@ -32,6 +47,14 @@ interface Stats {
   top_relics?: { relic_id: string; count: number; total_runs_with: number; win_runs: number }[];
   top_potions?: { potion_id: string; offered: number; picked: number; used: number; pick_rate: number }[];
   deadliest?: { encounter: string; count: number }[];
+}
+
+function formatTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  return `${m}m ${s}s`;
 }
 
 function displayName(id: string): string {
@@ -72,6 +95,7 @@ type Tab = "overview" | "cards" | "relics" | "potions";
 export default function ProfileStats() {
   const lp = useLangPrefix();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [bests, setBests] = useState<PersonalBests | null>(null);
   const [cardData, setCardData] = useState<Record<string, EntityInfo>>({});
   const [relicData, setRelicData] = useState<Record<string, EntityInfo>>({});
   const [potionData, setPotionData] = useState<Record<string, EntityInfo>>({});
@@ -81,13 +105,15 @@ export default function ProfileStats() {
   useEffect(() => {
     async function load() {
       try {
-        const [statsRes, cards, relics, potions] = await Promise.all([
+        const [statsRes, bestsRes, cards, relics, potions] = await Promise.all([
           fetch(`${API}/api/auth/stats`, { credentials: "include" }).then((r) => r.ok ? r.json() : null),
+          fetch(`${API}/api/auth/personal-bests`, { credentials: "include" }).then((r) => r.ok ? r.json() : null),
           cachedFetch<EntityInfo[]>(`${API}/api/cards`),
           cachedFetch<EntityInfo[]>(`${API}/api/relics`),
           cachedFetch<EntityInfo[]>(`${API}/api/potions`),
         ]);
         if (statsRes) setStats(statsRes);
+        if (bestsRes) setBests(bestsRes);
         const cm: Record<string, EntityInfo> = {};
         for (const c of cards) cm[c.id] = c;
         setCardData(cm);
@@ -182,6 +208,50 @@ export default function ProfileStats() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {bests && Object.keys(bests).length > 0 && (
+            <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-subtle)] p-4">
+              <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Personal Bests</h3>
+              <div className="space-y-2">
+                {bests.fastest_solo && (
+                  <Link href={`${lp}/runs/${bests.fastest_solo.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
+                    <span className="text-[var(--text-secondary)]">Fastest Solo</span>
+                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
+                      {formatTime(bests.fastest_solo.run_time)}
+                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.fastest_solo.character)} A{bests.fastest_solo.ascension}</span>
+                    </span>
+                  </Link>
+                )}
+                {bests.fastest_multi && (
+                  <Link href={`${lp}/runs/${bests.fastest_multi.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
+                    <span className="text-[var(--text-secondary)]">Fastest Co-op</span>
+                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
+                      {formatTime(bests.fastest_multi.run_time)}
+                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.fastest_multi.character)} A{bests.fastest_multi.ascension}</span>
+                    </span>
+                  </Link>
+                )}
+                {bests.highest_ascension && (
+                  <Link href={`${lp}/runs/${bests.highest_ascension.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
+                    <span className="text-[var(--text-secondary)]">Highest Ascension</span>
+                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
+                      A{bests.highest_ascension.ascension}
+                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.highest_ascension.character)} {formatTime(bests.highest_ascension.run_time)}</span>
+                    </span>
+                  </Link>
+                )}
+                {bests.fastest_daily && (
+                  <Link href={`${lp}/runs/${bests.fastest_daily.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
+                    <span className="text-[var(--text-secondary)]">Fastest Daily Climb</span>
+                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
+                      {formatTime(bests.fastest_daily.run_time)}
+                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.fastest_daily.character)}</span>
+                    </span>
+                  </Link>
+                )}
               </div>
             </div>
           )}

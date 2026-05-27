@@ -193,6 +193,87 @@ async def user_stats(request: Request):
     return get_stats(username=username)
 
 
+@router.get("/personal-bests")
+@limiter.limit("10/minute")
+async def personal_bests(request: Request):
+    user = require_user(request)
+    username = user.get("username")
+    if not username or not os.environ.get("MONGO_URL", "").strip():
+        return {"bests": []}
+
+    from ..services.runs_db_mongo import _get_collection
+
+    coll = _get_collection()
+    base_match = {
+        "username": username,
+        "win": {"$in": [True, 1]},
+    }
+
+    results = {}
+
+    # Fastest single-player win
+    sp = coll.find_one(
+        {**base_match, "player_count": 1, "game_mode": "standard"},
+        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
+        sort=[("run_time", 1)],
+    )
+    if sp:
+        results["fastest_solo"] = {
+            "run_hash": sp["_id"],
+            "character": sp["character"],
+            "run_time": sp["run_time"],
+            "ascension": sp.get("ascension", 0),
+            "floors_reached": sp.get("floors_reached", 0),
+        }
+
+    # Fastest multiplayer win
+    mp = coll.find_one(
+        {**base_match, "player_count": {"$gt": 1}, "game_mode": "standard"},
+        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
+        sort=[("run_time", 1)],
+    )
+    if mp:
+        results["fastest_multi"] = {
+            "run_hash": mp["_id"],
+            "character": mp["character"],
+            "run_time": mp["run_time"],
+            "ascension": mp.get("ascension", 0),
+            "floors_reached": mp.get("floors_reached", 0),
+        }
+
+    # Highest ascension win
+    ha = coll.find_one(
+        {**base_match, "game_mode": "standard"},
+        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
+        sort=[("ascension", -1), ("run_time", 1)],
+    )
+    if ha:
+        results["highest_ascension"] = {
+            "run_hash": ha["_id"],
+            "character": ha["character"],
+            "run_time": ha["run_time"],
+            "ascension": ha.get("ascension", 0),
+            "floors_reached": ha.get("floors_reached", 0),
+        }
+
+    # Best daily climb (fastest win in daily mode)
+    dc = coll.find_one(
+        {**base_match, "game_mode": "daily"},
+        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
+        sort=[("run_time", 1)],
+    )
+    if dc:
+        results["fastest_daily"] = {
+            "run_hash": dc["_id"],
+            "character": dc["character"],
+            "run_time": dc["run_time"],
+            "ascension": dc.get("ascension", 0),
+            "floors_reached": dc.get("floors_reached", 0),
+        }
+
+    return results
+
+
 @router.post("/runs/upload")
 @limiter.limit("10/minute")
 async def upload_runs(request: Request, files: list[UploadFile] = File(...)):
