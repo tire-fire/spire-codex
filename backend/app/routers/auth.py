@@ -193,108 +193,123 @@ async def user_stats(request: Request):
     return get_stats(username=username)
 
 
-@router.get("/personal-bests")
-@limiter.limit("10/minute")
-async def personal_bests(request: Request):
-    user = require_user(request)
-    username = user.get("username")
-    if not username or not os.environ.get("MONGO_URL", "").strip():
-        return {"bests": []}
-
+def _compute_personal_bests(username: str) -> dict:
     from ..services.runs_db_mongo import _get_collection
+    from datetime import datetime, timezone
 
     coll = _get_collection()
     base_match = {
         "username": username,
         "win": {"$in": [True, 1]},
     }
-
+    proj = {
+        "_id": 1,
+        "character": 1,
+        "run_time": 1,
+        "ascension": 1,
+        "floors_reached": 1,
+    }
     results = {}
 
-    # Fastest single-player win
-    sp = coll.find_one(
-        {**base_match, "player_count": 1, "game_mode": "standard"},
-        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
-        sort=[("run_time", 1)],
-    )
-    if sp:
-        results["fastest_solo"] = {
-            "run_hash": sp["_id"],
-            "character": sp["character"],
-            "run_time": sp["run_time"],
-            "ascension": sp.get("ascension", 0),
-            "floors_reached": sp.get("floors_reached", 0),
-        }
+    def _best(key, extra_match, sort):
+        doc = coll.find_one({**base_match, **extra_match}, proj, sort=sort)
+        if doc:
+            results[key] = {
+                "run_hash": doc["_id"],
+                "character": doc["character"],
+                "run_time": doc["run_time"],
+                "ascension": doc.get("ascension", 0),
+                "floors_reached": doc.get("floors_reached", 0),
+            }
 
-    # Fastest multiplayer win
-    mp = coll.find_one(
-        {**base_match, "player_count": {"$gt": 1}, "game_mode": "standard"},
-        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
-        sort=[("run_time", 1)],
+    _best(
+        "fastest_solo", {"player_count": 1, "game_mode": "standard"}, [("run_time", 1)]
     )
-    if mp:
-        results["fastest_multi"] = {
-            "run_hash": mp["_id"],
-            "character": mp["character"],
-            "run_time": mp["run_time"],
-            "ascension": mp.get("ascension", 0),
-            "floors_reached": mp.get("floors_reached", 0),
-        }
-
-    # Highest ascension win
-    ha = coll.find_one(
-        {**base_match, "game_mode": "standard"},
-        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
-        sort=[("ascension", -1), ("run_time", 1)],
+    _best(
+        "fastest_multi",
+        {"player_count": {"$gt": 1}, "game_mode": "standard"},
+        [("run_time", 1)],
     )
-    if ha:
-        results["highest_ascension"] = {
-            "run_hash": ha["_id"],
-            "character": ha["character"],
-            "run_time": ha["run_time"],
-            "ascension": ha.get("ascension", 0),
-            "floors_reached": ha.get("floors_reached", 0),
-        }
-
-    # Today's daily climb (fastest win submitted today)
-    from datetime import datetime, timezone, timedelta
-
-    now = datetime.now(timezone.utc)
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    dc = coll.find_one(
-        {
-            **base_match,
-            "game_mode": "daily",
-            "submitted_at": {"$gte": today_start},
-        },
-        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
-        sort=[("run_time", 1)],
+    _best(
+        "highest_ascension",
+        {"game_mode": "standard"},
+        [("ascension", -1), ("run_time", 1)],
     )
-    if dc:
-        results["todays_daily"] = {
-            "run_hash": dc["_id"],
-            "character": dc["character"],
-            "run_time": dc["run_time"],
-            "ascension": dc.get("ascension", 0),
-            "floors_reached": dc.get("floors_reached", 0),
-        }
 
-    # All-time fastest daily climb
-    dc_all = coll.find_one(
-        {**base_match, "game_mode": "daily"},
-        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
-        sort=[("run_time", 1)],
+    today_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
     )
-    if dc_all:
-        results["fastest_daily"] = {
-            "run_hash": dc_all["_id"],
-            "character": dc_all["character"],
-            "run_time": dc_all["run_time"],
-            "ascension": dc_all.get("ascension", 0),
-            "floors_reached": dc_all.get("floors_reached", 0),
-        }
+    _best(
+        "todays_daily",
+        {"game_mode": "daily", "submitted_at": {"$gte": today_start}},
+        [("run_time", 1)],
+    )
+    _best("fastest_daily", {"game_mode": "daily"}, [("run_time", 1)])
 
     return results
+
+
+@router.get("/personal-bests")
+@limiter.limit("10/minute")
+async def personal_bests(request: Request):
+    user = require_user(request)
+    username = user.get("username")
+    if not username or not os.environ.get("MONGO_URL", "").strip():
+        return {}
+    return _compute_personal_bests(username)
+
+
+@router.get("/competitive")
+@limiter.limit("10/minute")
+async def competitive_stats(request: Request):
+    user = require_user(request)
+    username = user.get("username")
+    if not username or not os.environ.get("MONGO_URL", "").strip():
+        return {
+            "daily_leaderboard": {"runs": [], "user_rank": None, "total_today": 0},
+            "personal_ranks": {},
+            "win_rate_comparison": [],
+        }
+
+    from ..services.runs_db_mongo import (
+        get_daily_leaderboard,
+        get_run_rank_scoped,
+        get_win_rate_comparison,
+    )
+
+    bests = _compute_personal_bests(username)
+
+    rank_configs = {
+        "fastest_solo": {
+            "category": "fastest",
+            "game_mode": "standard",
+            "players": "single",
+        },
+        "fastest_multi": {
+            "category": "fastest",
+            "game_mode": "standard",
+            "players": "multi",
+        },
+        "highest_ascension": {"category": "highest_ascension", "game_mode": "standard"},
+        "todays_daily": {
+            "category": "fastest",
+            "game_mode": "daily",
+            "today_only": True,
+        },
+        "fastest_daily": {"category": "fastest", "game_mode": "daily"},
+    }
+
+    personal_ranks = {}
+    for key, cfg in rank_configs.items():
+        best = bests.get(key)
+        if best:
+            personal_ranks[key] = get_run_rank_scoped(best["run_hash"], **cfg)
+
+    return {
+        "daily_leaderboard": get_daily_leaderboard(username),
+        "personal_ranks": personal_ranks,
+        "win_rate_comparison": get_win_rate_comparison(username),
+    }
 
 
 @router.post("/runs/upload")

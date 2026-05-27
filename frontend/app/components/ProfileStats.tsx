@@ -38,6 +38,31 @@ interface PersonalBests {
   fastest_daily?: PersonalBest;
 }
 
+interface DailyLeaderboardEntry {
+  run_hash: string;
+  username: string | null;
+  character: string;
+  run_time: number;
+  ascension: number;
+  is_current_user: boolean;
+}
+
+interface CompetitiveData {
+  daily_leaderboard: {
+    runs: DailyLeaderboardEntry[];
+    user_rank: number | null;
+    total_today: number;
+  };
+  personal_ranks: Record<string, { rank: number; total: number } | null>;
+  win_rate_comparison: {
+    character: string;
+    user_win_rate: number;
+    community_win_rate: number;
+    user_wins: number;
+    user_total: number;
+  }[];
+}
+
 interface Stats {
   total_runs: number;
   total_wins?: number;
@@ -97,6 +122,7 @@ export default function ProfileStats() {
   const lp = useLangPrefix();
   const [stats, setStats] = useState<Stats | null>(null);
   const [bests, setBests] = useState<PersonalBests | null>(null);
+  const [competitive, setCompetitive] = useState<CompetitiveData | null>(null);
   const [cardData, setCardData] = useState<Record<string, EntityInfo>>({});
   const [relicData, setRelicData] = useState<Record<string, EntityInfo>>({});
   const [potionData, setPotionData] = useState<Record<string, EntityInfo>>({});
@@ -106,15 +132,17 @@ export default function ProfileStats() {
   useEffect(() => {
     async function load() {
       try {
-        const [statsRes, bestsRes, cards, relics, potions] = await Promise.all([
+        const [statsRes, bestsRes, competitiveRes, cards, relics, potions] = await Promise.all([
           fetch(`${API}/api/auth/stats`, { credentials: "include" }).then((r) => r.ok ? r.json() : null),
           fetch(`${API}/api/auth/personal-bests`, { credentials: "include" }).then((r) => r.ok ? r.json() : null),
+          fetch(`${API}/api/auth/competitive`, { credentials: "include" }).then((r) => r.ok ? r.json() : null),
           cachedFetch<EntityInfo[]>(`${API}/api/cards`),
           cachedFetch<EntityInfo[]>(`${API}/api/relics`),
           cachedFetch<EntityInfo[]>(`${API}/api/potions`),
         ]);
         if (statsRes) setStats(statsRes);
         if (bestsRes) setBests(bestsRes);
+        if (competitiveRes) setCompetitive(competitiveRes);
         const cm: Record<string, EntityInfo> = {};
         for (const c of cards) cm[c.id] = c;
         setCardData(cm);
@@ -217,51 +245,123 @@ export default function ProfileStats() {
             <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-subtle)] p-4">
               <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Personal Bests</h3>
               <div className="space-y-2">
-                {bests.fastest_solo && (
-                  <Link href={`${lp}/runs/${bests.fastest_solo.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
-                    <span className="text-[var(--text-secondary)]">Fastest Solo</span>
-                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
-                      {formatTime(bests.fastest_solo.run_time)}
-                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.fastest_solo.character)} A{bests.fastest_solo.ascension}</span>
+                {([
+                  ["fastest_solo", "Fastest Solo", bests.fastest_solo],
+                  ["fastest_multi", "Fastest Co-op", bests.fastest_multi],
+                  ["highest_ascension", "Highest Ascension", bests.highest_ascension],
+                  ["todays_daily", "Today’s Daily Climb", bests.todays_daily],
+                  ["fastest_daily", "Fastest Daily (All Time)", bests.fastest_daily],
+                ] as [string, string, PersonalBest | undefined][]).map(([key, label, best]) => {
+                  if (!best) return null;
+                  const rank = competitive?.personal_ranks?.[key];
+                  const isAsc = key === "highest_ascension";
+                  return (
+                    <Link key={key} href={`${lp}/runs/${best.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
+                      <span className="text-[var(--text-secondary)]">{label}</span>
+                      <span className="text-[var(--text-primary)] font-medium tabular-nums">
+                        {isAsc ? `A${best.ascension}` : formatTime(best.run_time)}
+                        <span className="text-[var(--text-tertiary)] ml-2 text-xs">
+                          {displayName(best.character)}
+                          {!isAsc && ` A${best.ascension}`}
+                          {isAsc && ` ${formatTime(best.run_time)}`}
+                        </span>
+                        {rank && rank.rank && (
+                          <span className="text-[var(--accent-gold)] ml-2 text-[10px]">
+                            #{rank.rank.toLocaleString()}
+                            <span className="text-[var(--text-muted)]"> of {rank.total.toLocaleString()}</span>
+                          </span>
+                        )}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Today's Daily Climb Leaderboard */}
+          {competitive?.daily_leaderboard && competitive.daily_leaderboard.runs.length > 0 && (
+            <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-subtle)] p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Today&apos;s Daily Climb</h3>
+                <span className="text-[10px] text-[var(--text-tertiary)]">{competitive.daily_leaderboard.total_today} runs today</span>
+              </div>
+              <div className="space-y-1">
+                {competitive.daily_leaderboard.runs.map((entry, i) => (
+                  <Link
+                    key={entry.run_hash}
+                    href={`${lp}/runs/${entry.run_hash}`}
+                    className={`flex items-center gap-3 text-sm px-2 -mx-2 py-1.5 rounded transition-colors ${
+                      entry.is_current_user
+                        ? "bg-[var(--accent-gold)]/10 hover:bg-[var(--accent-gold)]/15"
+                        : "hover:bg-[var(--bg-card-hover)]"
+                    }`}
+                  >
+                    <span className="w-5 text-right text-xs text-[var(--text-tertiary)] tabular-nums">{i + 1}</span>
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: CHAR_COLORS[entry.character] || "#888" }}
+                    />
+                    <span className={`flex-1 truncate ${entry.is_current_user ? "text-[var(--accent-gold)] font-medium" : "text-[var(--text-primary)]"}`}>
+                      {entry.username || "Anonymous"}
                     </span>
+                    <span className="text-xs text-[var(--text-tertiary)] tabular-nums">{displayName(entry.character)}</span>
+                    <span className="text-xs text-[var(--text-primary)] tabular-nums font-medium">{formatTime(entry.run_time)}</span>
                   </Link>
+                ))}
+                {competitive.daily_leaderboard.user_rank && competitive.daily_leaderboard.user_rank > 10 && (
+                  <>
+                    <div className="text-center text-[var(--text-muted)] text-xs py-1">...</div>
+                    <div className="flex items-center gap-3 text-sm px-2 -mx-2 py-1.5 rounded bg-[var(--accent-gold)]/10">
+                      <span className="w-5 text-right text-xs text-[var(--text-tertiary)] tabular-nums">{competitive.daily_leaderboard.user_rank}</span>
+                      <span className="flex-1 text-[var(--accent-gold)] font-medium">You</span>
+                    </div>
+                  </>
                 )}
-                {bests.fastest_multi && (
-                  <Link href={`${lp}/runs/${bests.fastest_multi.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
-                    <span className="text-[var(--text-secondary)]">Fastest Co-op</span>
-                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
-                      {formatTime(bests.fastest_multi.run_time)}
-                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.fastest_multi.character)} A{bests.fastest_multi.ascension}</span>
-                    </span>
-                  </Link>
-                )}
-                {bests.highest_ascension && (
-                  <Link href={`${lp}/runs/${bests.highest_ascension.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
-                    <span className="text-[var(--text-secondary)]">Highest Ascension</span>
-                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
-                      A{bests.highest_ascension.ascension}
-                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.highest_ascension.character)} {formatTime(bests.highest_ascension.run_time)}</span>
-                    </span>
-                  </Link>
-                )}
-                {bests.todays_daily && (
-                  <Link href={`${lp}/runs/${bests.todays_daily.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
-                    <span className="text-[var(--text-secondary)]">Today&apos;s Daily Climb</span>
-                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
-                      {formatTime(bests.todays_daily.run_time)}
-                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.todays_daily.character)} A{bests.todays_daily.ascension}</span>
-                    </span>
-                  </Link>
-                )}
-                {bests.fastest_daily && (
-                  <Link href={`${lp}/runs/${bests.fastest_daily.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
-                    <span className="text-[var(--text-secondary)]">Fastest Daily (All Time)</span>
-                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
-                      {formatTime(bests.fastest_daily.run_time)}
-                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.fastest_daily.character)}</span>
-                    </span>
-                  </Link>
-                )}
+              </div>
+            </div>
+          )}
+
+          {/* Win Rate vs Community */}
+          {competitive?.win_rate_comparison && competitive.win_rate_comparison.length > 0 && (
+            <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-subtle)] p-4">
+              <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Win Rate vs Community</h3>
+              <div className="space-y-3">
+                {competitive.win_rate_comparison.map((c) => {
+                  const color = CHAR_COLORS[c.character] || "var(--text-muted)";
+                  const delta = c.user_win_rate - c.community_win_rate;
+                  const deltaColor = delta > 0 ? "text-green-400" : delta < 0 ? "text-red-400" : "text-[var(--text-muted)]";
+                  return (
+                    <div key={c.character} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                          <span className="text-[var(--text-primary)]">{displayName(c.character)}</span>
+                        </div>
+                        <span className={`text-xs font-medium tabular-nums ${deltaColor}`}>
+                          {delta > 0 ? "+" : ""}{delta.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 text-[10px] text-[var(--text-tertiary)]">You</span>
+                          <div className="flex-1 h-1.5 rounded-full bg-[var(--bg-primary)] overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${Math.min(c.user_win_rate, 100)}%`, backgroundColor: color }} />
+                          </div>
+                          <span className="w-12 text-right text-[10px] tabular-nums text-[var(--text-primary)]">{c.user_win_rate}%</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 text-[10px] text-[var(--text-tertiary)]">Avg</span>
+                          <div className="flex-1 h-1.5 rounded-full bg-[var(--bg-primary)] overflow-hidden">
+                            <div className="h-full rounded-full opacity-40" style={{ width: `${Math.min(c.community_win_rate, 100)}%`, backgroundColor: color }} />
+                          </div>
+                          <span className="w-12 text-right text-[10px] tabular-nums text-[var(--text-tertiary)]">{c.community_win_rate}%</span>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-[var(--text-muted)]">{c.user_wins}W / {c.user_total - c.user_wins}L across {c.user_total} runs</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

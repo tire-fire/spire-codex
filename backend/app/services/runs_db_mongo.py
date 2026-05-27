@@ -142,6 +142,14 @@ def _ensure_indexes(coll) -> None:
     coll.create_index([("relics.id", ASCENDING)])
     coll.create_index([("killed_by", ASCENDING)])
     coll.create_index([("user_id", ASCENDING), ("submitted_at", DESCENDING)])
+    coll.create_index(
+        [
+            ("game_mode", ASCENDING),
+            ("win", ASCENDING),
+            ("submitted_at", DESCENDING),
+            ("run_time", ASCENDING),
+        ]
+    )
 
 
 # ── helpers (mirrors of the sqlite module) ──────────────────────────────
@@ -1373,6 +1381,152 @@ def find_sibling_hashes(run_hash: str) -> list[str]:
         return []
     siblings = coll.find({"seed": row["seed"], "_id": {"$ne": run_hash}}, {"_id": 1})
     return [s["_id"] for s in siblings]
+
+
+# ── Competitive / comparison queries ────────────────────────────────────
+
+
+@_instrument("get_daily_leaderboard")
+def get_daily_leaderboard(username: str | None = None) -> dict:
+    """Today's top daily climb wins, plus the requesting user's rank."""
+    from datetime import datetime, timezone
+
+    coll = _get_collection()
+    today_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    base = {
+        "win": {"$in": [True, 1]},
+        "game_mode": "daily",
+        "submitted_at": {"$gte": today_start},
+    }
+
+    top_10 = list(coll.find(base, _projection_row()).sort("run_time", 1).limit(10))
+    total = coll.count_documents(base)
+
+    runs = []
+    for r in top_10:
+        row = _row_to_dict(r)
+        row["is_current_user"] = bool(username and row.get("username") == username)
+        runs.append(row)
+
+    user_rank = None
+    if username:
+        user_run = coll.find_one(
+            {**base, "username": username},
+            {"run_time": 1},
+            sort=[("run_time", 1)],
+        )
+        if user_run:
+            user_rank = (
+                coll.count_documents(
+                    {**base, "run_time": {"$lt": user_run["run_time"]}}
+                )
+                + 1
+            )
+
+    return {"runs": runs, "user_rank": user_rank, "total_today": total}
+
+
+@_instrument("get_run_rank_scoped")
+def get_run_rank_scoped(
+    run_hash: str,
+    category: str = "fastest",
+    game_mode: str | None = None,
+    players: str | None = None,
+    today_only: bool = False,
+) -> dict:
+    """Rank of a run within a scoped leaderboard. Extends get_run_rank
+    with optional game_mode, players, and today-only filters."""
+    from datetime import datetime, timezone
+
+    coll = _get_collection()
+    row = coll.find_one(
+        {"_id": run_hash},
+        {"win": 1, "character": 1, "run_time": 1, "ascension": 1},
+    )
+    if not row or not row.get("win"):
+        return {"rank": None, "total": 0}
+
+    scope: dict[str, Any] = {"win": {"$in": [True, 1]}}
+    if not today_only:
+        scope["character"] = row["character"]
+    if game_mode:
+        scope["game_mode"] = game_mode
+    if players == "single":
+        scope["player_count"] = 1
+    elif players == "multi":
+        scope["player_count"] = {"$gt": 1}
+    if today_only:
+        today_start = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        scope["submitted_at"] = {"$gte": today_start}
+
+    if category == "highest_ascension":
+        ahead_q = {
+            **scope,
+            "$or": [
+                {"ascension": {"$gt": row.get("ascension", 0)}},
+                {
+                    "ascension": row.get("ascension", 0),
+                    "run_time": {"$lt": row.get("run_time", 0)},
+                },
+            ],
+        }
+    else:
+        ahead_q = {**scope, "run_time": {"$lt": row.get("run_time", 0)}}
+
+    ahead = coll.count_documents(ahead_q)
+    total = coll.count_documents(scope)
+    return {"rank": ahead + 1, "total": total}
+
+
+@_instrument("get_win_rate_comparison")
+def get_win_rate_comparison(username: str) -> list[dict]:
+    """Per-character win rate for the user vs community average."""
+    coll = _get_collection()
+
+    user_chars = list(
+        coll.aggregate(
+            [
+                {"$match": {"username": username}},
+                {
+                    "$group": {
+                        "_id": "$character",
+                        "total": {"$sum": 1},
+                        "wins": {"$sum": {"$cond": ["$win", 1, 0]}},
+                    }
+                },
+            ],
+            allowDiskUse=True,
+        )
+    )
+
+    summary = _summary_coll().find_one({"_id": "global"})
+    community_chars = {}
+    if summary and "characters" in summary:
+        for c in summary["characters"]:
+            community_chars[c["character"]] = c.get("win_rate", 0)
+
+    result = []
+    for uc in user_chars:
+        char = uc["_id"]
+        if char not in OFFICIAL_CHARACTERS or uc["total"] < 5:
+            continue
+        user_wr = round(uc["wins"] / uc["total"] * 100, 1) if uc["total"] > 0 else 0
+        result.append(
+            {
+                "character": char,
+                "user_win_rate": user_wr,
+                "community_win_rate": community_chars.get(char, 0),
+                "user_wins": uc["wins"],
+                "user_total": uc["total"],
+            }
+        )
+
+    result.sort(key=lambda x: x["user_total"], reverse=True)
+    return result
 
 
 # ── User run ownership ──────────────────────────────────────────────────
