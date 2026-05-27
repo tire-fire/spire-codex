@@ -181,10 +181,15 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-3 sm:gap-4 h-16">
           <Link href={`${langPrefix}/`} className="flex items-center gap-2 shrink-0">
-            <span className="text-xl font-bold text-[var(--accent-gold)]">
+            <img
+              src="/spire-codex-white-final.png"
+              alt="Spire Codex"
+              className="h-8 w-auto sm:hidden"
+            />
+            <span className="hidden sm:inline text-xl font-bold text-[var(--accent-gold)]">
               SPIRE
             </span>
-            <span className="text-xl font-light text-[var(--text-primary)]">
+            <span className="hidden sm:inline text-xl font-light text-[var(--text-primary)]">
               CODEX
             </span>
           </Link>
