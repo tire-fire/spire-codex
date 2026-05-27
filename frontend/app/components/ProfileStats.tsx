@@ -34,6 +34,7 @@ interface PersonalBests {
   fastest_solo?: PersonalBest;
   fastest_multi?: PersonalBest;
   highest_ascension?: PersonalBest;
+  todays_daily?: PersonalBest;
   fastest_daily?: PersonalBest;
 }
 
@@ -243,9 +244,18 @@ export default function ProfileStats() {
                     </span>
                   </Link>
                 )}
+                {bests.todays_daily && (
+                  <Link href={`${lp}/runs/${bests.todays_daily.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
+                    <span className="text-[var(--text-secondary)]">Today&apos;s Daily Climb</span>
+                    <span className="text-[var(--text-primary)] font-medium tabular-nums">
+                      {formatTime(bests.todays_daily.run_time)}
+                      <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.todays_daily.character)} A{bests.todays_daily.ascension}</span>
+                    </span>
+                  </Link>
+                )}
                 {bests.fastest_daily && (
                   <Link href={`${lp}/runs/${bests.fastest_daily.run_hash}`} className="flex items-center justify-between text-sm hover:bg-[var(--bg-card-hover)] rounded px-2 -mx-2 py-1 transition-colors">
-                    <span className="text-[var(--text-secondary)]">Fastest Daily Climb</span>
+                    <span className="text-[var(--text-secondary)]">Fastest Daily (All Time)</span>
                     <span className="text-[var(--text-primary)] font-medium tabular-nums">
                       {formatTime(bests.fastest_daily.run_time)}
                       <span className="text-[var(--text-tertiary)] ml-2 text-xs">{displayName(bests.fastest_daily.character)}</span>

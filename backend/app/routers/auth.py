@@ -256,19 +256,42 @@ async def personal_bests(request: Request):
             "floors_reached": ha.get("floors_reached", 0),
         }
 
-    # Best daily climb (fastest win in daily mode)
+    # Today's daily climb (fastest win submitted today)
+    from datetime import datetime, timezone, timedelta
+
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     dc = coll.find_one(
-        {**base_match, "game_mode": "daily"},
+        {
+            **base_match,
+            "game_mode": "daily",
+            "submitted_at": {"$gte": today_start},
+        },
         {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
         sort=[("run_time", 1)],
     )
     if dc:
-        results["fastest_daily"] = {
+        results["todays_daily"] = {
             "run_hash": dc["_id"],
             "character": dc["character"],
             "run_time": dc["run_time"],
             "ascension": dc.get("ascension", 0),
             "floors_reached": dc.get("floors_reached", 0),
+        }
+
+    # All-time fastest daily climb
+    dc_all = coll.find_one(
+        {**base_match, "game_mode": "daily"},
+        {"_id": 1, "character": 1, "run_time": 1, "ascension": 1, "floors_reached": 1},
+        sort=[("run_time", 1)],
+    )
+    if dc_all:
+        results["fastest_daily"] = {
+            "run_hash": dc_all["_id"],
+            "character": dc_all["character"],
+            "run_time": dc_all["run_time"],
+            "ascension": dc_all.get("ascension", 0),
+            "floors_reached": dc_all.get("floors_reached", 0),
         }
 
     return results
