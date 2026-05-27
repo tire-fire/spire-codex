@@ -177,6 +177,141 @@ async def delete_run(run_hash: str, request: Request):
     return {"success": True}
 
 
+@router.get("/stats")
+@limiter.limit("10/minute")
+async def user_stats(request: Request):
+    user = require_user(request)
+    username = user.get("username")
+    if not username:
+        return {"total_runs": 0}
+
+    if not os.environ.get("MONGO_URL", "").strip():
+        return {"total_runs": 0}
+
+    from ..services.runs_db_mongo import get_stats
+
+    return get_stats(username=username)
+
+
+def _compute_personal_bests(username: str) -> dict:
+    from ..services.runs_db_mongo import _get_collection
+    from datetime import datetime, timezone
+
+    coll = _get_collection()
+    base_match = {
+        "username": username,
+        "win": {"$in": [True, 1]},
+    }
+    proj = {
+        "_id": 1,
+        "character": 1,
+        "run_time": 1,
+        "ascension": 1,
+        "floors_reached": 1,
+    }
+    results = {}
+
+    def _best(key, extra_match, sort):
+        doc = coll.find_one({**base_match, **extra_match}, proj, sort=sort)
+        if doc:
+            results[key] = {
+                "run_hash": doc["_id"],
+                "character": doc["character"],
+                "run_time": doc["run_time"],
+                "ascension": doc.get("ascension", 0),
+                "floors_reached": doc.get("floors_reached", 0),
+            }
+
+    _best(
+        "fastest_solo", {"player_count": 1, "game_mode": "standard"}, [("run_time", 1)]
+    )
+    _best(
+        "fastest_multi",
+        {"player_count": {"$gt": 1}, "game_mode": "standard"},
+        [("run_time", 1)],
+    )
+    _best(
+        "highest_ascension",
+        {"game_mode": "standard"},
+        [("ascension", -1), ("run_time", 1)],
+    )
+
+    today_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    _best(
+        "todays_daily",
+        {"game_mode": "daily", "submitted_at": {"$gte": today_start}},
+        [("run_time", 1)],
+    )
+    _best("fastest_daily", {"game_mode": "daily"}, [("run_time", 1)])
+
+    return results
+
+
+@router.get("/personal-bests")
+@limiter.limit("10/minute")
+async def personal_bests(request: Request):
+    user = require_user(request)
+    username = user.get("username")
+    if not username or not os.environ.get("MONGO_URL", "").strip():
+        return {}
+    return _compute_personal_bests(username)
+
+
+@router.get("/competitive")
+@limiter.limit("10/minute")
+async def competitive_stats(request: Request):
+    user = require_user(request)
+    username = user.get("username")
+    if not username or not os.environ.get("MONGO_URL", "").strip():
+        return {
+            "daily_leaderboard": {"runs": [], "user_rank": None, "total_today": 0},
+            "personal_ranks": {},
+            "win_rate_comparison": [],
+        }
+
+    from ..services.runs_db_mongo import (
+        get_daily_leaderboard,
+        get_run_rank_scoped,
+        get_win_rate_comparison,
+    )
+
+    bests = _compute_personal_bests(username)
+
+    rank_configs = {
+        "fastest_solo": {
+            "category": "fastest",
+            "game_mode": "standard",
+            "players": "single",
+        },
+        "fastest_multi": {
+            "category": "fastest",
+            "game_mode": "standard",
+            "players": "multi",
+        },
+        "highest_ascension": {"category": "highest_ascension", "game_mode": "standard"},
+        "todays_daily": {
+            "category": "fastest",
+            "game_mode": "daily",
+            "today_only": True,
+        },
+        "fastest_daily": {"category": "fastest", "game_mode": "daily"},
+    }
+
+    personal_ranks = {}
+    for key, cfg in rank_configs.items():
+        best = bests.get(key)
+        if best:
+            personal_ranks[key] = get_run_rank_scoped(best["run_hash"], **cfg)
+
+    return {
+        "daily_leaderboard": get_daily_leaderboard(username),
+        "personal_ranks": personal_ranks,
+        "win_rate_comparison": get_win_rate_comparison(username),
+    }
+
+
 @router.post("/runs/upload")
 @limiter.limit("10/minute")
 async def upload_runs(request: Request, files: list[UploadFile] = File(...)):
