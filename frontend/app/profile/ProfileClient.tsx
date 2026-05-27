@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useToast } from "@/app/components/Toast";
-import RunFileHelp from "@/app/components/RunFileHelp";
+import RunDropZone from "@/app/components/RunDropZone";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -47,8 +47,6 @@ export default function ProfileClient() {
   const [uploading, setUploading] = useState(false);
   const [uploadResults, setUploadResults] = useState<UploadResult[] | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchRuns = useCallback(async (p: number) => {
     setRunsLoading(true);
@@ -135,11 +133,6 @@ export default function ProfileClient() {
     }
   };
 
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    if (e.dataTransfer.files.length) handleUpload(e.dataTransfer.files);
-  };
 
   if (loading) {
     return (
@@ -169,48 +162,7 @@ export default function ProfileClient() {
       {/* Upload section */}
       <section>
         <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">Claim Runs</h2>
-        <div
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={onDrop}
-          onClick={() => fileRef.current?.click()}
-          className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center cursor-pointer transition-colors ${
-            dragOver
-              ? "border-[var(--border-accent)] bg-[var(--border-accent)]/5"
-              : "border-[var(--border-subtle)] hover:border-[var(--border-accent)]"
-          }`}
-        >
-          <input
-            ref={fileRef}
-            type="file"
-            multiple
-            accept=".run,.json"
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.length) handleUpload(e.target.files);
-              e.target.value = "";
-            }}
-          />
-          {uploading ? (
-            <p className="text-[var(--text-secondary)]">Uploading...</p>
-          ) : (
-            <p className="text-[var(--text-primary)] font-medium">
-              Drop .run files here or click to browse
-            </p>
-          )}
-        </div>
-
-        <div className="mt-4 space-y-3">
-          <a
-            href="https://www.overwolf.com/app/ptrlrd-spire_codex"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-[var(--accent-gold)] text-white hover:opacity-90 transition-opacity"
-          >
-            Download Overwolf Companion App
-          </a>
-          <RunFileHelp />
-        </div>
+        <RunDropZone onFiles={(files) => handleUpload(files)} uploading={uploading} />
 
         {uploadResults && uploadResults.length > 0 && (
           <div className="mt-3 space-y-1 max-h-40 overflow-y-auto">
