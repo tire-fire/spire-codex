@@ -1217,11 +1217,14 @@ def list_runs(
     seed: str | None = None,
     sort: str | None = None,
     build_id: str | None = None,
+    build_ids: str | None = None,
     players: str | None = None,
     game_mode: str | None = None,
     ascension: int | None = None,
     ascension_min: int | None = None,
     ascension_max: int | None = None,
+    card: str | None = None,
+    relic: str | None = None,
     today: bool = False,
     page: int = 1,
     limit: int = 50,
@@ -1240,7 +1243,9 @@ def list_runs(
         q["username"] = {"$regex": username, "$options": "i"}
     if seed:
         q["seed"] = {"$regex": seed, "$options": "i"}
-    if build_id:
+    if build_ids:
+        q["build_id"] = {"$in": [b for b in build_ids.split(",") if b]}
+    elif build_id:
         q["build_id"] = build_id
     if players == "single":
         q["player_count"] = 1
@@ -1257,6 +1262,10 @@ def list_runs(
         if ascension_max is not None:
             asc_range["$lte"] = ascension_max
         q["ascension"] = asc_range
+    if card:
+        q["deck.id"] = card.strip().upper().replace(" ", "_")
+    if relic:
+        q["relics.id"] = relic.strip().upper().replace(" ", "_")
     if today:
         today_start = datetime.now(timezone.utc).replace(
             hour=0, minute=0, second=0, microsecond=0

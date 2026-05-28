@@ -73,8 +73,10 @@ type Sort = "date" | "time_asc" | "time_desc" | "ascension_desc";
 // Parse `key:value` expressions out of a free-text query.
 // Returns extracted filters and the remaining free-text (after stripping
 // recognized key:value pairs).
+type QueryKey = "user" | "seed" | "char" | "asc" | "version" | "mode" | "result" | "players" | "card" | "relic";
+
 function parseQuery(q: string): {
-  filters: Partial<Record<"user" | "seed" | "char" | "asc" | "version" | "mode" | "result" | "players", string>>;
+  filters: Partial<Record<QueryKey, string>>;
   rest: string;
 } {
   const filters: Record<string, string> = {};
@@ -96,9 +98,25 @@ function parseQuery(q: string): {
     else if (["mode", "gamemode"].includes(key)) filters.mode = value;
     else if (["result", "win"].includes(key)) filters.result = value;
     else if (["players", "p"].includes(key)) filters.players = value;
+    else if (["card"].includes(key)) filters.card = value;
+    else if (["relic"].includes(key)) filters.relic = value;
     else restTokens.push(tok);
   }
   return { filters, rest: restTokens.join(" ").trim() };
+}
+
+// Expand a version expression to the list of build_ids it covers.
+// "v0.104.0-v0.106.0" → all versions between (inclusive), using the
+// already numeric-sorted `versions` list. A single version returns [it].
+function expandVersionRange(expr: string, versions: string[]): string[] {
+  const range = expr.split("-").map((s) => s.trim());
+  if (range.length !== 2) return versions.includes(expr) ? [expr] : [expr];
+  const [a, b] = range;
+  const ia = versions.indexOf(a);
+  const ib = versions.indexOf(b);
+  if (ia === -1 || ib === -1) return [expr];
+  const [lo, hi] = ia <= ib ? [ia, ib] : [ib, ia];
+  return versions.slice(lo, hi + 1);
 }
 
 export default function BrowseRunsClient() {
@@ -184,6 +202,8 @@ export default function BrowseRunsClient() {
     (queryFilters.mode === "daily" || queryFilters.mode === "custom" || queryFilters.mode === "standard"
       ? queryFilters.mode
       : "");
+  const effectiveCard = queryFilters.card || "";
+  const effectiveRelic = queryFilters.relic || "";
 
   // Reset page when any filter changes
   useEffect(() => {
@@ -216,7 +236,13 @@ export default function BrowseRunsClient() {
     if (effectiveWin) params.set("win", effectiveWin);
     if (effectiveUser) params.set("username", effectiveUser);
     if (effectiveSeed) params.set("seed", effectiveSeed);
-    if (effectiveBuildId) params.set("build_id", effectiveBuildId);
+    if (effectiveBuildId) {
+      if (effectiveBuildId.includes("-") && versions.length > 0) {
+        params.set("build_ids", expandVersionRange(effectiveBuildId, versions).join(","));
+      } else {
+        params.set("build_id", effectiveBuildId);
+      }
+    }
     if (effectivePlayers) params.set("players", effectivePlayers);
     if (effectiveAscension) {
       const asc = parseAscension(effectiveAscension);
@@ -224,6 +250,8 @@ export default function BrowseRunsClient() {
       if (asc.min !== undefined) params.set("ascension_min", String(asc.min));
       if (asc.max !== undefined) params.set("ascension_max", String(asc.max));
     }
+    if (effectiveCard) params.set("card", effectiveCard);
+    if (effectiveRelic) params.set("relic", effectiveRelic);
     if (effectiveGameMode === "daily_today") {
       params.set("game_mode", "daily");
       params.set("today", "true");
@@ -241,7 +269,7 @@ export default function BrowseRunsClient() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [effectiveChar, effectiveWin, effectiveUser, effectiveSeed, effectiveBuildId, effectivePlayers, effectiveGameMode, effectiveAscension, sort, page]);
+  }, [effectiveChar, effectiveWin, effectiveUser, effectiveSeed, effectiveBuildId, effectivePlayers, effectiveGameMode, effectiveAscension, effectiveCard, effectiveRelic, versions, sort, page]);
 
   function clearAll() {
     setQuery("");
@@ -278,11 +306,11 @@ export default function BrowseRunsClient() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder='Try: "user:bob asc:20 char:ironclad"'
+          placeholder='Try: "char:ironclad asc:10 relic:burning_blood"'
           className="w-full text-sm px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-gold)]"
         />
         <p className="mt-1.5 text-[10px] text-[var(--text-tertiary)]">
-          Expressions: <code>user:name</code>, <code>seed:abc</code>, <code>char:ironclad</code>, <code>asc:20</code> or <code>asc:3-4</code>, <code>version:v0.106.0</code>, <code>mode:daily</code>, <code>result:win</code>, <code>players:single</code>
+          Expressions: <code>user:name</code>, <code>char:ironclad</code>, <code>asc:10</code> or <code>asc:3-7</code>, <code>card:bash</code>, <code>relic:burning_blood</code>, <code>version:v0.106.0</code> or <code>version:v0.104.0-v0.106.0</code>, <code>seed:abc</code>, <code>mode:daily</code>, <code>result:win</code>, <code>players:single</code>
         </p>
       </div>
 
@@ -335,7 +363,7 @@ export default function BrowseRunsClient() {
           type="text"
           value={ascension}
           onChange={(e) => setAscension(e.target.value)}
-          placeholder="Ascension (e.g. 20, 3-4)"
+          placeholder="Ascension (e.g. 10, 3-7)"
           className="text-sm px-3 py-1.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-gold)]"
         />
 
