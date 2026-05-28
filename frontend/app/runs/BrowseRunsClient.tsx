@@ -299,8 +299,15 @@ export default function BrowseRunsClient() {
         </Link>
       </div>
 
-      <p className="text-sm text-[var(--text-muted)] mb-4">
-        {t("Search and filter every run submitted to Spire Codex.", lang)}
+      <p className="text-sm text-[var(--text-secondary)] mb-4">
+        <span className="font-semibold text-[var(--text-primary)]">Find any run.</span>{" "}
+        Type filters into the search bar or use the dropdowns below. Combine anything:{" "}
+        <code className="text-[var(--accent-gold)]">char:ironclad asc:5-10 relic:akabeko</code>{" "}
+        finds high-ascension Ironclad runs that had Akabeko. Use{" "}
+        <code className="text-[var(--accent-gold)]">card:bash,anger</code> to require multiple cards,{" "}
+        <code className="text-[var(--accent-gold)]">asc:3-7</code> for a range, and{" "}
+        <code className="text-[var(--accent-gold)]">version:v0.104.0-v0.106.0</code> to span patches.
+        Click any run to see the full breakdown.
       </p>
 
       {/* Search bar */}
