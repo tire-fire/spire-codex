@@ -43,11 +43,12 @@ _PREFIX_TO_TYPE = {
 
 # Codex Score formula constants — see _compute_score for derivation.
 # PRIOR_WEIGHT is how many "virtual baseline picks" we add to every
-# entity to shrink low-N noise toward the global mean. 50 means a
+# entity to shrink low-N noise toward the baseline. 50 means a
 # 5-pick perfect-record card lands ~mid-tier, not S-tier. SCALE_RANGE
-# is the win-rate delta (vs baseline) that maps to the edges of the
-# 0-100 scale; ±15pp covers the full real-world spread without making
-# moderate over/underperformers saturate.
+# is the win-rate delta (vs the per-type baseline) that maps to the
+# edges of the 0-100 scale; ±15pp covers the real-world spread of card/
+# relic win rates around the per-type average without saturating
+# moderate over/underperformers.
 _SCORE_PRIOR_WEIGHT = 50
 _SCORE_SCALE_RANGE = 0.15
 
@@ -64,6 +65,13 @@ _RUNS_DIR = (
 _lock = threading.Lock()
 _cache: dict[tuple[str, str], dict[str, Any]] = {}
 _global_totals: dict[str, int] = {"total_runs": 0, "total_wins": 0}
+# Pick-weighted average win-rate per entity type (cards/relics/potions).
+# Used as the scoring baseline instead of the global run win rate: an
+# entity is graded against the typical entity OF ITS TYPE, not against
+# the global run win rate. The global rate is dragged down by abandoned
+# / early-quit runs that contain almost no entities, which pushed nearly
+# every card and relic above baseline and piled everything into S-tier.
+_type_baselines: dict[str, float] = {}
 _cache_built_at: float = 0.0
 _building: bool = False
 
@@ -203,9 +211,23 @@ def _build_cache() -> None:
                 agg["last_submitted_at"] = submitted
                 agg["last_run_hash"] = run_hash
 
-    global _cache, _cache_built_at, _global_totals
+    # Per-type baselines: pick-weighted average win rate across all
+    # entities of each type. Computed once per rebuild so scoring reads
+    # are O(1).
+    type_totals: dict[str, dict[str, int]] = {}
+    for (etype, _), agg in new_cache.items():
+        tt = type_totals.setdefault(etype, {"wins": 0, "picks": 0})
+        tt["wins"] += agg["wins"]
+        tt["picks"] += agg["picks"]
+    new_type_baselines = {
+        etype: (tt["wins"] / tt["picks"]) if tt["picks"] else 0.5
+        for etype, tt in type_totals.items()
+    }
+
+    global _cache, _cache_built_at, _global_totals, _type_baselines
     _cache = new_cache
     _global_totals = new_totals
+    _type_baselines = new_type_baselines
     _cache_built_at = time.time()
     logger.info(
         "run-entity-stats cache rebuilt: %d entities across %d runs",
@@ -240,6 +262,15 @@ def _baseline_win_rate() -> float:
     return _global_totals["total_wins"] / total
 
 
+def _type_baseline(entity_type: str) -> float:
+    """Pick-weighted average win rate across entities of one type.
+
+    This is the scoring baseline: an entity is graded relative to the
+    typical entity of its type. Falls back to the global run win rate
+    if the type hasn't been aggregated yet (cold cache)."""
+    return _type_baselines.get(entity_type, _baseline_win_rate())
+
+
 def _compute_score(wins: int, picks: int, baseline: float) -> int | None:
     """0-100 Codex Score for an entity.
 
@@ -268,7 +299,7 @@ def get_all_entity_scores(entity_type: str) -> dict[str, dict[str, Any]]:
     of N round-trips to /stats/{type}/{id}.
     """
     _maybe_rebuild()
-    baseline = _baseline_win_rate()
+    baseline = _type_baseline(entity_type)
     out: dict[str, dict[str, Any]] = {}
     for (etype, eid), agg in _cache.items():
         if etype != entity_type:
@@ -314,7 +345,7 @@ def get_entity_stats(entity_type: str, entity_id: str) -> dict[str, Any] | None:
         )
     ]
     total_runs = _global_totals["total_runs"]
-    baseline = _baseline_win_rate()
+    baseline = _type_baseline(entity_type)
     return {
         "entity_type": entity_type,
         "entity_id": entity_id.upper(),
