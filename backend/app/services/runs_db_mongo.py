@@ -1220,6 +1220,8 @@ def list_runs(
     players: str | None = None,
     game_mode: str | None = None,
     ascension: int | None = None,
+    ascension_min: int | None = None,
+    ascension_max: int | None = None,
     today: bool = False,
     page: int = 1,
     limit: int = 50,
@@ -1248,6 +1250,13 @@ def list_runs(
         q["game_mode"] = game_mode
     if ascension is not None:
         q["ascension"] = ascension
+    elif ascension_min is not None or ascension_max is not None:
+        asc_range: dict[str, int] = {}
+        if ascension_min is not None:
+            asc_range["$gte"] = ascension_min
+        if ascension_max is not None:
+            asc_range["$lte"] = ascension_max
+        q["ascension"] = asc_range
     if today:
         today_start = datetime.now(timezone.utc).replace(
             hour=0, minute=0, second=0, microsecond=0

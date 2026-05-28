@@ -48,6 +48,23 @@ function formatTimeShort(s: number): string {
   return `${m}m`;
 }
 
+// Parse an ascension value: "20" → exact, "3-4" → range, "3+" → min.
+function parseAscension(value: string): { exact?: number; min?: number; max?: number } {
+  const v = value.trim();
+  if (!v) return {};
+  const range = /^(\d+)\s*-\s*(\d+)$/.exec(v);
+  if (range) {
+    const lo = parseInt(range[1], 10);
+    const hi = parseInt(range[2], 10);
+    return { min: Math.min(lo, hi), max: Math.max(lo, hi) };
+  }
+  const min = /^(\d+)\s*\+$/.exec(v);
+  if (min) return { min: parseInt(min[1], 10) };
+  const num = parseInt(v, 10);
+  if (!Number.isNaN(num)) return { exact: num };
+  return {};
+}
+
 type Mode = "" | "single" | "multi";
 type GameMode = "" | "standard" | "daily" | "daily_today" | "custom";
 type WinFilter = "" | "true" | "false";
@@ -201,7 +218,12 @@ export default function BrowseRunsClient() {
     if (effectiveSeed) params.set("seed", effectiveSeed);
     if (effectiveBuildId) params.set("build_id", effectiveBuildId);
     if (effectivePlayers) params.set("players", effectivePlayers);
-    if (effectiveAscension) params.set("ascension", effectiveAscension);
+    if (effectiveAscension) {
+      const asc = parseAscension(effectiveAscension);
+      if (asc.exact !== undefined) params.set("ascension", String(asc.exact));
+      if (asc.min !== undefined) params.set("ascension_min", String(asc.min));
+      if (asc.max !== undefined) params.set("ascension_max", String(asc.max));
+    }
     if (effectiveGameMode === "daily_today") {
       params.set("game_mode", "daily");
       params.set("today", "true");
@@ -260,7 +282,7 @@ export default function BrowseRunsClient() {
           className="w-full text-sm px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-gold)]"
         />
         <p className="mt-1.5 text-[10px] text-[var(--text-tertiary)]">
-          Expressions: <code>user:name</code>, <code>seed:abc</code>, <code>char:ironclad</code>, <code>asc:20</code>, <code>version:v0.106.0</code>, <code>mode:daily</code>, <code>result:win</code>, <code>players:single</code>
+          Expressions: <code>user:name</code>, <code>seed:abc</code>, <code>char:ironclad</code>, <code>asc:20</code> or <code>asc:3-4</code>, <code>version:v0.106.0</code>, <code>mode:daily</code>, <code>result:win</code>, <code>players:single</code>
         </p>
       </div>
 
@@ -310,12 +332,10 @@ export default function BrowseRunsClient() {
         </select>
 
         <input
-          type="number"
+          type="text"
           value={ascension}
           onChange={(e) => setAscension(e.target.value)}
-          placeholder="Ascension"
-          min={0}
-          max={20}
+          placeholder="Ascension (e.g. 20, 3-4)"
           className="text-sm px-3 py-1.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-gold)]"
         />
 
