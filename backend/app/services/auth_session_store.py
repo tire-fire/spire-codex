@@ -108,6 +108,11 @@ def get_session(sid: str) -> dict | None:
             return None
         created = doc.get("created_at")
         if isinstance(created, datetime):
+            # pymongo returns naive (UTC) datetimes by default; make it
+            # tz-aware before subtracting from an aware now, otherwise
+            # "can't subtract offset-naive and offset-aware datetimes".
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
             age = (datetime.now(timezone.utc) - created).total_seconds()
             if age > SESSION_TTL_SECONDS:
                 _coll().delete_one({"_id": sid})
