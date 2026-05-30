@@ -150,6 +150,31 @@ def _ensure_indexes(coll) -> None:
             ("run_time", ASCENDING),
         ]
     )
+    # Leaderboard sort indexes. The existing (character, win, ascension) helps
+    # filter + sort for the highest_ascension category, but the *fastest*
+    # category sorts by run_time, so without these the query materialized
+    # every win for a character and sorted in memory -- 10+ seconds in prod.
+    coll.create_index(
+        [("character", ASCENDING), ("win", ASCENDING), ("run_time", ASCENDING)],
+        name="char_win_runtime",
+    )
+    coll.create_index(
+        [
+            ("character", ASCENDING),
+            ("win", ASCENDING),
+            ("ascension", DESCENDING),
+            ("run_time", ASCENDING),
+        ],
+        name="char_win_asc_runtime",
+    )
+    coll.create_index(
+        [("win", ASCENDING), ("run_time", ASCENDING)],
+        name="win_runtime",
+    )
+    coll.create_index(
+        [("game_mode", ASCENDING), ("win", ASCENDING), ("run_time", ASCENDING)],
+        name="mode_win_runtime",
+    )
 
 
 # ── helpers (mirrors of the sqlite module) ──────────────────────────────
