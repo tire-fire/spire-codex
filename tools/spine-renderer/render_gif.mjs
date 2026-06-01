@@ -54,7 +54,10 @@ async function main() {
   const skelDir = path.resolve(process.argv[2] || "");
   const outputPath = path.resolve(process.argv[3] || "output.gif");
   const outputWidth = parseInt(process.argv[4] || "256");
-  const outputHeight = parseInt(process.argv[5] || "256");
+  // Fall back to the width arg before the default so
+  //   node render_gif.mjs <dir> <out> 512
+  // produces a 512x512 (square) frame rather than 512x256.
+  const outputHeight = parseInt(process.argv[5] || process.argv[4] || "256");
   const fpsArg = process.argv.find(a => a.startsWith("--fps="));
   const fps = fpsArg ? parseInt(fpsArg.split("=")[1]) : 20;
   const whiteMode = process.argv.includes("--white");

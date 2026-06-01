@@ -186,7 +186,7 @@ async function renderSkel(page, skelPath, outPath, outputWidth, outputHeight) {
       outputWidth / scale, outputHeight / scale
     );
 
-    gl.viewport(0, 0, outputWidth, outputWidth);
+    gl.viewport(0, 0, outputWidth, outputHeight);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.enable(gl.BLEND);
@@ -217,8 +217,8 @@ async function renderSkel(page, skelPath, outPath, outputWidth, outputHeight) {
     // Flip vertically
     const flipped = new Uint8Array(pixels.length);
     const rowSize = outputWidth * 4;
-    for (let y = 0; y < outputWidth; y++) {
-      flipped.set(pixels.subarray((outputWidth - 1 - y) * rowSize, (outputWidth - y) * rowSize), y * rowSize);
+    for (let y = 0; y < outputHeight; y++) {
+      flipped.set(pixels.subarray((outputHeight - 1 - y) * rowSize, (outputHeight - y) * rowSize), y * rowSize);
     }
 
     // Check if anything was actually rendered
@@ -226,7 +226,7 @@ async function renderSkel(page, skelPath, outPath, outputWidth, outputHeight) {
     for (let i = 3; i < flipped.length; i += 4) {
       if (flipped[i] > 0) nonTransparent++;
     }
-    if (nonTransparent < outputWidth * outputWidth * 0.001) {
+    if (nonTransparent < outputWidth * outputHeight * 0.001) {
       return { error: "no bounds (blank render)" };
     }
 

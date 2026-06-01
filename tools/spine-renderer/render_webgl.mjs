@@ -344,9 +344,11 @@ async function main() {
 
     const sw = maxX - minX;
     const sh = maxY - minY;
-    // TODO: Generalize this.
-    const padding = outputWidth * 0.05;
-    const avail = outputWidth - padding * 2;
+    // Use the smaller dimension as the padding/fit reference so non-square
+    // outputs keep the skeleton inside the frame in both axes.
+    const minDim = Math.min(outputWidth, outputHeight);
+    const padding = minDim * 0.05;
+    const avail = minDim - padding * 2;
     const scale = Math.min(avail / sw, avail / sh);
 
     const cx = (minX + maxX) / 2;

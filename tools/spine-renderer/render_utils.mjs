@@ -54,14 +54,14 @@ export function renderSkeleton(skeleton, renderWidth, renderHeight, scale, minX,
     // OOM — canvas state corrupted
   }
 
-  if (bufferOk && nonTransparent > renderWidth * renderWidth * 0.01 && nonTransparent > renderHeight * renderHeight * 0.01) {
+  if (bufferOk && nonTransparent > renderWidth * renderHeight * 0.01) {
     // Normal render succeeded — copy pixels to fresh canvas to be safe
     return imgData;
   }
 
   // Fallback: slot-by-slot compositing
   console.log("    (using slot-by-slot fallback renderer)");
-  return renderSlotBySlot(skeleton, renderWidth, scale, cx, cy);
+  return renderSlotBySlot(skeleton, renderWidth, renderHeight, scale, cx, cy);
 }
 
 function renderSlotBySlot(skeleton, renderWidth, renderHeight, scale, cx, cy) {
