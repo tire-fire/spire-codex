@@ -141,6 +141,18 @@ http {
           rewrite ^/static/images/relics/(.+)\.(.+)$ /static/images/characters/character_icon_$1.$2 last;
       }
 
+      # Legacy image URLs from before the CDN cut-over. The slim backend
+      # Dockerfile stopped shipping .webp files; assets live on Cloudflare
+      # R2 at cdn.spire-codex.com/<category>/<file> now. Old links still
+      # hit this origin (browser tabs, wiki/blog embeds, outdated client
+      # versions); 301 them onto the CDN so they keep resolving. Sits
+      # AFTER the character-icon rewrite above so a Compendium request
+      # for /static/images/relics/<char>.webp gets rewritten first, then
+      # redirected from the corrected /static/images/characters/... path.
+      location ~ ^/static/images/(.+)$ {
+          return 301 https://cdn.spire-codex.com/$1;
+      }
+
       location /static/ {
           proxy_pass http://spire-codex-backend:8000;
           proxy_http_version 1.1;
