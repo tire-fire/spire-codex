@@ -50,14 +50,19 @@ const CHARACTERS: { id: string; name: string; tagline: string }[] = [
   { id: "regent", name: "Regent", tagline: "Court attendants, decree powers, prestige scaling." },
 ];
 
-interface EntityScore {
-  entity_id: string;
+// Matches the shape returned by /api/runs/scores/{entity_type}
+// (run_entity_stats.get_all_entity_scores): the response is a dict
+// keyed by entity_id, and each value carries score + raw counts +
+// already-percentaged win_rate (e.g. 50.8 means 50.8%). entity_id
+// is the key, not a field on the value, so the SSR has to thread it
+// in when flattening to an array.
+interface ScoreEntry {
   score: number | null;
-  letter: string | null;
-  pick_rate: number;
   win_rate: number;
   picks: number;
+  wins: number;
 }
+type ScoreRow = ScoreEntry & { entity_id: string };
 
 export default async function CardsPage() {
   // Fetch the catalog + Codex Scores in parallel so the server-rendered
@@ -67,12 +72,20 @@ export default async function CardsPage() {
   // response.
   const [cards, scoresRaw] = await Promise.all([
     fetchJSON<Card[]>(`${API}/api/cards?lang=eng`, []),
-    fetchJSON<Record<string, EntityScore>>(
+    fetchJSON<Record<string, ScoreEntry>>(
       `${API}/api/runs/scores/cards`,
       {},
     ),
   ]);
-  const scores: EntityScore[] = Object.values(scoresRaw);
+  // The endpoint keys the score by entity_id; carry that through onto
+  // each row so the .map below can look the card up. Previously the
+  // page did Object.values(scoresRaw) and then read s.entity_id, which
+  // threw "Cannot read properties of undefined (reading 'toLowerCase')"
+  // and crashed the SSR render, which is why every count fell back to
+  // the build-time empty prerender.
+  const scores: ScoreRow[] = Object.entries(scoresRaw).map(
+    ([entity_id, s]) => ({ ...s, entity_id }),
+  );
 
   const totalCards = cards.length;
   const cardsByCharacter = CHARACTERS.map((char) => ({
@@ -91,10 +104,11 @@ export default async function CardsPage() {
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     .slice(0, 24)
     .map((s) => {
+      if (typeof s.entity_id !== "string") return null;
       const card = cardById.get(s.entity_id.toLowerCase());
       return card ? { card, score: s } : null;
     })
-    .filter((x): x is { card: Card; score: EntityScore } => x !== null)
+    .filter((x): x is { card: Card; score: ScoreRow } => x !== null)
     .slice(0, 6);
 
   const faq = [
@@ -206,8 +220,8 @@ export default async function CardsPage() {
                     )}
                   </div>
                   <div className="text-xs text-[var(--text-muted)] mt-1">
-                    {(score.win_rate * 100).toFixed(1)}% win ·{" "}
-                    {(score.pick_rate * 100).toFixed(1)}% pick
+                    {score.win_rate.toFixed(1)}% win ·{" "}
+                    {score.picks.toLocaleString()} picks
                   </div>
                 </Link>
               </li>
