@@ -109,8 +109,10 @@ async def _send_via_resend(
     if not api_key:
         raise RuntimeError("RESEND_API_KEY not set")
 
-    sender = os.environ.get("UNINSTALL_FROM", "Spire Codex <onboarding@resend.dev>")
-    recipient = os.environ.get("UNINSTALL_FEEDBACK_TO", "feedback@spire-codex.com")
+    sender = os.environ.get(
+        "UNINSTALL_FORWARD_FROM", "Spire Codex <onboarding@resend.dev>"
+    )
+    recipient = os.environ.get("UNINSTALL_FORWARD_TO", "feedback@spire-codex.com")
 
     payload: dict = {
         "from": sender,
