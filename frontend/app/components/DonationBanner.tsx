@@ -203,14 +203,56 @@ function AncientBanner({ banner, onDismiss }: { banner: RotatingBanner; onDismis
   );
 }
 
+function TierListBanner({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="bg-sky-900/40 border-b border-sky-700/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <img
+            src={imageUrl("/static/images/misc/ancients/tanx.webp")}
+            alt="Tanx"
+            className="w-8 h-8 object-contain flex-shrink-0 hidden sm:block"
+            crossOrigin="anonymous"
+          />
+          <p className="text-sm text-sky-200">
+            <span className="mr-2 rounded bg-sky-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              New
+            </span>
+            The{" "}
+            <Link
+              href="/tier-list-maker"
+              className="font-medium text-sky-100 underline hover:text-white transition-colors"
+            >
+              Tier List Maker
+            </Link>{" "}
+            is here — rank cards, relics, monsters and more, then share your list.
+          </p>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="text-sky-400 hover:text-sky-200 transition-colors flex-shrink-0 text-lg leading-none"
+          aria-label="Dismiss"
+        >
+          &times;
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function DonationBanner() {
-  const [banner, setBanner] = useState<"none" | "kofi" | "rotating">("none");
+  const [banner, setBanner] = useState<
+    "none" | "tierlist" | "kofi" | "rotating"
+  >("none");
   const [rotatingIndex, setRotatingIndex] = useState(0);
 
   useEffect(() => {
+    const tierlistDismissed = localStorage.getItem("tierlist-announce-dismissed");
     const kofiDismissed = localStorage.getItem("donation-banner-dismissed");
     const rotatingDismissed = sessionStorage.getItem("community-banner-dismissed");
-    if (!kofiDismissed) {
+    if (!tierlistDismissed) {
+      setBanner("tierlist");
+    } else if (!kofiDismissed) {
       setBanner("kofi");
     } else if (!rotatingDismissed) {
       // Pick a random banner for this session
@@ -218,6 +260,20 @@ export default function DonationBanner() {
       setBanner("rotating");
     }
   }, []);
+
+  function dismissTierlist() {
+    localStorage.setItem("tierlist-announce-dismissed", "1");
+    const kofiDismissed = localStorage.getItem("donation-banner-dismissed");
+    const rotatingDismissed = sessionStorage.getItem("community-banner-dismissed");
+    if (!kofiDismissed) {
+      setBanner("kofi");
+    } else if (!rotatingDismissed) {
+      setRotatingIndex(Math.floor(Math.random() * ROTATING_BANNERS.length));
+      setBanner("rotating");
+    } else {
+      setBanner("none");
+    }
+  }
 
   function dismissKofi() {
     localStorage.setItem("donation-banner-dismissed", "1");
@@ -235,6 +291,8 @@ export default function DonationBanner() {
     setBanner("none");
   }
 
+  if (banner === "tierlist")
+    return <TierListBanner onDismiss={dismissTierlist} />;
   if (banner === "kofi") return <KofiBanner onDismiss={dismissKofi} />;
   if (banner === "rotating")
     return <AncientBanner banner={ROTATING_BANNERS[rotatingIndex]} onDismiss={dismissRotating} />;

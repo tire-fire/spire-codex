@@ -101,6 +101,7 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [savedShareId, setSavedShareId] = useState<string | undefined>(initial?.share_id);
   const savedIdRef = useRef<string | undefined>(initial?.id);
   // The branded region (tier rows + Spire Codex header) captured on export.
@@ -428,10 +429,16 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
             className="flex-1 min-w-[200px] rounded bg-neutral-800 px-2 py-1 text-sm text-neutral-200"
           />
           <button
-            onClick={() => navigator.clipboard?.writeText(shareUrl)}
-            className="rounded bg-neutral-700 px-3 py-1 text-sm text-white hover:bg-neutral-600"
+            onClick={() => {
+              navigator.clipboard?.writeText(shareUrl);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}
+            className={`rounded px-3 py-1 text-sm text-white ${
+              copied ? "bg-green-600" : "bg-neutral-700 hover:bg-neutral-600"
+            }`}
           >
-            Copy
+            {copied ? "Copied!" : "Copy"}
           </button>
         </div>
       )}
