@@ -250,6 +250,7 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
     setSaving(true);
     setError(null);
     try {
+      const isCreate = !savedIdRef.current;
       const payload = buildPayload();
       let result: TierList;
       if (savedIdRef.current) {
@@ -259,17 +260,27 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
       }
       savedIdRef.current = result.id;
       setSavedShareId(result.share_id);
-      // Render a preview for the share/OG card. Best-effort and non-blocking —
-      // the save itself already succeeded; a failed snapshot just means no
-      // unfurl image until the next save.
-      if (result.id) {
+
+      if (isCreate) {
+        // First save: render the preview now (so the OG card is ready), then
+        // land on the public /shared/ URL — that's the one people should share.
+        if (result.id) {
+          const url = await captureDataUrl(1).catch(() => null);
+          if (url) await saveTierListImage(result.id, url).catch(() => {});
+        }
+        if (result.share_id) {
+          router.push(`/tier-list-maker/shared/${result.share_id}`);
+        } else if (result.id) {
+          router.replace(`/tier-list-maker/${result.id}`);
+        }
+      } else if (result.id) {
+        // Editing an existing list: refresh the preview in the background and
+        // stay in the editor.
         const id = result.id;
         captureDataUrl(1)
           .then((url) => (url ? saveTierListImage(id, url) : undefined))
           .catch(() => {});
       }
-      // Move to the canonical edit URL without a reload so later saves update.
-      if (result.id) router.replace(`/tier-list-maker/${result.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save");
     } finally {

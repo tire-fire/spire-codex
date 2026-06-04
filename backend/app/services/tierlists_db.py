@@ -246,15 +246,20 @@ def update_tierlist(tierlist_id: str, user_id: str, fields: dict) -> dict | None
     return _to_dict(doc, include_owner_id=True) if doc else None
 
 
-def delete_tierlist(tierlist_id: str, user_id: str) -> bool:
-    from . import r2_storage
-
+def delete_tierlist(tierlist_id: str, user_id: str) -> str | None:
+    """Delete owner-scoped. Returns the deleted doc's share_id so the caller
+    can clean up its R2 preview out of band; None if nothing matched."""
     oid = _oid(tierlist_id)
     if oid is None:
-        return False
+        return None
     coll = _get_collection()
-    doc = coll.find_one({"_id": oid, "user_id": ObjectId(user_id)}, {"share_id": 1})
-    result = coll.delete_one({"_id": oid, "user_id": ObjectId(user_id)})
-    if result.deleted_count and doc and doc.get("share_id"):
-        r2_storage.delete_preview(doc["share_id"])
-    return result.deleted_count > 0
+    doc = coll.find_one_and_delete({"_id": oid, "user_id": ObjectId(user_id)})
+    return (doc or {}).get("share_id")
+
+
+def cleanup_preview(share_id: str) -> None:
+    """Delete a removed list's R2 preview. Meant to run as a background task
+    so the delete response doesn't wait on the network round-trip."""
+    from . import r2_storage
+
+    r2_storage.delete_preview(share_id)

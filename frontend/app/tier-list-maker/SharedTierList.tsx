@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import TierListView from "./TierListView";
+import { useAuth } from "../contexts/AuthContext";
 import { fetchEntities, getSharedTierList } from "./api";
 import { ENTITY_LABEL } from "./types";
 import type { TierEntity, TierList } from "./types";
 
 export default function SharedTierList({ shareId }: { shareId: string }) {
+  const { user } = useAuth();
   const [list, setList] = useState<TierList | null>(null);
   const [entities, setEntities] = useState<TierEntity[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -61,12 +63,22 @@ export default function SharedTierList({ shareId }: { shareId: string }) {
         </p>
       </div>
       <TierListView list={list} entities={entityMap} />
-      <Link
-        href="/tier-list-maker"
-        className="mt-6 inline-block rounded bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-500"
-      >
-        Make your own
-      </Link>
+      <div className="mt-6 flex flex-wrap gap-3">
+        {user && user.username === list.owner_username && list.id && (
+          <Link
+            href={`/tier-list-maker/${list.id}`}
+            className="inline-block rounded border border-neutral-600 px-4 py-2 font-semibold text-neutral-200 hover:border-neutral-400 hover:text-white"
+          >
+            Edit this list
+          </Link>
+        )}
+        <Link
+          href="/tier-list-maker"
+          className="inline-block rounded bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-500"
+        >
+          Make your own
+        </Link>
+      </div>
     </div>
   );
 }
