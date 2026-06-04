@@ -132,7 +132,7 @@ const ROTATING_BANNERS: RotatingBanner[] = [
   },
 ];
 
-function KofiBanner({ onDismiss }: { onDismiss: () => void }) {
+function PatreonBanner({ onDismiss }: { onDismiss: () => void }) {
   return (
     <div className="bg-emerald-900/40 border-b border-emerald-700/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-4">
@@ -147,12 +147,12 @@ function KofiBanner({ onDismiss }: { onDismiss: () => void }) {
             &ldquo;I haven&apos;t had a visitor in a millennia! If you wish to
             support Spire Codex, consider{" "}
             <a
-              href="https://ko-fi.com/yitsy"
+              href="https://www.patreon.com/cw/SpireCodex"
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-emerald-100 underline hover:text-white transition-colors"
             >
-              donating on Ko-Fi
+              supporting us on Patreon
             </a>
             . Servants! Fetch tea for{" "}
             <Link
@@ -242,18 +242,18 @@ function TierListBanner({ onDismiss }: { onDismiss: () => void }) {
 
 export default function DonationBanner() {
   const [banner, setBanner] = useState<
-    "none" | "tierlist" | "kofi" | "rotating"
+    "none" | "tierlist" | "patreon" | "rotating"
   >("none");
   const [rotatingIndex, setRotatingIndex] = useState(0);
 
   useEffect(() => {
     const tierlistDismissed = localStorage.getItem("tierlist-announce-dismissed");
-    const kofiDismissed = localStorage.getItem("donation-banner-dismissed");
+    const patreonDismissed = localStorage.getItem("donation-banner-dismissed");
     const rotatingDismissed = sessionStorage.getItem("community-banner-dismissed");
     if (!tierlistDismissed) {
       setBanner("tierlist");
-    } else if (!kofiDismissed) {
-      setBanner("kofi");
+    } else if (!patreonDismissed) {
+      setBanner("patreon");
     } else if (!rotatingDismissed) {
       // Pick a random banner for this session
       setRotatingIndex(Math.floor(Math.random() * ROTATING_BANNERS.length));
@@ -263,10 +263,10 @@ export default function DonationBanner() {
 
   function dismissTierlist() {
     localStorage.setItem("tierlist-announce-dismissed", "1");
-    const kofiDismissed = localStorage.getItem("donation-banner-dismissed");
+    const patreonDismissed = localStorage.getItem("donation-banner-dismissed");
     const rotatingDismissed = sessionStorage.getItem("community-banner-dismissed");
-    if (!kofiDismissed) {
-      setBanner("kofi");
+    if (!patreonDismissed) {
+      setBanner("patreon");
     } else if (!rotatingDismissed) {
       setRotatingIndex(Math.floor(Math.random() * ROTATING_BANNERS.length));
       setBanner("rotating");
@@ -275,7 +275,7 @@ export default function DonationBanner() {
     }
   }
 
-  function dismissKofi() {
+  function dismissPatreon() {
     localStorage.setItem("donation-banner-dismissed", "1");
     const rotatingDismissed = sessionStorage.getItem("community-banner-dismissed");
     if (!rotatingDismissed) {
@@ -293,7 +293,7 @@ export default function DonationBanner() {
 
   if (banner === "tierlist")
     return <TierListBanner onDismiss={dismissTierlist} />;
-  if (banner === "kofi") return <KofiBanner onDismiss={dismissKofi} />;
+  if (banner === "patreon") return <PatreonBanner onDismiss={dismissPatreon} />;
   if (banner === "rotating")
     return <AncientBanner banner={ROTATING_BANNERS[rotatingIndex]} onDismiss={dismissRotating} />;
   return null;
