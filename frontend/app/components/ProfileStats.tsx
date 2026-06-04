@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cachedFetch } from "@/lib/fetch-cache";
 import { imageUrl } from "@/lib/image-url";
 import { useLangPrefix } from "@/lib/use-lang-prefix";
-import ProfileTierLists from "./ProfileTierLists";
+import MyTierLists from "../tier-list-maker/MyTierLists";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -585,7 +585,19 @@ export default function ProfileStats({
         </div>
       )}
 
-      {tab === "tierlists" && <ProfileTierLists />}
+      {tab === "tierlists" && (
+        <div>
+          <div className="mb-1 flex items-center justify-end">
+            <Link
+              href="/tier-list-maker"
+              className="text-sm text-sky-400 hover:underline"
+            >
+              New tier list
+            </Link>
+          </div>
+          <MyTierLists />
+        </div>
+      )}
     </div>
   );
 }

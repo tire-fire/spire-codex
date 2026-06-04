@@ -11,7 +11,7 @@ URLs from the existing /api/{cards,relics,potions,monsters} endpoints.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ..services import tierlists_db
@@ -208,8 +208,13 @@ def update_my_tierlist(tierlist_id: str, payload: TierListUpdate, request: Reque
 
 
 @router.delete("/{tierlist_id}")
-def delete_my_tierlist(tierlist_id: str, request: Request):
+def delete_my_tierlist(
+    tierlist_id: str, request: Request, background_tasks: BackgroundTasks
+):
     user_id = _owner_id(request)
-    if not tierlists_db.delete_tierlist(tierlist_id, user_id):
+    share_id = tierlists_db.delete_tierlist(tierlist_id, user_id)
+    if not share_id:
         raise HTTPException(status_code=404, detail="Tier list not found")
+    # R2 cleanup off the request path so the delete returns immediately.
+    background_tasks.add_task(tierlists_db.cleanup_preview, share_id)
     return {"success": True}
