@@ -107,6 +107,7 @@ export interface Character {
   quotes: Record<string, string> | null;
   dialogues: CharacterDialogue[] | null;
   image_url: string | null;
+  animation_url: string | null;
 }
 
 export interface MerchantPrice {
@@ -375,6 +376,7 @@ export interface Badge {
 export interface Epoch {
   id: string;
   title: string;
+  image_url: string | null;
   description: string | null;
   era: string;
   era_name: string | null;

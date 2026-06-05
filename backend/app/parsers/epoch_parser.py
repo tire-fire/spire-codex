@@ -4,7 +4,12 @@ import json
 import re
 from pathlib import Path
 
-from parser_paths import DECOMPILED, loc_dir as _loc_dir, data_dir as _data_dir
+from parser_paths import (
+    DECOMPILED,
+    loc_dir as _loc_dir,
+    data_dir as _data_dir,
+    resolve_image_url,
+)
 
 EPOCHS_DIR = DECOMPILED / "MegaCrit.Sts2.Core.Timeline.Epochs"
 STORIES_DIR = DECOMPILED / "MegaCrit.Sts2.Core.Timeline.Stories"
@@ -268,6 +273,11 @@ def parse_single_epoch(
         "id": epoch_id,
         "slug": slug,
         "title": title,
+        # Epoch portrait illustration. The game ships final art for some
+        # epochs and placeholder art for the rest; sync-images flattens
+        # both into images/.../epochs/ with the final one winning, keyed
+        # by the lowercased epoch id (e.g. NECROBINDER5_EPOCH -> the_giant).
+        "image_url": resolve_image_url("epochs", epoch_id.lower()),
         "era": era,
         "era_name": None,
         "era_year": None,
