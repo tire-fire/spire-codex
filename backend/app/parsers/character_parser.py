@@ -184,9 +184,13 @@ def parse_character(
         "quotes": quotes if quotes else None,
         "dialogues": dialogues if dialogues else None,
         "image_url": f"/static/images/characters/char_select_{char_id.lower()}.webp",
-        # Looping animated portrait (Spine idle), rendered per beta version.
-        # Null when no animation has been rendered for this character.
-        "animation_url": resolve_animation_url("characters", char_id.lower()),
+        # Looping animated portrait, rendered per beta version. Prefer the
+        # character's signature animation (e.g. the Defect power-up) over a
+        # plain idle when both exist. Null when nothing has been rendered.
+        "animation_url": (
+            resolve_animation_url("characters", f"{char_id.lower()}_power_up")
+            or resolve_animation_url("characters", f"{char_id.lower()}_idle")
+        ),
     }
 
 

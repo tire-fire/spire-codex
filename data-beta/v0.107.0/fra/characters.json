@@ -441,7 +441,7 @@
       }
     ],
     "image_url": "/static/images/characters/char_select_defect.webp",
-    "animation_url": "/static/images/beta/v0.107.0/characters/defect.webp"
+    "animation_url": "/static/images/beta/v0.107.0/characters/defect_power_up.webp"
   },
   {
     "id": "IRONCLAD",
@@ -854,7 +854,7 @@
       }
     ],
     "image_url": "/static/images/characters/char_select_ironclad.webp",
-    "animation_url": "/static/images/beta/v0.107.0/characters/ironclad.webp"
+    "animation_url": "/static/images/beta/v0.107.0/characters/ironclad_idle.webp"
   },
   {
     "id": "NECROBINDER",
@@ -1369,7 +1369,7 @@
       }
     ],
     "image_url": "/static/images/characters/char_select_necrobinder.webp",
-    "animation_url": "/static/images/beta/v0.107.0/characters/necrobinder.webp"
+    "animation_url": "/static/images/beta/v0.107.0/characters/necrobinder_idle.webp"
   },
   {
     "id": "REGENT",
@@ -1878,7 +1878,7 @@
       }
     ],
     "image_url": "/static/images/characters/char_select_regent.webp",
-    "animation_url": "/static/images/beta/v0.107.0/characters/regent.webp"
+    "animation_url": "/static/images/beta/v0.107.0/characters/regent_idle.webp"
   },
   {
     "id": "SILENT",
@@ -2325,6 +2325,6 @@
       }
     ],
     "image_url": "/static/images/characters/char_select_silent.webp",
-    "animation_url": "/static/images/beta/v0.107.0/characters/silent.webp"
+    "animation_url": "/static/images/beta/v0.107.0/characters/silent_idle.webp"
   }
 ]
