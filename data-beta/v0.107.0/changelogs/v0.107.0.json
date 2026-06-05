@@ -1,8 +1,8 @@
 {
   "app_id": 2868840,
-  "game_version": "v0.107.0",
+  "game_version": "0.107.0",
   "build_id": "",
-  "tag": "v0.107.0",
+  "tag": "0.107.0",
   "date": "2026-06-04",
   "title": "Beta v0.107.0",
   "from_ref": "data-beta/v0.106.1/eng",
