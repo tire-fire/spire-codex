@@ -182,6 +182,24 @@ for type in relics potions powers enchantments; do
   echo "    $type: $(find "$DEST/$type" -name '*.png' | wc -l | tr -d ' ') files"
 done
 
+# Epoch portrait illustrations for the timeline. The game stages final art
+# directly under timeline/epoch_portraits/ and not-yet-final art in a
+# placeholder/ subdir, both keyed by the lowercased epoch id (e.g.
+# necrobinder5_epoch.png -> NECROBINDER5_EPOCH). Copy placeholders first,
+# then overlay finals so a finished epoch always wins.
+EPOCH_SRC="$EXTRACT/timeline/epoch_portraits"
+if [ -d "$EPOCH_SRC" ]; then
+  echo "==> epochs: flattening $EPOCH_SRC into $VERSION/epochs/"
+  rm -rf "$DEST/epochs" && mkdir -p "$DEST/epochs"
+  if [ -d "$EPOCH_SRC/placeholder" ]; then
+    find "$EPOCH_SRC/placeholder" -maxdepth 1 -name '*.png' -type f ! -name '* [0-9].png' \
+      | while IFS= read -r src; do cp "$src" "$DEST/epochs/$(basename "$src")"; done
+  fi
+  find "$EPOCH_SRC" -maxdepth 1 -name '*.png' -type f ! -name '* [0-9].png' \
+    | while IFS= read -r src; do cp "$src" "$DEST/epochs/$(basename "$src")"; done
+  echo "    epochs: $(find "$DEST/epochs" -name '*.png' | wc -l | tr -d ' ') files"
+fi
+
 echo "==> generating WebP companions across all types"
 gen_webps "$DEST"
 
