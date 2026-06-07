@@ -700,7 +700,9 @@ def get_entity_metrics(
             detail=f"entity_type must be one of {sorted(_ENTITY_STATS_TYPES)}",
         )
     # Snapshot refreshes at most every 10 min; let edges/clients cache it.
-    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=600"
+    response.headers["Cache-Control"] = (
+        "public, max-age=300, stale-while-revalidate=600"
+    )
     return get_entity_metrics_table(entity_type, cohort)
 
 

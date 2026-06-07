@@ -1093,9 +1093,7 @@ def get_stats(
             "_id": (cid.split(".", 1)[1] if "." in cid else cid),
             "offered": r["offered"],
             "picked": r["picked"],
-            "used": used_by_id.get(
-                (cid.split(".", 1)[1] if "." in cid else cid), 0
-            ),
+            "used": used_by_id.get((cid.split(".", 1)[1] if "." in cid else cid), 0),
         }
         for r in potion_shop
         if (cid := r["_id"])

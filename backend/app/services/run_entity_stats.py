@@ -119,6 +119,7 @@ def _run_extra_cohorts(player_count: int, ascension: int, game_mode: str) -> lis
         out.append("custom")
     return out
 
+
 _RUNS_DIR = (
     Path(os.environ.get("DATA_DIR", Path(__file__).resolve().parents[3] / "data"))
     / "runs"
@@ -447,7 +448,9 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
     pick_counts: dict[str, dict[str, Any]] = {}
     pair_wins: dict[tuple[str, str], int] = {}
     # Parallel lightweight accumulators, one per non-"all" cohort.
-    cohort_accs: dict[str, dict[str, Any]] = {k: _new_cohort_acc() for k in _COHORT_KEYS}
+    cohort_accs: dict[str, dict[str, Any]] = {
+        k: _new_cohort_acc() for k in _COHORT_KEYS
+    }
 
     # Source of truth depends on which DB the app is using. Either way we end
     # up with rows carrying win/character/submission + the cohort fields
@@ -595,7 +598,9 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
         # picked-beats-skipped head-to-heads for the Bradley-Terry fit, for
         # the all-runs pass AND every cohort this run belongs to.
         for act_index, picked_ids, skipped_ids in _walk_card_reward_screens(blob):
-            _accumulate_screen(pick_counts, pair_wins, act_index, picked_ids, skipped_ids)
+            _accumulate_screen(
+                pick_counts, pair_wins, act_index, picked_ids, skipped_ids
+            )
             for ck in extra_cohorts:
                 _accumulate_screen(
                     cohort_accs[ck]["pick_counts"],
@@ -942,9 +947,7 @@ def get_all_entity_scores(entity_type: str) -> dict[str, dict[str, Any]]:
     return out
 
 
-def get_entity_metrics_table(
-    entity_type: str, cohort: str = "all"
-) -> dict[str, Any]:
+def get_entity_metrics_table(entity_type: str, cohort: str = "all") -> dict[str, Any]:
     """Dense per-entity metrics for the /leaderboards/metrics table.
 
     One row per entity carrying both the win-outcome metrics (Codex Score,
@@ -1006,11 +1009,15 @@ def get_entity_metrics_table(
                 continue
             rows.append(
                 _row(
-                    eid, data.get("picks", 0), data.get("wins", 0),
-                    elo=data.get("elo"), offered=data.get("offered", 0),
+                    eid,
+                    data.get("picks", 0),
+                    data.get("wins", 0),
+                    elo=data.get("elo"),
+                    offered=data.get("offered", 0),
                     picked=data.get("picked", 0),
                     off_act=data.get("off_act") or z3,
-                    pick_act=data.get("pick_act") or z3, upgraded=False,
+                    pick_act=data.get("pick_act") or z3,
+                    upgraded=False,
                 )
             )
             continue
@@ -1022,30 +1029,44 @@ def get_entity_metrics_table(
             base = agg.get("base") or {"picks": 0, "wins": 0}
             rows.append(
                 _row(
-                    eid, base["picks"], base["wins"],
-                    elo=agg.get("elo"), offered=agg.get("offered", 0),
+                    eid,
+                    base["picks"],
+                    base["wins"],
+                    elo=agg.get("elo"),
+                    offered=agg.get("offered", 0),
                     picked=agg.get("picked", 0),
                     off_act=agg.get("off_act") or z3,
-                    pick_act=agg.get("pick_act") or z3, upgraded=False,
+                    pick_act=agg.get("pick_act") or z3,
+                    upgraded=False,
                 )
             )
             upg = agg.get("upg")
             if upg and upg.get("picks", 0) > 0:
                 rows.append(
                     _row(
-                        eid, upg["picks"], upg["wins"],
-                        elo=None, offered=0, picked=0,
-                        off_act=z3, pick_act=z3, upgraded=True,
+                        eid,
+                        upg["picks"],
+                        upg["wins"],
+                        elo=None,
+                        offered=0,
+                        picked=0,
+                        off_act=z3,
+                        pick_act=z3,
+                        upgraded=True,
                     )
                 )
         else:
             rows.append(
                 _row(
-                    eid, agg.get("picks", 0), agg.get("wins", 0),
-                    elo=agg.get("elo"), offered=agg.get("offered", 0),
+                    eid,
+                    agg.get("picks", 0),
+                    agg.get("wins", 0),
+                    elo=agg.get("elo"),
+                    offered=agg.get("offered", 0),
                     picked=agg.get("picked", 0),
                     off_act=agg.get("off_act") or z3,
-                    pick_act=agg.get("pick_act") or z3, upgraded=False,
+                    pick_act=agg.get("pick_act") or z3,
+                    upgraded=False,
                 )
             )
     return {
