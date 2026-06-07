@@ -20,6 +20,7 @@ const RUNS_API = IS_BETA ? "https://spire-codex.com" : API;
 const PUBLIC_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 import { imageUrl } from "@/lib/image-url";
+import { colorTextClass } from "@/lib/character-colors";
 
 function characterIcon(character: string): string {
   return imageUrl(`/static/images/characters/character_icon_${character.toLowerCase()}.webp`);
@@ -55,13 +56,6 @@ const ENGLISH_CHARACTER_LABELS: Record<string, string> = {
   REGENT: "Regent",
 };
 
-const CHARACTER_COLORS: Record<string, string> = {
-  IRONCLAD: "text-[#d53b27]",
-  SILENT: "text-[#23935b]",
-  DEFECT: "text-[#3873a9]",
-  NECROBINDER: "text-[#bf5a85]",
-  REGENT: "text-[#f07c1e]",
-};
 
 /** Resolve a character key (uppercase from the runs API: `IRONCLAD`,
  * `SILENT`, etc.) to its localized display name. The translations API
@@ -142,6 +136,23 @@ async function loadRecentRuns(): Promise<RunRow[]> {
   }
 }
 
+async function loadDailyClimb(): Promise<RunRow[]> {
+  // Top wins on today's Daily Climb (the daily seed everyone shares),
+  // ranked by ascension. `today=true` scopes to runs since 00:00 UTC,
+  // which is when the daily resets.
+  try {
+    const res = await fetch(
+      `${RUNS_API}/api/runs/leaderboard?category=highest_ascension&game_mode=daily&today=true&limit=5`,
+      { next: { revalidate: REVALIDATE } },
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { runs: RunRow[] };
+    return (data.runs ?? []).slice(0, 5);
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomeLeaderboardSection({
   langPrefix = "",
   lang = "eng",
@@ -154,8 +165,13 @@ export default async function HomeLeaderboardSection({
    * don't make an extra API hop here. */
   characterNames?: Record<string, string>;
 }) {
-  const [fastest, recent] = await Promise.all([loadFastestWins(), loadRecentRuns()]);
-  if (fastest.runs.length === 0 && recent.length === 0) return null;
+  const [fastest, daily, recent] = await Promise.all([
+    loadFastestWins(),
+    loadDailyClimb(),
+    loadRecentRuns(),
+  ]);
+  if (fastest.runs.length === 0 && daily.length === 0 && recent.length === 0)
+    return null;
 
   // On beta, point all in-page links at stable's absolute URL, the data
   // shown in this section came from stable, so the run-detail / browse /
@@ -189,7 +205,7 @@ export default async function HomeLeaderboardSection({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Fastest wins (filtered to the highest available ascension, A10 ideal) */}
         <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] overflow-hidden">
           <div className="flex items-baseline justify-between gap-3 px-5 py-4 border-b border-[var(--border-subtle)]">
@@ -231,7 +247,66 @@ export default async function HomeLeaderboardSection({
                       className="w-8 h-8 object-contain"
                     />
                     <div className="min-w-0">
-                      <div className={`text-sm font-semibold truncate ${CHARACTER_COLORS[r.character] ?? "text-[var(--text-primary)]"}`}>
+                      <div className={`text-sm font-semibold truncate ${colorTextClass(r.character)}`}>
+                        {characterLabel(r.character, characterNames)}
+                        <span className="ml-2 text-[10px] text-[var(--text-muted)] font-normal">
+                          A{r.ascension}
+                        </span>
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] truncate">
+                        {r.username ?? "anon"} · fl{r.floors_reached}
+                      </div>
+                    </div>
+                    <span className="text-sm font-mono text-[var(--accent-gold)] tabular-nums shrink-0">
+                      {formatRunTime(r.run_time)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Daily Climb: top wins on today's shared daily seed, resets 00:00 UTC */}
+        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] overflow-hidden">
+          <div className="flex items-baseline justify-between gap-3 px-5 py-4 border-b border-[var(--border-subtle)]">
+            <h3 className="text-base sm:text-lg font-semibold text-[var(--text-primary)]">
+              {t("Daily Climb", lang)}
+              <span className="ml-2 text-[10px] text-[var(--text-muted)] font-normal align-middle">
+                {t("resets 00:00 UTC", lang)}
+              </span>
+            </h3>
+            <Link
+              href={`${runsBase}?win=true&game_mode=daily_today&sort=ascension_desc`}
+              className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--accent-gold)] transition-colors"
+            >
+              <span>{t("View more", lang)}</span>
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+          {daily.length === 0 ? (
+            <p className="px-5 py-6 text-sm text-[var(--text-muted)]">
+              {t("No daily runs yet today.", lang)}
+            </p>
+          ) : (
+            <ul className="divide-y divide-[var(--border-subtle)]">
+              {daily.map((r, i) => (
+                <li key={r.run_hash}>
+                  <Link
+                    href={`${runsBase}/${r.run_hash}`}
+                    className="grid grid-cols-[1.5rem_2rem_1fr_auto] items-center gap-3 px-5 py-3 hover:bg-[var(--bg-card-hover)] transition-colors"
+                  >
+                    <span className="text-base font-bold text-[var(--text-muted)] tabular-nums">
+                      {i + 1}
+                    </span>
+                    <img
+                      src={characterIcon(r.character)}
+                      alt={characterLabel(r.character, characterNames)}
+                      loading="lazy"
+                      className="w-8 h-8 object-contain"
+                    />
+                    <div className="min-w-0">
+                      <div className={`text-sm font-semibold truncate ${colorTextClass(r.character)}`}>
                         {characterLabel(r.character, characterNames)}
                         <span className="ml-2 text-[10px] text-[var(--text-muted)] font-normal">
                           A{r.ascension}
@@ -291,7 +366,7 @@ export default async function HomeLeaderboardSection({
                         className="w-8 h-8 object-contain shrink-0"
                       />
                       <div className="min-w-0 flex-1">
-                        <div className={`text-sm font-semibold truncate ${CHARACTER_COLORS[r.character] ?? "text-[var(--text-primary)]"}`}>
+                        <div className={`text-sm font-semibold truncate ${colorTextClass(r.character)}`}>
                           {characterLabel(r.character, characterNames)}
                           <span className="ml-2 text-[10px] text-[var(--text-muted)] font-normal">
                             A{r.ascension}

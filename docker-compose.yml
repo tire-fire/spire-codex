@@ -11,6 +11,11 @@ services:
       - ./.secrets:/secrets:ro
     environment:
       - DATA_DIR=/data
+      # Credentialed requests (auth cookie on /api/auth/me etc.) need a
+      # specific origin, not the wildcard fallback. Without this the backend
+      # sends `Access-Control-Allow-Origin: *`, which browsers reject for
+      # credentialed requests (Firefox especially), breaking the account menu.
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
       - FEEDBACK_WEBHOOK_URL=${FEEDBACK_WEBHOOK_URL:-}
       - GUIDE_WEBHOOK_URL=${GUIDE_WEBHOOK_URL:-}
       - SENTRY_DSN=${SENTRY_DSN:-}
@@ -39,6 +44,9 @@ services:
       - ./data:/data:ro
     environment:
       - HOSTNAME=0.0.0.0
+      # Server-side data fetches (tier list, etc.) must reach the backend over
+      # the compose network, not localhost (which is the frontend container).
+      - API_INTERNAL_URL=http://backend:8000
     depends_on:
       - backend
     logging:

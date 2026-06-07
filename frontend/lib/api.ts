@@ -70,6 +70,11 @@ export interface Card {
   upgrade_description: string | null;
   image_url: string | null;
   beta_image_url: string | null;
+  /** Full game-rendered card image (frame + art + text; animated for ancients).
+   *  Absolute CDN URL. Null for mad_science (no render). */
+  image_url_card?: string | null;
+  /** Full game-rendered upgraded card. Null when the card has no upgrade. */
+  image_url_card_upg?: string | null;
   type_variants: Record<string, CardTypeVariant> | null;
   /** `false` when the card cannot be added to combat by Skill Potion or
    * other generated effects. Field is omitted (null) when the card uses
@@ -107,6 +112,7 @@ export interface Character {
   quotes: Record<string, string> | null;
   dialogues: CharacterDialogue[] | null;
   image_url: string | null;
+  animation_url: string | null;
 }
 
 export interface MerchantPrice {

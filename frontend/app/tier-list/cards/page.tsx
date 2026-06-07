@@ -89,12 +89,15 @@ export default async function CardsTierListPage({ searchParams }: PageProps) {
   const color = sp.color?.toLowerCase();
   const { cards, scores } = await fetchData(color);
 
-  const entities: TierEntity[] = cards.map((c) => ({
-    id: c.id,
-    name: c.name,
-    image_url: c.image_url,
-    score: scores[c.id.toUpperCase()]?.score ?? null,
-  }));
+  const entities: TierEntity[] = cards
+    // mad_science is a multi-type event card with no full render; hide it.
+    .filter((c) => c.id.toLowerCase() !== "mad_science")
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      image_url: c.image_url,
+      score: scores[c.id.toUpperCase()]?.score ?? null,
+    }));
 
   const charLabel = COLOR_FILTERS.find((c) => c.value === color)?.label;
   const heading = charLabel && color ? `${charLabel} Card Tier List` : "Card Tier List";

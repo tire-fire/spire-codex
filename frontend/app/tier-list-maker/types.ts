@@ -58,7 +58,27 @@ export interface TierEntity {
   /** Grouping key for tray filters. For cards this is the character/pool
    * color (ironclad, silent, colorless, …); unset for other entity types. */
   group?: string;
+  /** Rarity key (Common, Uncommon, Rare, Shop, Event, Ancient, …) for the
+   * tray's secondary rarity filter. Set wherever the API exposes one. */
+  rarity?: string;
 }
+
+/** Canonical rarity ordering for the tray's rarity dropdown. Anything not
+ * listed falls to the end. Covers cards, relics, and potions. */
+export const RARITY_ORDER = [
+  "Starter",
+  "Basic",
+  "Common",
+  "Uncommon",
+  "Rare",
+  "Shop",
+  "Event",
+  "Ancient",
+  "Curse",
+  "Status",
+  "Token",
+  "Quest",
+];
 
 /** Card color groups in display order, with labels, for the tray's character
  * filter. The five characters come first, then the shared/non-character pools.
@@ -76,6 +96,34 @@ export const CARD_GROUPS: { value: string; label: string }[] = [
   { value: "token", label: "Token" },
   { value: "quest", label: "Quest" },
 ];
+
+/** Relic tray filter groups: the character pools (from each relic's `pool`
+ * field) followed by the eight ancients. Ancient relics carry `pool: shared`
+ * in the relic data, so their ancient is resolved from /api/ancient-pools
+ * (each ancient relic belongs to exactly one ancient) and used as the group.
+ * Only groups actually present in the loaded relics get a filter pill. */
+export const RELIC_GROUPS: { value: string; label: string }[] = [
+  { value: "shared", label: "Shared" },
+  { value: "ironclad", label: "Ironclad" },
+  { value: "silent", label: "Silent" },
+  { value: "defect", label: "Defect" },
+  { value: "necrobinder", label: "Necrobinder" },
+  { value: "regent", label: "Regent" },
+  { value: "neow", label: "Neow" },
+  { value: "tezcatara", label: "Tezcatara" },
+  { value: "pael", label: "Pael" },
+  { value: "orobas", label: "Orobas" },
+  { value: "darv", label: "Darv" },
+  { value: "nonupeipe", label: "Nonupeipe" },
+  { value: "tanx", label: "Tanx" },
+  { value: "vakuu", label: "Vakuu" },
+];
+
+/** Tray filter groups per entity type (only cards + relics have them today). */
+export const GROUPS_BY_TYPE: Partial<Record<EntityType, { value: string; label: string }[]>> = {
+  cards: CARD_GROUPS,
+  relics: RELIC_GROUPS,
+};
 
 export interface Tier {
   id: string;

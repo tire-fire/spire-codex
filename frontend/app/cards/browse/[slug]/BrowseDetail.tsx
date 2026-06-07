@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import type { Card } from "@/lib/api";
 import { cachedFetch } from "@/lib/fetch-cache";
-import CardGrid from "@/app/components/CardGrid";
+import FullCardGrid from "@/app/components/FullCardGrid";
 import SearchFilter from "@/app/components/SearchFilter";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -145,7 +145,7 @@ export default function BrowseDetail({ initialCards, fixedParams }: BrowseDetail
         onSortChange={setSort}
         filters={filters}
       />
-      <CardGrid cards={sortedCards} />
+      <FullCardGrid cards={sortedCards} />
     </>
   );
 }

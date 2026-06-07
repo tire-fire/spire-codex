@@ -22,6 +22,9 @@ interface SearchFilterProps {
     value: string;
     options: FilterOption[];
     onChange: (value: string) => void;
+    // When true, omit the empty "{label}" placeholder option — for selects
+    // that are always set to one of their options (e.g. a view switcher).
+    noEmptyOption?: boolean;
   }[];
   sortOptions?: SortOption[];
   sortValue?: string;
@@ -82,7 +85,7 @@ export default function SearchFilter({
           onChange={(e) => filter.onChange(e.target.value)}
           className="px-3 py-2.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-gold)]/50 cursor-pointer text-sm"
         >
-          <option value="">{filter.label}</option>
+          {!filter.noEmptyOption && <option value="">{filter.label}</option>}
           {filter.options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}

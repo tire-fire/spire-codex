@@ -14,6 +14,7 @@ interface ApiRelic {
   name: string;
   image_url: string | null;
   pool: string;
+  rarity_key: string | null;
 }
 
 interface ScoresMap {
@@ -30,8 +31,29 @@ const POOL_FILTERS = [
   { value: "regent",      label: "Regent" },
 ];
 
+// Rarity / source — matches the relic rarity_key. "Starter" relics are the
+// Neow / character starting relics; "Ancient" covers the ancient-boss relics.
+const RARITY_FILTERS = [
+  { value: "",          label: "All rarities" },
+  { value: "starter",   label: "Starter (Neow)" },
+  { value: "common",    label: "Common" },
+  { value: "uncommon",  label: "Uncommon" },
+  { value: "rare",      label: "Rare" },
+  { value: "shop",      label: "Shop" },
+  { value: "event",     label: "Event" },
+  { value: "ancient",   label: "Ancient" },
+];
+
+function relicHref(pool?: string, rarity?: string): string {
+  const params = new URLSearchParams();
+  if (pool) params.set("pool", pool);
+  if (rarity) params.set("rarity", rarity);
+  const qs = params.toString();
+  return `/tier-list/relics${qs ? `?${qs}` : ""}`;
+}
+
 interface PageProps {
-  searchParams: Promise<{ pool?: string }>;
+  searchParams: Promise<{ pool?: string; rarity?: string }>;
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -72,14 +94,17 @@ async function fetchData(pool?: string): Promise<{ relics: ApiRelic[]; scores: S
 export default async function RelicsTierListPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const pool = sp.pool?.toLowerCase();
+  const rarity = sp.rarity?.toLowerCase();
   const { relics, scores } = await fetchData(pool);
 
-  const entities: TierEntity[] = relics.map((r) => ({
-    id: r.id,
-    name: r.name,
-    image_url: r.image_url,
-    score: scores[r.id.toUpperCase()]?.score ?? null,
-  }));
+  const entities: TierEntity[] = relics
+    .filter((r) => !rarity || (r.rarity_key ?? "").toLowerCase() === rarity)
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      image_url: r.image_url,
+      score: scores[r.id.toUpperCase()]?.score ?? null,
+    }));
 
   const poolLabel = POOL_FILTERS.find((p) => p.value === pool)?.label;
   const heading = poolLabel && pool ? `${poolLabel} Relic Tier List` : "Relic Tier List";
@@ -126,17 +151,36 @@ export default async function RelicsTierListPage({ searchParams }: PageProps) {
         500-pick one. Click any relic for full stats.
       </p>
 
-      <div className="flex flex-wrap gap-1.5 mb-6">
+      {/* Pool (character) filter */}
+      <div className="flex flex-wrap gap-1.5 mb-2">
         {POOL_FILTERS.map((opt) => {
           const isActive = (pool ?? "") === opt.value;
-          const href = opt.value ? `/tier-list/relics?pool=${opt.value}` : "/tier-list/relics";
           return (
             <Link
               key={opt.value || "all"}
-              href={href}
+              href={relicHref(opt.value || undefined, rarity)}
               className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
                 isActive
                   ? "bg-[var(--accent-gold)]/10 border-[var(--accent-gold)]/40 text-[var(--accent-gold)]"
+                  : "bg-[var(--bg-card)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-accent)]"
+              }`}
+            >
+              {opt.label}
+            </Link>
+          );
+        })}
+      </div>
+      {/* Rarity / source filter (Neow/Starter, Shop, Event, Ancient, …) */}
+      <div className="flex flex-wrap gap-1.5 mb-6">
+        {RARITY_FILTERS.map((opt) => {
+          const isActive = (rarity ?? "") === opt.value;
+          return (
+            <Link
+              key={opt.value || "all-rarities"}
+              href={relicHref(pool, opt.value || undefined)}
+              className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+                isActive
+                  ? "bg-sky-500/10 border-sky-500/40 text-sky-300"
                   : "bg-[var(--bg-card)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-accent)]"
               }`}
             >

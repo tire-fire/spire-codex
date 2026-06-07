@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Card } from "@/lib/api";
-import CardGrid from "@/app/components/CardGrid";
+import FullCardGrid from "@/app/components/FullCardGrid";
 import RichDescription from "@/app/components/RichDescription";
 import SearchFilter from "@/app/components/SearchFilter";
 import { cachedFetch } from "@/lib/fetch-cache";
@@ -166,7 +166,7 @@ export default function KeywordDetail({ initialResult }: { initialResult?: Initi
         ]}
       />
 
-      <CardGrid cards={filtered} />
+      <FullCardGrid cards={filtered} />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useLanguage } from "@/app/contexts/LanguageContext";
 import Link from "next/link";
 import RichDescription from "@/app/components/RichDescription";
-import { imageUrl } from "@/lib/image-url";
+import { imageUrl, fullCardUrl } from "@/lib/image-url";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -60,6 +61,7 @@ export function CardPill({
   children?: ReactNode;
 }) {
   const [show, setShow] = useState(false);
+  const { lang } = useLanguage();
   const info = cardData[cardId];
   return (
     <Link
@@ -79,32 +81,21 @@ export function CardPill({
           )}
         </>
       )}
-      {show && info && (
-        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-xl pointer-events-none">
-          <div className="flex items-start gap-2 mb-1.5">
-            {info.image_url && (
-              <img
-                src={imageUrl(info.image_url)}
-                alt=""
-                className="w-10 h-10 object-cover rounded"
-                crossOrigin="anonymous"
-              />
-            )}
-            <div className="min-w-0">
-              <div className="font-semibold text-xs text-[var(--text-primary)] truncate">
-                {info.name}
-                {upgraded && "+"}
-              </div>
-              <div className="text-[10px] text-[var(--text-muted)]">
-                {info.type} · {info.rarity} · {info.cost}
-              </div>
-            </div>
-          </div>
-          <div className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
-            <RichDescription text={info.description} />
-          </div>
-          <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-[var(--bg-card)] border-r border-b border-[var(--border-subtle)] rotate-45 -mt-1" />
-        </div>
+      {show && (
+        // Pop the full rendered card (upgraded variant when upgraded) instead
+        // of the text tooltip. Falls back to the portrait art if there's no
+        // full render.
+        <span className="pointer-events-none absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-40">
+          <img
+            src={fullCardUrl(cardId.toLowerCase(), upgraded, "stable", lang)}
+            alt=""
+            className="w-40 h-auto drop-shadow-[0_8px_24px_rgba(0,0,0,0.7)]"
+            crossOrigin="anonymous"
+            onError={(e) => {
+              if (info?.image_url) (e.target as HTMLImageElement).src = imageUrl(info.image_url);
+            }}
+          />
+        </span>
       )}
     </Link>
   );

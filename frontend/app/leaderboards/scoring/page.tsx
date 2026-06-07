@@ -226,6 +226,46 @@ score      = clamp(raw, 0, 100)            # rounded to integer`}
         </div>
       </section>
 
+      {/* Codex Elo */}
+      <section className="mb-10">
+        <h2 className="text-xl font-semibold text-[var(--accent-gold)] mb-4">
+          Codex Elo, the other half
+        </h2>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4">
+          Codex Score grades <strong>win rate</strong>, which is honest but confounded: a
+          card&apos;s win rate reflects who picks it and what deck it lands in, not just the
+          card. <strong>Codex Elo</strong> attacks that from the other side. It ignores wins
+          entirely and instead reads <em>revealed preference</em>. Every card-reward screen is
+          treated as a head-to-head where the card you take beats the cards you skip. Fit a
+          Bradley-Terry model over millions of those decisions and you get a rating for
+          &ldquo;when offered, which card do players actually want?&rdquo;
+        </p>
+        <ul className="text-sm text-[var(--text-secondary)] space-y-2 list-disc pl-5 mb-4">
+          <li>
+            <strong>Skill-agnostic.</strong> Win rate rises and falls with who&apos;s playing the
+            card. A pick decision doesn&apos;t. A strong card is preferred whether a great or a
+            mediocre player is choosing, so Elo sidesteps the win-rate confound.
+          </li>
+          <li>
+            <strong>Anchored ~1500, 400 per decade.</strong> A card picked ten times as often as
+            the field average over its rivals sits ~400 Elo above it, same scale logic as chess.
+          </li>
+          <li>
+            <strong>Cards only.</strong> Reward screens offer cards, not relics or potions, so
+            Elo exists for cards. Starter cards and cards never offered in a reward have no Elo.
+          </li>
+        </ul>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+          Use them together: Score says &ldquo;this wins games,&rdquo; Elo says &ldquo;players
+          want this when they see it.&rdquo; Cards high on both are unambiguous; a gap between
+          them is usually a build-around or a trap. Both, side by side, live on the{" "}
+          <Link href="/leaderboards/metrics" className="text-[var(--accent-gold)] hover:underline">
+            Card Metrics
+          </Link>{" "}
+          table.
+        </p>
+      </section>
+
       {/* Limitations / disclaimers */}
       <section className="mb-10">
         <h2 className="text-xl font-semibold text-[var(--accent-gold)] mb-4">What the score is not</h2>

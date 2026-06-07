@@ -18,7 +18,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 interface NavGroup {
   label: string;
-  links: { href: string; label: string }[];
+  links: { href: string; label: string; badge?: "discord-bot" }[];
 }
 
 const BETA_HIDDEN = new Set(["/guides", "/showcase", "/leaderboards", "/leaderboards/submit", "/leaderboards/stats", "/leaderboards/scoring", "/tier-list"]);
@@ -31,6 +31,24 @@ function isLinkActive(strippedPath: string, href: string): boolean {
   // Match on path-segment boundaries so e.g. "/tier-list" doesn't light up
   // when the active route is "/tier-list-maker".
   return strippedPath === href || strippedPath.startsWith(`${href}/`);
+}
+
+/** Renders a nav-link label, with a compact Discord-icon + "bot" tag after
+ * it for `badge: "discord-bot"` links (shorter than spelling out "(Discord
+ * Bot)", which clipped the menu). */
+function NavLinkLabel({ label, badge, lang }: { label: string; badge?: "discord-bot"; lang: string }) {
+  if (badge === "discord-bot") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        {t(label, lang)}
+        <span className="inline-flex items-center gap-0.5 text-[var(--text-muted)]">
+          <DiscordIcon className="w-3.5 h-3.5 shrink-0" />
+          <span className="text-xs">bot</span>
+        </span>
+      </span>
+    );
+  }
+  return <>{t(label, lang)}</>;
 }
 
 const NAV_GROUPS: NavGroup[] = [
@@ -74,6 +92,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/runs", label: "Browse Runs" },
       { href: "/leaderboards/submit", label: "Submit a Run" },
       { href: "/leaderboards/stats", label: "Stats" },
+      { href: "/leaderboards/metrics", label: "Card Metrics" },
       { href: "/leaderboards/encounters", label: "Encounters" },
       { href: "/leaderboards/scoring", label: "Scoring" },
     ],
@@ -84,7 +103,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/tier-list-maker", label: "Tier List Maker" },
       { href: "/overlay", label: "Overlay (Overwolf)" },
       { href: "/showcase", label: "Showcase" },
-      { href: "/knowledge-demon", label: "Knowledge Demon" },
+      { href: "/knowledge-demon", label: "Knowledge Demon", badge: "discord-bot" },
       { href: "/developers", label: "Developers" },
       { href: `${API_BASE}/docs`, label: "API" },
     ],
@@ -249,7 +268,7 @@ export default function Navbar() {
                   >
                     <div
                       role="menu"
-                      className="grid grid-cols-2 w-[22rem] gap-x-4 gap-y-0.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-primary)] shadow-xl shadow-black/30 p-2"
+                      className="grid grid-cols-2 w-[25rem] gap-x-4 gap-y-0.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-primary)] shadow-xl shadow-black/30 p-2"
                     >
                       {links.map((link) => {
                         const isInternal = link.href.startsWith("/");
@@ -264,7 +283,7 @@ export default function Navbar() {
                         if (isInternal) {
                           return (
                             <Link key={link.href} href={fullHref} role="menuitem" className={className} onMouseDown={(e) => e.preventDefault()}>
-                              {t(link.label, lang)}
+                              <NavLinkLabel label={link.label} badge={link.badge} lang={lang} />
                             </Link>
                           );
                         }
@@ -277,7 +296,7 @@ export default function Navbar() {
                             onMouseDown={(e) => e.preventDefault()}
                             className={className}
                           >
-                            {t(link.label, lang)}
+                            <NavLinkLabel label={link.label} badge={link.badge} lang={lang} />
                           </a>
                         );
                       })}
@@ -517,7 +536,7 @@ export default function Navbar() {
                             if (isInternal) {
                               return (
                                 <Link key={link.href} href={fullHref} className={className}>
-                                  {t(link.label, lang)}
+                                  <NavLinkLabel label={link.label} badge={link.badge} lang={lang} />
                                 </Link>
                               );
                             }
@@ -528,7 +547,7 @@ export default function Navbar() {
                                 {...(isHttp ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                                 className={className}
                               >
-                                {t(link.label, lang)}
+                                <NavLinkLabel label={link.label} badge={link.badge} lang={lang} />
                               </a>
                             );
                           })}

@@ -36,12 +36,20 @@ export default function KnowledgeDemonPage() {
 
       <div className="flex flex-wrap gap-3 mb-12">
         <a
-          href="https://bot.spire-codex.com"
+          href="https://discord.com/oauth2/authorize?client_id=1492232191546228886&permissions=1494984439878&scope=bot+applications.commands"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--accent-gold)] text-[var(--bg-primary)] font-semibold hover:opacity-90 transition-opacity"
         >
-          Add to Discord
+          Invite to Server
+        </a>
+        <a
+          href="https://bot.spire-codex.com/auth/login"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[var(--border-subtle)] text-[var(--text-primary)] font-semibold hover:bg-[var(--bg-card-hover)] transition-colors"
+        >
+          Knowledge Demon Dashboard
         </a>
       </div>
 

@@ -4,7 +4,7 @@ import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE, buildLanguageAlternates } from "
 import JsonLd from "@/app/components/JsonLd";
 import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
 import ScoreBadge from "@/app/components/ScoreBadge";
-import { imageUrl } from "@/lib/image-url";
+import { imageUrl, fullCardUrl } from "@/lib/image-url";
 
 const API_INTERNAL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_PUBLIC = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -63,6 +63,8 @@ interface TopEntity {
   name: string;
   image_url: string | null;
   score: number;
+  picks?: number;
+  winRate?: number;
 }
 
 interface ScoresResponse {
@@ -81,6 +83,7 @@ interface ApiEntity {
 async function fetchTopEntities(
   type: "cards" | "relics" | "potions",
   count: number,
+  order: "top" | "bottom" = "top",
 ): Promise<TopEntity[]> {
   try {
     const [entitiesRes, scoresRes] = await Promise.all([
@@ -92,11 +95,17 @@ async function fetchTopEntities(
     const scores = (await scoresRes.json()) as ScoresResponse;
     const enriched: TopEntity[] = [];
     for (const e of entities) {
-      const s = scores[e.id.toUpperCase()]?.score;
+      const sc = scores[e.id.toUpperCase()];
+      const s = sc?.score;
       if (s == null) continue;
-      enriched.push({ id: e.id, name: e.name, image_url: e.image_url, score: s });
+      // For the underperforming list, ignore tiny-sample noise.
+      if (order === "bottom" && (sc?.picks ?? 0) < 3) continue;
+      enriched.push({
+        id: e.id, name: e.name, image_url: e.image_url, score: s,
+        picks: sc?.picks, winRate: sc?.win_rate,
+      });
     }
-    enriched.sort((a, b) => b.score - a.score);
+    enriched.sort((a, b) => (order === "bottom" ? a.score - b.score : b.score - a.score));
     return enriched.slice(0, count);
   } catch {
     return [];
@@ -149,10 +158,11 @@ export default async function TierListIndex() {
   // Server-render the top-5 of each type so the page has rich content
   // above the fold (helps SEO crawlers understand the page is a
   // ranked tier list, not just a navigation hub).
-  const [topCards, topRelics, topPotions] = await Promise.all([
+  const [topCards, topRelics, topPotions, bottomCards] = await Promise.all([
     fetchTopEntities("cards", 5),
     fetchTopEntities("relics", 5),
     fetchTopEntities("potions", 5),
+    fetchTopEntities("cards", 5, "bottom"),
   ]);
 
   // ISO 8601 date for the visible "updated" line. force-dynamic means
@@ -249,27 +259,45 @@ export default async function TierListIndex() {
                     </Link>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {block.entities.map((ent) => (
-                      <Link
-                        key={ent.id}
-                        href={`/${block.route}/${ent.id.toLowerCase()}`}
-                        className="flex flex-col items-center gap-1 w-20 p-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-primary)] hover:border-[var(--accent-gold)]/50 transition-colors"
-                      >
-                        {ent.image_url && (
+                    {block.entities.map((ent) =>
+                      block.route === "cards" ? (
+                        <Link
+                          key={ent.id}
+                          href={`/cards/${ent.id.toLowerCase()}`}
+                          className="flex flex-col items-center gap-1 w-[124px] sm:w-[144px] hover:scale-[1.04] transition-transform"
+                          title={ent.name}
+                        >
                           <img
-                            src={imageUrl(ent.image_url)}
+                            src={fullCardUrl(ent.id.toLowerCase())}
                             alt={ent.name}
-                            className="w-12 h-12 object-contain"
+                            className="w-full h-auto drop-shadow-[0_3px_10px_rgba(0,0,0,0.5)]"
                             loading="lazy"
                             crossOrigin="anonymous"
                           />
-                        )}
-                        <span className="text-[10px] text-[var(--text-secondary)] text-center leading-tight line-clamp-2 min-h-[1.5rem]">
-                          {ent.name}
-                        </span>
-                        <ScoreBadge score={ent.score} size="sm" showNumber />
-                      </Link>
-                    ))}
+                          <ScoreBadge score={ent.score} size="sm" showNumber />
+                        </Link>
+                      ) : (
+                        <Link
+                          key={ent.id}
+                          href={`/${block.route}/${ent.id.toLowerCase()}`}
+                          className="flex flex-col items-center gap-1 w-20 p-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-primary)] hover:border-[var(--accent-gold)]/50 transition-colors"
+                        >
+                          {ent.image_url && (
+                            <img
+                              src={imageUrl(ent.image_url)}
+                              alt={ent.name}
+                              className="w-12 h-12 object-contain"
+                              loading="lazy"
+                              crossOrigin="anonymous"
+                            />
+                          )}
+                          <span className="text-[10px] text-[var(--text-secondary)] text-center leading-tight line-clamp-2 min-h-[1.5rem]">
+                            {ent.name}
+                          </span>
+                          <ScoreBadge score={ent.score} size="sm" showNumber />
+                        </Link>
+                      )
+                    )}
                   </div>
                 </div>
               )
@@ -279,6 +307,47 @@ export default async function TierListIndex() {
       )}
 
       {/* Methodology block (kept from original) */}
+      {/* Underperforming cards — the bottom of the meta right now. */}
+      {bottomCards.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold text-[var(--accent-gold)] mb-4">
+            What&apos;s underperforming right now
+          </h2>
+          <div className="p-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)]">
+            <div className="flex items-baseline justify-between mb-3">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+                Lowest-scoring Cards right now
+              </h3>
+              <Link
+                href="/tier-list/cards"
+                className="text-xs text-[var(--accent-gold)] hover:underline"
+              >
+                View full list →
+              </Link>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {bottomCards.map((ent) => (
+                <Link
+                  key={ent.id}
+                  href={`/cards/${ent.id.toLowerCase()}`}
+                  className="flex flex-col items-center gap-1 w-[124px] sm:w-[144px] hover:scale-[1.04] transition-transform"
+                  title={ent.name}
+                >
+                  <img
+                    src={fullCardUrl(ent.id.toLowerCase())}
+                    alt={ent.name}
+                    className="w-full h-auto drop-shadow-[0_3px_10px_rgba(0,0,0,0.5)]"
+                    loading="lazy"
+                    crossOrigin="anonymous"
+                  />
+                  <ScoreBadge score={ent.score} size="sm" showNumber />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="p-5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] mb-10">
         <h2 className="text-base font-semibold text-[var(--text-primary)] mb-2">
           How the rankings work

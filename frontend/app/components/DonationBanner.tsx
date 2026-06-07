@@ -224,7 +224,22 @@ function TierListBanner({ onDismiss }: { onDismiss: () => void }) {
             >
               Tier List Maker
             </Link>{" "}
-            is here. Rank cards, relics, monsters and more, then share your list.
+            is here, make your list and share it. Introducing the Codex Elo
+            system, check out our{" "}
+            <Link
+              href="/leaderboards/metrics"
+              className="font-medium text-green-100 underline hover:text-white transition-colors"
+            >
+              card metrics
+            </Link>{" "}
+            for an in-depth view of picks. Plus a new 1:1{" "}
+            <Link
+              href="/cards"
+              className="font-medium text-green-100 underline hover:text-white transition-colors"
+            >
+              card view
+            </Link>{" "}
+            is now available.
           </p>
         </div>
         <button
@@ -246,7 +261,7 @@ export default function DonationBanner() {
   const [rotatingIndex, setRotatingIndex] = useState(0);
 
   useEffect(() => {
-    const tierlistDismissed = localStorage.getItem("tierlist-announce-dismissed");
+    const tierlistDismissed = localStorage.getItem("announce-dismissed-v2");
     const patreonDismissed = localStorage.getItem("donation-banner-dismissed");
     const rotatingDismissed = sessionStorage.getItem("community-banner-dismissed");
     if (!tierlistDismissed) {
@@ -261,7 +276,7 @@ export default function DonationBanner() {
   }, []);
 
   function dismissTierlist() {
-    localStorage.setItem("tierlist-announce-dismissed", "1");
+    localStorage.setItem("announce-dismissed-v2", "1");
     const patreonDismissed = localStorage.getItem("donation-banner-dismissed");
     const rotatingDismissed = sessionStorage.getItem("community-banner-dismissed");
     if (!patreonDismissed) {

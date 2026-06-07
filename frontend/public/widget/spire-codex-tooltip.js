@@ -26,11 +26,16 @@
 
   var SITE = "https://spire-codex.com";
   var API = "https://spire-codex.com";
+  // Full game-rendered card images live on the CDN (cards-full/<channel>/).
+  var CDN = "https://cdn.spire-codex.com";
+  var CARD_CHANNEL = "stable";
 
   var tag = document.currentScript;
   if (tag) {
     API = tag.getAttribute("data-api") || API;
     SITE = tag.getAttribute("data-site") || SITE;
+    CDN = tag.getAttribute("data-cdn") || CDN;
+    CARD_CHANNEL = tag.getAttribute("data-card-channel") || CARD_CHANNEL;
   }
 
   // --- Cache ---
@@ -47,6 +52,9 @@
       ".scx-link:hover{color:#f0c860}" +
       ".scx-tip{position:fixed;z-index:999999;max-width:320px;min-width:220px;background:#1a1a1f;border:1px solid #2a2a30;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.6);padding:0;overflow:hidden;font-family:-apple-system,system-ui,sans-serif;font-size:13px;color:#e8e6e3;pointer-events:none;opacity:0;transition:opacity .15s}" +
       ".scx-tip.scx-visible{opacity:1;pointer-events:auto}" +
+      // Card mode: just the full rendered card image, no panel chrome.
+      ".scx-tip.scx-card-mode{background:transparent;border:none;box-shadow:none;min-width:0;max-width:none;overflow:visible}" +
+      ".scx-tip-card{display:block;width:210px;aspect-ratio:400/520;height:auto;filter:drop-shadow(0 10px 26px rgba(0,0,0,.7))}" +
       ".scx-tip-img{width:100%;max-height:160px;object-fit:contain;background:#0a0a0f;display:block}" +
       ".scx-tip-body{padding:10px 12px}" +
       ".scx-tip-name{font-size:15px;font-weight:600;color:#e8e6e3;margin:0 0 4px}" +
@@ -112,6 +120,19 @@
   }
 
   function renderTip(data, type) {
+    // Cards pop the full game-rendered card image (the whole card), not the
+    // little text tooltip. Falls back to the portrait art if there's no full
+    // render (e.g. mad_science).
+    if (type === "card") {
+      tip.classList.add("scx-card-mode");
+      var fid = (data.id || data.name || "").toLowerCase();
+      tip.innerHTML =
+        '<img class="scx-tip-card" src="' + CDN + "/cards-full/" + CARD_CHANNEL + "/" + encodeURIComponent(fid) + '.webp"' +
+        ' alt="' + esc(data.name || "") + '" crossorigin="anonymous"' +
+        ' onerror="this.onerror=null;this.style.aspectRatio=\'auto\';this.style.objectFit=\'contain\';this.src=\'' + API + (data.image_url || "") + '\'">';
+      return;
+    }
+    tip.classList.remove("scx-card-mode");
     var html = "";
     if (data.image_url) {
       html += '<img class="scx-tip-img" src="' + API + data.image_url + '" alt="" crossorigin="anonymous">';

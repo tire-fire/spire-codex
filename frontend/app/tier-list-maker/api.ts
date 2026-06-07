@@ -1,4 +1,4 @@
-import { imageUrl } from "@/lib/image-url";
+import { imageUrl, fullCardUrl } from "@/lib/image-url";
 import { ANCIENT_ENTITIES } from "./types";
 import type { EntityType, TierEntity, TierList } from "./types";
 
@@ -11,6 +11,39 @@ interface RawEntity {
   compendium_order?: number;
   // Cards carry their character/pool key here (ironclad, silent, colorless, …).
   color?: string;
+  // Relics carry their pool here (shared, ironclad, silent, …).
+  pool?: string;
+  // Cards/relics/potions carry a clean rarity key (Common, Rare, Ancient, …).
+  rarity_key?: string;
+}
+
+/** Map every ancient relic to the single ancient that offers it, e.g.
+ * { NUTRITIOUS_SOUP: "tezcatara" }. Ancient relics carry `pool: shared` in
+ * the relic data, so the relic tray groups them by ancient instead, sourced
+ * from /api/ancient-pools (verified: each ancient relic belongs to exactly
+ * one ancient, no overlap). Best-effort: returns {} if the call fails. */
+async function fetchRelicAncientMap(): Promise<Record<string, string>> {
+  try {
+    const res = await fetch(`${API}/api/ancient-pools`);
+    if (!res.ok) return {};
+    const ancients: {
+      id: string;
+      pools?: { relics?: ({ id?: string } | string)[] }[];
+    }[] = await res.json();
+    const map: Record<string, string> = {};
+    for (const anc of ancients) {
+      const group = String(anc.id).toLowerCase();
+      for (const pool of anc.pools ?? []) {
+        for (const r of pool.relics ?? []) {
+          const rid = typeof r === "string" ? r : r.id;
+          if (rid) map[rid.toUpperCase()] = group;
+        }
+      }
+    }
+    return map;
+  } catch {
+    return {};
+  }
 }
 
 /** Fetch every entity of a type, mapped to {id, name, image, group} for the tray.
@@ -26,7 +59,12 @@ export async function fetchEntities(type: EntityType): Promise<TierEntity[]> {
       image: imageUrl(a.image_path),
     }));
   }
-  const res = await fetch(`${API}/api/${type}?lang=eng`);
+  // Relics group by pool, with ancient relics broken out by their ancient,
+  // so fetch the ancient map alongside the relic list.
+  const [res, ancientMap] = await Promise.all([
+    fetch(`${API}/api/${type}?lang=eng`),
+    type === "relics" ? fetchRelicAncientMap() : Promise.resolve<Record<string, string>>({}),
+  ]);
   if (!res.ok) throw new Error(`Failed to load ${type}`);
   const raw: RawEntity[] = await res.json();
   return raw
@@ -40,8 +78,16 @@ export async function fetchEntities(type: EntityType): Promise<TierEntity[]> {
       image:
         type === "characters"
           ? imageUrl(`/static/images/characters/character_icon_${e.id.toLowerCase()}.webp`)
-          : imageUrl(e.image_url),
-      group: e.color ?? undefined,
+          : type === "cards"
+            ? fullCardUrl(e.id.toLowerCase())
+            : imageUrl(e.image_url),
+      group:
+        type === "relics"
+          ? ancientMap[e.id.toUpperCase()] ?? e.pool ?? undefined
+          : e.color ?? undefined,
+      // "None" is the API's placeholder for the odd un-raritied entry; treat
+      // it as no rarity so it doesn't pollute the rarity dropdown.
+      rarity: e.rarity_key && e.rarity_key !== "None" ? e.rarity_key : undefined,
     }));
 }
 

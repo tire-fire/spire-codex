@@ -5,12 +5,13 @@ import os
 import time
 from functools import lru_cache
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Response
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from ..services.runs_db import submit_run, get_stats, claim_runs
 from ..services.run_entity_stats import (
     get_all_entity_scores,
+    get_entity_metrics_table,
     get_entity_stats,
     get_top_entities_for_character,
 )
@@ -673,6 +674,34 @@ def get_entity_scores(request: Request, entity_type: str):
             detail=f"entity_type must be one of {sorted(_ENTITY_STATS_TYPES)}",
         )
     return get_all_entity_scores(entity_type)
+
+
+@router.get("/metrics/{entity_type}", tags=["Runs"])
+@limiter.limit("60/minute")
+def get_entity_metrics(
+    request: Request, response: Response, entity_type: str, cohort: str = "all"
+):
+    """Dense metrics table for one entity type, powers /leaderboards/metrics.
+
+    Each row carries the win-outcome metrics (Codex Score, Win%) AND the
+    revealed-preference metrics (Codex Elo, Pick%, per-act pick splits) plus
+    raw counts. Served from the same pre-built snapshot as /scores, so it's
+    one in-memory pass with no per-request aggregation; the client sorts
+    and filters the whole table locally. Cards carry Elo/Pick%; relics and
+    potions only the win-outcome columns (rewards don't offer them this way).
+
+    `cohort` slices to a pre-built run cohort: `all` (default), `solo`,
+    `2p`, `3p`, `4p`, `a10` (ascension 10), `daily`, `custom`. Every cohort
+    is materialized in the same snapshot, so this stays a single cached read.
+    """
+    if entity_type not in _ENTITY_STATS_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"entity_type must be one of {sorted(_ENTITY_STATS_TYPES)}",
+        )
+    # Snapshot refreshes at most every 10 min; let edges/clients cache it.
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=600"
+    return get_entity_metrics_table(entity_type, cohort)
 
 
 @router.get("/top/{entity_type}/{character}", tags=["Runs"])

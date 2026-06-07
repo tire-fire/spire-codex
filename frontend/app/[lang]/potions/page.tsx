@@ -4,6 +4,7 @@ import JsonLd from "@/app/components/JsonLd";
 import { buildCollectionPageJsonLd, buildBreadcrumbJsonLd } from "@/lib/jsonld";
 import PotionsClient from "@/app/potions/PotionsClient";
 import RecentlyAdded from "@/app/components/RecentlyAdded";
+import HighestRated from "@/app/components/HighestRated";
 import {
   isValidLang,
   LANG_GAME_NAME,
@@ -99,6 +100,14 @@ export default async function LangPotionsPage({ params }: { params: Promise<{ la
       <p className="text-sm text-[var(--text-muted)] mb-6">
         {t("potions_tagline", lang)}
       </p>
+
+      <HighestRated
+        entityType="potions"
+        entities={potions}
+        label="potions"
+        pathPrefix={`/${lang}/potions`}
+        tierHref="/tier-list/potions"
+      />
 
       <RecentlyAdded entityType="potions" label="Potion" pathPrefix={`/${lang}/potions`} />
 

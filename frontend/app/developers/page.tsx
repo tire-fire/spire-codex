@@ -251,6 +251,8 @@ export default function DevelopersPage() {
                 { method: "GET", path: "/api/runs/leaderboard", desc: "Run leaderboards (fastest, highest_ascension)" },
                 { method: "GET", path: "/api/runs/shared/{run_hash}", desc: "Single submitted run by hash (rate-limited)" },
                 { method: "GET", path: "/api/runs/stats", desc: "Aggregate community stats (filter by character, ascension, username)" },
+                { method: "GET", path: "/api/runs/scores/{type}", desc: "Codex Score + tier per entity (cards/relics/potions)" },
+                { method: "GET", path: "/api/runs/metrics/{type}", desc: "Dense metrics table: Codex Score, Codex Elo, win rate, pick rate, per-act splits" },
                 { method: "GET", path: "/api/runs/versions", desc: "Distinct game build IDs that have submitted runs" },
                 { method: "POST", path: "/api/feedback", desc: "Submit feedback (Discord webhook)" },
               ],
@@ -501,6 +503,38 @@ console.log(relics.map(r => r.name));`}</code>
 
 // Feed in the three fields from /api/cards:
 <TinyCard color="ironclad" type="Attack" rarity="Rare" className="w-16 h-16" />`}</code>
+          </pre>
+        </div>
+
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] p-5 mt-4">
+          <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">
+            Full card images
+          </h3>
+          <p className="text-[var(--text-secondary)] mb-3">
+            Every card from <code>/api/cards</code> includes two ready-to-use URLs
+            for the full game-rendered card (frame, art, banner, and text, exactly
+            as it looks in-game). Ancient cards are animated webps.
+          </p>
+          <ul className="text-sm text-[var(--text-secondary)] space-y-1.5 mb-3">
+            <li>
+              <code className="text-[var(--accent-gold)]">image_url_card</code> —
+              the base card. <code>null</code> for the one card with no render
+              (<code>mad_science</code>); fall back to <code>image_url</code> (the
+              portrait art) there.
+            </li>
+            <li>
+              <code className="text-[var(--accent-gold)]">image_url_card_upg</code> —
+              the upgraded card. <code>null</code> when the card has no upgrade.
+            </li>
+          </ul>
+          <pre className="bg-[var(--bg-primary)] rounded-lg p-4 text-xs text-[var(--text-secondary)] overflow-x-auto">
+            <code>{`// e.g. /api/cards/bash
+{
+  "id": "BASH",
+  "image_url":          "/static/images/cards/bash.webp",  // portrait art
+  "image_url_card":     "https://cdn.spire-codex.com/cards-full/stable/bash.webp",
+  "image_url_card_upg": "https://cdn.spire-codex.com/cards-full/stable/bash_upg.webp"
+}`}</code>
           </pre>
         </div>
       </section>

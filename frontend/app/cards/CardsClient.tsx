@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import type { Card } from "@/lib/api";
 import { cachedFetch } from "@/lib/fetch-cache";
 import CardGrid from "../components/CardGrid";
+import FullCardGrid from "../components/FullCardGrid";
 import SearchFilter from "../components/SearchFilter";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useLangPrefix } from "@/lib/use-lang-prefix";
@@ -70,6 +71,18 @@ export default function CardsClient({ initialCards }: { initialCards: Card[] }) 
   const [rarity, setRarity] = useState(searchParams.get("rarity") || "");
   const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "az");
+  // "card" = full game-rendered card images (default), "detail" = data tiles.
+  const [view, setView] = useState<"card" | "detail">("card");
+  useEffect(() => {
+    // Key bumped to -v2 to reset everyone to the 1:1 card render once, since
+    // it's now the default. Visitors can still switch back to "detail".
+    const saved = localStorage.getItem("cards-view-v2");
+    if (saved === "card" || saved === "detail") setView(saved);
+  }, []);
+  const pickView = (v: "card" | "detail") => {
+    setView(v);
+    localStorage.setItem("cards-view-v2", v);
+  };
   const { lang } = useLanguage();
   const initialRender = useRef(true);
 
@@ -156,6 +169,16 @@ export default function CardsClient({ initialCards }: { initialCards: Card[] }) 
         onSortChange={(v) => setFilterAndUrl("sort", v, setSort)}
         filters={[
           {
+            label: "View",
+            value: view,
+            options: [
+              { value: "card", label: "Card View" },
+              { value: "detail", label: "Detail View" },
+            ],
+            onChange: (v) => pickView(v as "card" | "detail"),
+            noEmptyOption: true,
+          },
+          {
             label: "All Colors",
             value: color,
             options: colorOptions,
@@ -182,7 +205,16 @@ export default function CardsClient({ initialCards }: { initialCards: Card[] }) 
         ]}
       />
 
-      <CardGrid cards={sortedCards} />
+      {view === "card" || sort === "score" ? (
+        // Score sort always uses the card view and shows WR / picks per card.
+        // Sit the transparent card renders on a subtle panel so the grid reads
+        // as a contained module instead of floating on the page background.
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/40 p-3 sm:p-5">
+          <FullCardGrid cards={sortedCards} stats={sort === "score" ? scores : undefined} />
+        </div>
+      ) : (
+        <CardGrid cards={sortedCards} />
+      )}
     </>
   );
 }

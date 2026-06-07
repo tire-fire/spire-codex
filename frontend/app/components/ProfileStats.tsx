@@ -6,16 +6,9 @@ import { cachedFetch } from "@/lib/fetch-cache";
 import { imageUrl } from "@/lib/image-url";
 import { useLangPrefix } from "@/lib/use-lang-prefix";
 import MyTierLists from "../tier-list-maker/MyTierLists";
+import { characterHex } from "@/lib/character-colors";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-const CHAR_COLORS: Record<string, string> = {
-  IRONCLAD: "#d53b27",
-  SILENT: "#23935b",
-  DEFECT: "#3873a9",
-  NECROBINDER: "#bf5a85",
-  REGENT: "#f07c1e",
-};
 
 interface EntityInfo {
   id: string;
@@ -264,7 +257,7 @@ export default function ProfileStats({
               <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Characters</h3>
               <div className="space-y-2">
                 {stats.characters.map((c) => {
-                  const color = CHAR_COLORS[c.character] || "var(--text-muted)";
+                  const color = characterHex(c.character) || "var(--text-muted)";
                   const pct = stats.total_runs > 0 ? (c.total / stats.total_runs) * 100 : 0;
                   return (
                     <div key={c.character} className="flex items-center gap-3 text-sm">
@@ -341,7 +334,7 @@ export default function ProfileStats({
                     <span className={`flex-1 truncate ${entry.is_current_user ? "text-[var(--accent-gold)] font-medium" : "text-[var(--text-primary)]"}`}>
                       {entry.username || "Anonymous"}
                     </span>
-                    <span className="text-xs tabular-nums" style={{ color: CHAR_COLORS[entry.character] || "var(--text-tertiary)" }}>{displayName(entry.character)}</span>
+                    <span className="text-xs tabular-nums" style={{ color: characterHex(entry.character) || "var(--text-tertiary)" }}>{displayName(entry.character)}</span>
                     <span className="text-xs text-[var(--text-primary)] tabular-nums font-medium">{formatTime(entry.run_time)}</span>
                   </Link>
                 ))}
@@ -364,7 +357,7 @@ export default function ProfileStats({
               <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Win Rate vs Community</h3>
               <div className="space-y-3">
                 {competitive.win_rate_comparison.map((c) => {
-                  const color = CHAR_COLORS[c.character] || "var(--text-muted)";
+                  const color = characterHex(c.character) || "var(--text-muted)";
                   const delta = c.user_win_rate - c.community_win_rate;
                   const deltaColor = delta > 0 ? "text-green-400" : delta < 0 ? "text-red-400" : "text-[var(--text-muted)]";
                   return (
@@ -435,7 +428,7 @@ export default function ProfileStats({
                     key={run.run_hash}
                     className="flex items-center gap-2 sm:gap-3 px-3 py-2.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-sm"
                   >
-                    <span className="font-medium w-20 sm:w-24 truncate" style={{ color: CHAR_COLORS[run.character] || "var(--text-primary)" }}>
+                    <span className="font-medium w-20 sm:w-24 truncate" style={{ color: characterHex(run.character) || "var(--text-primary)" }}>
                       {run.character}
                     </span>
                     <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded ${

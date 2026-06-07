@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { t } from "@/lib/ui-translations";
 import { IS_BETA } from "@/lib/seo";
+import { characterHex } from "@/lib/character-colors";
 
 const API = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 // Beta has run submissions disabled, so its stats endpoint reports near
@@ -25,14 +26,6 @@ const ENGLISH_CHARACTER_LABELS: Record<string, string> = {
   DEFECT: "Defect",
   NECROBINDER: "Necrobinder",
   REGENT: "Regent",
-};
-
-const CHARACTER_COLORS: Record<string, string> = {
-  IRONCLAD: "#d53b27",
-  SILENT: "#23935b",
-  DEFECT: "#3873a9",
-  NECROBINDER: "#bf5a85",
-  REGENT: "#f07c1e",
 };
 
 /** Resolve a character key (uppercase from the runs API) to its localized
@@ -132,7 +125,7 @@ export default async function HomeStatsSection({
           <div className="bg-[var(--bg-primary)] rounded-lg p-2.5">
             <div
               className="text-xl font-bold leading-tight truncate"
-              style={{ color: mostPlayed ? CHARACTER_COLORS[mostPlayed.character] ?? "var(--text-primary)" : "var(--text-muted)" }}
+              style={{ color: mostPlayed ? characterHex(mostPlayed.character) || "var(--text-primary)" : "var(--text-muted)" }}
               title={mostPlayed ? characterLabel(mostPlayed.character, characterNames) : ""}
             >
               {mostPlayed ? characterLabel(mostPlayed.character, characterNames) : "—"}
@@ -148,7 +141,7 @@ export default async function HomeStatsSection({
             </h3>
             <div className="space-y-2">
               {stats.characters.map((c) => {
-                const charColor = CHARACTER_COLORS[c.character] ?? "var(--text-muted)";
+                const charColor = characterHex(c.character) || "var(--text-muted)";
                 const totalPct = (c.total / maxCharTotal) * 100;
                 const winPct = c.total > 0 ? (c.wins / c.total) * 100 : 0;
                 return (

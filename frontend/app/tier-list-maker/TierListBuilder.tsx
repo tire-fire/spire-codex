@@ -23,8 +23,11 @@ import { toCanvas } from "html-to-image";
 import { useAuth } from "../contexts/AuthContext";
 import { Chip, SortableItem } from "./chip";
 import { createTierList, saveTierListImage, updateTierList } from "./api";
+import { fullCardUrl, CARD_RENDER_LANGS } from "@/lib/image-url";
+import { LANG_NAMES } from "@/lib/languages";
 import {
-  CARD_GROUPS,
+  GROUPS_BY_TYPE,
+  RARITY_ORDER,
   ENTITY_LABEL,
   TIER_COLORS,
   TRAY_ID,
@@ -47,15 +50,35 @@ function findIn(map: Containers, id: string): string | undefined {
   return Object.keys(map).find((k) => map[k].includes(id));
 }
 
+// Languages offered by the card maker's language filter: English plus every
+// language we have full card renders for, in the site's display order.
+const CARD_LANG_OPTIONS: { code: string; label: string }[] = [
+  { code: "eng", label: "English" },
+  ...Object.entries(LANG_NAMES)
+    .filter(([code]) => CARD_RENDER_LANGS.has(code))
+    .map(([code, label]) => ({ code, label })),
+];
+
 export default function TierListBuilder({ entityType, entities, initial }: Props) {
   const router = useRouter();
   const { user, loading: authLoading, loginSteam } = useAuth();
 
+  // Card maker only: render the card images in the chosen language. Other
+  // entity types have no localized renders, so the selector is hidden.
+  const [cardLang, setCardLang] = useState("eng");
+  const displayEntities = useMemo(() => {
+    if (entityType !== "cards" || cardLang === "eng") return entities;
+    return entities.map((e) => ({
+      ...e,
+      image: fullCardUrl(e.id.toLowerCase(), false, "stable", cardLang),
+    }));
+  }, [entities, entityType, cardLang]);
+
   const entityMap = useMemo(() => {
     const m = new Map<string, TierEntity>();
-    for (const e of entities) m.set(e.id, e);
+    for (const e of displayEntities) m.set(e.id, e);
     return m;
-  }, [entities]);
+  }, [displayEntities]);
   const allIds = useMemo(() => entities.map((e) => e.id), [entities]);
 
   // Tier metadata (label/color/order). Items live in `containers`.
@@ -97,6 +120,8 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
   const [groupFilter, setGroupFilter] = useState<string | null>(
     entityType === "cards" ? "ironclad" : null,
   );
+  // Secondary tray filter: rarity (independent of the pool/character pills).
+  const [rarityFilter, setRarityFilter] = useState<string>("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -361,12 +386,25 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
     return m;
   }, [trayItems, entityMap]);
 
-  // The filter pills to show: every CARD_GROUPS entry that exists in this
-  // pool (so we never render a Necrobinder pill for, say, relics).
-  const cardGroups = useMemo(
-    () => CARD_GROUPS.filter((g) => entities.some((e) => e.group === g.value)),
-    [entities],
-  );
+  // The filter pills to show: every group defined for this entity type
+  // (cards by character, relics by pool/ancient) that actually exists in
+  // the loaded pool, so we never render an empty pill.
+  const trayGroups = useMemo(() => {
+    const defs = GROUPS_BY_TYPE[entityType] ?? [];
+    return defs.filter((g) => entities.some((e) => e.group === g.value));
+  }, [entities, entityType]);
+
+  // Rarities present in this pool, in canonical order, for the rarity
+  // dropdown. Only shown when the loaded entities actually carry rarities.
+  const rarityOptions = useMemo(() => {
+    const present = new Set<string>();
+    for (const e of entities) if (e.rarity) present.add(e.rarity);
+    return [...present].sort((a, b) => {
+      const ia = RARITY_ORDER.indexOf(a);
+      const ib = RARITY_ORDER.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b);
+    });
+  }, [entities]);
 
   const filteredTray = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -374,13 +412,14 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
       const e = entityMap.get(id);
       if (!e) return false;
       if (groupFilter && e.group !== groupFilter) return false;
+      if (rarityFilter && e.rarity !== rarityFilter) return false;
       if (q && !e.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [trayItems, search, groupFilter, entityMap]);
+  }, [trayItems, search, groupFilter, rarityFilter, entityMap]);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto max-w-[1800px] px-4 sm:px-6 py-6">
       <Link
         href="/tier-list-maker"
         className="mb-3 inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-white"
@@ -505,14 +544,46 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
             <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-400">
               {ENTITY_LABEL[entityType]} ({filteredTray.length})
             </h2>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search…"
-              className="w-40 rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-sm text-white outline-none focus:border-sky-500"
-            />
+            <div className="flex items-center gap-2">
+              {entityType === "cards" && (
+                <select
+                  value={cardLang}
+                  onChange={(e) => setCardLang(e.target.value)}
+                  className="rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-sm text-white outline-none focus:border-sky-500"
+                  aria-label="Card language"
+                  title="Render the cards in this language"
+                >
+                  {CARD_LANG_OPTIONS.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {rarityOptions.length > 0 && (
+                <select
+                  value={rarityFilter}
+                  onChange={(e) => setRarityFilter(e.target.value)}
+                  className="rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-sm text-white outline-none focus:border-sky-500"
+                  aria-label="Filter by rarity"
+                >
+                  <option value="">All rarities</option>
+                  {rarityOptions.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search…"
+                className="w-40 rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-sm text-white outline-none focus:border-sky-500"
+              />
+            </div>
           </div>
-          {cardGroups.length > 0 && (
+          {trayGroups.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-1.5">
               <GroupPill
                 label="All"
@@ -520,7 +591,7 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
                 active={groupFilter === null}
                 onClick={() => setGroupFilter(null)}
               />
-              {cardGroups.map((g) => (
+              {trayGroups.map((g) => (
                 <GroupPill
                   key={g.value}
                   label={g.label}

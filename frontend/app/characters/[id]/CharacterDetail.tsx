@@ -10,7 +10,8 @@ import { cachedFetch } from "@/lib/fetch-cache";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-import { imageUrl } from "@/lib/image-url";
+import { imageUrl, fullCardUrl } from "@/lib/image-url";
+import FullCardGrid from "@/app/components/FullCardGrid";
 
 function toUpperSnake(s: string): string {
   return s.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
@@ -356,33 +357,24 @@ export default function CharacterDetail({ initialCharacter }: { initialCharacter
             ({char.starting_deck.length} cards)
           </span>
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {char.starting_deck.map((cardName, i) => {
             const cardData = cards[toUpperSnake(cardName)];
+            if (!cardData) return null;
             return (
               <Link
                 key={`${cardName}-${i}`}
-                href={cardData ? `/cards/${cardData.id.toLowerCase()}` : "#"}
-                className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] transition-colors"
+                href={`/cards/${cardData.id.toLowerCase()}`}
+                className="block transition-transform duration-150 hover:scale-[1.04]"
+                title={cardData.name}
               >
-                {cardData?.image_url && (
-                  <img
-                    src={imageUrl(cardData.image_url)}
-                    alt={`${cardData.name} - Slay the Spire 2 Card`}
-                    className="w-10 h-10 object-contain"
-                    crossOrigin="anonymous"
-                  />
-                )}
-                <div>
-                  <div className="text-sm font-medium text-[var(--text-primary)]">
-                    {cardData?.name ?? cardName.replace(/([A-Z])/g, " $1").trim()}
-                  </div>
-                  {cardData && (
-                    <div className="text-xs text-[var(--text-muted)]">
-                      {cardData.type} · Cost {cardData.cost}
-                    </div>
-                  )}
-                </div>
+                <img
+                  src={fullCardUrl(cardData.id.toLowerCase(), false, "stable", lang)}
+                  alt={`${cardData.name} - Slay the Spire 2`}
+                  className="w-full h-auto drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+                  crossOrigin="anonymous"
+                  loading="lazy"
+                />
               </Link>
             );
           })}
@@ -474,32 +466,10 @@ export default function CharacterDetail({ initialCharacter }: { initialCharacter
                     </span>
                     <span className="text-xs font-normal">({cardsByRarity[rarity].length})</span>
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {cardsByRarity[rarity].map((card) => (
-                      <Link
-                        key={card.id}
-                        href={`/cards/${card.id.toLowerCase()}`}
-                        className="flex items-center gap-3 p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] transition-colors"
-                      >
-                        {card.image_url && (
-                          <img
-                            src={imageUrl(card.image_url)}
-                            alt={`${card.name} - Slay the Spire 2 Card`}
-                            className="w-8 h-8 object-contain flex-shrink-0"
-                            crossOrigin="anonymous"
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-[var(--text-primary)] truncate">
-                            {card.name}
-                          </div>
-                          <div className="text-xs text-[var(--text-muted)]">
-                            {card.type}{card.cost !== null && card.cost !== undefined ? ` · Cost ${card.is_x_cost ? "X" : card.cost}` : ""}
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                  <FullCardGrid
+                    cards={cardsByRarity[rarity]}
+                    className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+                  />
                 </div>
               ))}
             </div>

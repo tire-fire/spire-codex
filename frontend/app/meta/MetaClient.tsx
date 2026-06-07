@@ -9,6 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
+import { characterHex } from "@/lib/character-colors";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const BETA_SITE = "https://beta.spire-codex.com";
@@ -23,14 +24,6 @@ const CHART_COLORS = {
   orange: "#fb923c",
   cyan: "#22d3ee",
   muted: "#6b7280",
-};
-
-const CHAR_COLORS: Record<string, string> = {
-  IRONCLAD: "#d53b27",
-  SILENT: "#23935b",
-  DEFECT: "#3873a9",
-  NECROBINDER: "#bf5a85",
-  REGENT: "#f07c1e",
 };
 
 interface CardInfo {
@@ -400,7 +393,7 @@ export default function MetaClient() {
                       name: displayName(`CHARACTER.${c.character}`),
                       wins: c.wins,
                       losses: c.total - c.wins,
-                      fill: CHAR_COLORS[c.character] || CHART_COLORS.muted,
+                      fill: characterHex(c.character) || CHART_COLORS.muted,
                     }))}>
                       <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#9ca3af" }} />
                       <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} />

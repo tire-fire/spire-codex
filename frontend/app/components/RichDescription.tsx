@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-import { imageUrl } from "@/lib/image-url";
+import { imageUrl, fullCardUrl } from "@/lib/image-url";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export interface RelatedCard {
   id: string;
@@ -294,6 +295,8 @@ function cleanTemplateVars(text: string): string {
 
 function CardHoverTip({ card, isUpgraded, children }: { card: RelatedCard; isUpgraded?: boolean; children: React.ReactNode }) {
   const [show, setShow] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const { lang } = useLanguage();
   const displayName = isUpgraded ? `${card.name}+` : card.name;
 
   return (
@@ -309,27 +312,22 @@ function CardHoverTip({ card, isUpgraded, children }: { card: RelatedCard; isUpg
         {children}
       </Link>
       {show && (
-        <span className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none">
-          <span className="block w-48 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg shadow-xl shadow-black/60 overflow-hidden">
-            {card.image_url && (
-              <span className="block bg-black/40">
-                <img
-                  src={imageUrl(card.image_url)}
-                  alt={`${displayName} - Slay the Spire 2 Card`}
-                  className="w-full h-24 object-contain"
-                  crossOrigin="anonymous"
-                />
-              </span>
-            )}
-            <span className="block px-2.5 py-2">
-              <span className="block text-xs font-semibold text-[var(--text-primary)]">
-                {displayName}
-              </span>
-              <span className="block text-[10px] text-[var(--text-muted)] mt-0.5">
-                {card.type} · {card.rarity} · Cost {card.cost}
-              </span>
-            </span>
-          </span>
+        <span className="pointer-events-none absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-40">
+          {/* Full game-rendered card (with upgraded variant when relevant);
+              the render already carries the name/cost/text. Falls back to
+              the portrait art if a card has no full render (mad_science). */}
+          <img
+            src={
+              failed && card.image_url
+                ? imageUrl(card.image_url)
+                : fullCardUrl(card.id.toLowerCase(), !!isUpgraded, "stable", lang)
+            }
+            alt={`${displayName} - Slay the Spire 2 Card`}
+            className="w-40 h-auto drop-shadow-[0_8px_24px_rgba(0,0,0,0.7)]"
+            crossOrigin="anonymous"
+            loading="lazy"
+            onError={() => setFailed(true)}
+          />
         </span>
       )}
     </span>
