@@ -97,7 +97,7 @@ if [ -n "$PREV" ]; then
     "$DATA_OUT/eng" \
     --format json \
     --output-dir "$DATA_OUT/changelogs" \
-    --game-version "$VERSION" \
+    --game-version "${VERSION#v}" \
     --title "Beta $VERSION"
 fi
 

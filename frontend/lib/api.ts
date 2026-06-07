@@ -381,6 +381,7 @@ export interface Badge {
 export interface Epoch {
   id: string;
   title: string;
+  image_url: string | null;
   description: string | null;
   era: string;
   era_name: string | null;

@@ -7,6 +7,7 @@ import { cachedFetch } from "@/lib/fetch-cache";
 import SearchFilter from "../components/SearchFilter";
 import RichDescription from "../components/RichDescription";
 import { useLanguage } from "../contexts/LanguageContext";
+import { imageUrl } from "@/lib/image-url";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -307,6 +308,15 @@ export default function TimelineClient({
                               >
                                 &gt;
                               </span>
+                              {epoch.image_url && (
+                                <img
+                                  src={imageUrl(epoch.image_url)}
+                                  alt={`${epoch.title} epoch art`}
+                                  className="w-10 h-10 rounded object-cover border border-[var(--border-subtle)] flex-shrink-0"
+                                  loading="lazy"
+                                  crossOrigin="anonymous"
+                                />
+                              )}
                               <div>
                                 <h3 className="font-semibold text-[var(--text-primary)]">
                                   <Link href={`/timeline/${epoch.id.toLowerCase()}`} className="hover:text-[var(--accent-gold)] transition-colors" onClick={(e) => e.stopPropagation()}>

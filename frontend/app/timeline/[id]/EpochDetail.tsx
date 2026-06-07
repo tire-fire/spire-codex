@@ -7,6 +7,7 @@ import type { Epoch, Card, Relic, Potion } from "@/lib/api";
 import RichDescription from "@/app/components/RichDescription";
 import { cachedFetch } from "@/lib/fetch-cache";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { imageUrl } from "@/lib/image-url";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -133,6 +134,17 @@ export default function EpochDetail({ initialEpoch }: { initialEpoch?: Epoch | n
         <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-4">
           {epoch.title}
         </h1>
+
+        {/* Epoch portrait illustration */}
+        {epoch.image_url && (
+          <img
+            src={imageUrl(epoch.image_url)}
+            alt={`${epoch.title} epoch art - Slay the Spire 2`}
+            className="w-full max-w-sm rounded-lg border border-[var(--border-subtle)] mb-5"
+            loading="lazy"
+            crossOrigin="anonymous"
+          />
+        )}
 
         {/* Unlock info */}
         {epoch.unlock_info && (
