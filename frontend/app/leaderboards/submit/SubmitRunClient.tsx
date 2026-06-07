@@ -10,6 +10,7 @@ import { t } from "@/lib/ui-translations";
 import { IS_BETA } from "@/lib/seo";
 import RunDropZone from "@/app/components/RunDropZone";
 import DiscordIcon from "@/app/components/DiscordIcon";
+import { characterHex } from "@/lib/character-colors";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -22,14 +23,6 @@ interface Run {
   floors_reached: number;
   submitted_at: string;
 }
-
-const CHARACTER_COLORS: Record<string, string> = {
-  IRONCLAD: "#d53b27",
-  SILENT: "#23935b",
-  DEFECT: "#3873a9",
-  NECROBINDER: "#bf5a85",
-  REGENT: "#f07c1e",
-};
 
 export default function SubmitRunClient() {
   const router = useRouter();
@@ -336,7 +329,7 @@ export default function SubmitRunClient() {
                 >
                   <span
                     className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: CHARACTER_COLORS[run.character] || "#888" }}
+                    style={{ backgroundColor: characterHex(run.character) || "#888" }}
                   />
                   <span className="font-medium text-[var(--text-primary)] w-20 sm:w-24 truncate">
                     {run.character}

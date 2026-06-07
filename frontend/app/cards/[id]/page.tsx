@@ -4,7 +4,7 @@ import { stripTags, stripTagsFlat, clipMetaDescription, buildLanguageAlternates,
 import JsonLd from "@/app/components/JsonLd";
 import { buildDetailPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
 import { redirectMissingEntity } from "@/lib/redirect-helpers";
-import { imageUrl } from "@/lib/image-url";
+import { cardOgImages } from "@/lib/image-url";
 
 // 1h on-demand ISR. force-static + revalidate forces Next.js to
 // cache even with async-params pages, without it, Next 15+ sees
@@ -36,6 +36,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const metaDesc = clipMetaDescription(
       `Slay the Spire 2 card, ${card.name} (${card.cost ?? "X"}-cost ${card.rarity} ${card.type}, ${color}). ${descFlat}${keywords}`,
     );
+    // Full game-rendered card (base + upgraded) as the share image, English.
+    const ogImages = cardOgImages(card, "eng");
     return {
       title,
       description: metaDesc,
@@ -45,9 +47,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: `${SITE_URL}/cards/${id}`,
         title,
         description: metaDesc,
-        images: card.image_url ? [{ url: imageUrl(card.image_url) }] : [],
+        images: ogImages,
       },
-      twitter: { card: "summary_large_image", title, description: metaDesc },
+      twitter: { card: "summary_large_image", title, description: metaDesc, images: ogImages.map((i) => i.url) },
       alternates: { canonical: `/cards/${id}`, languages: buildLanguageAlternates(`/cards/${id}`) },
     };
   } catch {
@@ -71,7 +73,7 @@ export default async function Page({ params }: Props) {
         name: card.name,
         description: desc || `${card.name} card from Slay the Spire 2`,
         path: `/cards/${id}`,
-        imageUrl: card.image_url ? imageUrl(card.image_url) : undefined,
+        imageUrl: cardOgImages(card, "eng")[0]?.url,
         category: "Card",
         breadcrumbs: [
           { name: "Home", href: "/" },

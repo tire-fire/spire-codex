@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { imageUrl } from "@/lib/image-url";
+import { imageUrl, fullCardUrl } from "@/lib/image-url";
 
 // Use ?? not ||, production sets NEXT_PUBLIC_API_URL="" intentionally
 // so URLs resolve same-origin (nginx proxies /static to the backend
@@ -131,36 +131,59 @@ export default function TierList({ route, entities, showUnrated = true }: TierLi
 
           {/* Entity tile grid */}
           <div className="flex flex-wrap gap-2 p-3 flex-1 min-w-0">
-            {items.map((ent) => (
-              <Link
-                key={ent.id}
-                href={`/${route}/${ent.id.toLowerCase()}`}
-                title={ent.score != null ? `${ent.name} (Score ${ent.score})` : ent.name}
-                className="group relative flex flex-col items-center gap-1 w-16 sm:w-20 p-1.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-primary)] hover:border-[var(--accent-gold)]/50 transition-colors"
-              >
-                {ent.image_url ? (
+            {items.map((ent) =>
+              route === "cards" ? (
+                // Full game-rendered card for the card tier list.
+                <Link
+                  key={ent.id}
+                  href={`/cards/${ent.id.toLowerCase()}`}
+                  title={ent.score != null ? `${ent.name} (Score ${ent.score})` : ent.name}
+                  className="group relative flex flex-col items-center gap-0.5 w-[130px] sm:w-[150px] hover:scale-[1.04] transition-transform"
+                >
                   <img
-                    src={imageUrl(ent.image_url)}
+                    src={fullCardUrl(ent.id.toLowerCase())}
                     alt={ent.name}
-                    className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
+                    className="w-full h-auto drop-shadow-[0_3px_10px_rgba(0,0,0,0.5)]"
                     loading="lazy"
                     crossOrigin="anonymous"
                   />
-                ) : (
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded bg-[var(--bg-card)] flex items-center justify-center text-xs text-[var(--text-muted)]">
-                    ?
-                  </div>
-                )}
-                <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] text-center leading-tight line-clamp-2 min-h-[1.5rem]">
-                  {ent.name}
-                </span>
-                {ent.score != null && (
-                  <span className="text-[9px] font-mono tabular-nums text-[var(--text-muted)]">
-                    {ent.score}
+                  {ent.score != null && (
+                    <span className="text-[9px] font-mono tabular-nums text-[var(--text-muted)]">
+                      {ent.score}
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <Link
+                  key={ent.id}
+                  href={`/${route}/${ent.id.toLowerCase()}`}
+                  title={ent.score != null ? `${ent.name} (Score ${ent.score})` : ent.name}
+                  className="group relative flex flex-col items-center gap-1 w-16 sm:w-20 p-1.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-primary)] hover:border-[var(--accent-gold)]/50 transition-colors"
+                >
+                  {ent.image_url ? (
+                    <img
+                      src={imageUrl(ent.image_url)}
+                      alt={ent.name}
+                      className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
+                      loading="lazy"
+                      crossOrigin="anonymous"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded bg-[var(--bg-card)] flex items-center justify-center text-xs text-[var(--text-muted)]">
+                      ?
+                    </div>
+                  )}
+                  <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] text-center leading-tight line-clamp-2 min-h-[1.5rem]">
+                    {ent.name}
                   </span>
-                )}
-              </Link>
-            ))}
+                  {ent.score != null && (
+                    <span className="text-[9px] font-mono tabular-nums text-[var(--text-muted)]">
+                      {ent.score}
+                    </span>
+                  )}
+                </Link>
+              )
+            )}
           </div>
         </div>
       ))}

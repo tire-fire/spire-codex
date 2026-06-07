@@ -6,6 +6,7 @@ import HomeGuidesSection from "@/app/components/HomeGuidesSection";
 import HomeShowcaseSection from "@/app/components/HomeShowcaseSection";
 import HomeLeaderboardSection from "@/app/components/HomeLeaderboardSection";
 import HomeStatsSection from "@/app/components/HomeStatsSection";
+import HomeMetricsSection from "@/app/components/HomeMetricsSection";
 import HomeFAQ from "@/app/components/HomeFAQ";
 import JsonLd from "@/app/components/JsonLd";
 import SearchTrigger from "@/app/components/SearchTrigger";
@@ -134,6 +135,7 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
       <HomeNewsSection langPrefix={`/${lang}`} lang={lang} />
       <HomeLeaderboardSection langPrefix={`/${lang}`} lang={lang} characterNames={translations?.character_names} />
       <HomeStatsSection langPrefix={`/${lang}`} lang={lang} characterNames={translations?.character_names} />
+      <HomeMetricsSection langPrefix={`/${lang}`} lang={lang} />
       <HomeGuidesSection langPrefix={`/${lang}`} lang={lang} />
       <HomeShowcaseSection langPrefix={`/${lang}`} lang={lang} />
       <HomeFAQ stats={stats} lang={lang} />

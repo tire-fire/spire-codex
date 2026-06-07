@@ -1039,20 +1039,65 @@ def get_stats(
     )
     potion_owned = {r["_id"]: r for r in potions_owned_list}
 
-    potion_pu = agg(
+    # Potion offered/picked is computed SHOP-ONLY, on purpose. A combat-drop
+    # potion with an open slot gets taken ~91% of the time because it's free
+    # and has no downside, so a drop "pick rate" measures slot availability,
+    # not potion quality. A SHOP purchase is a real decision (you spend gold),
+    # and the buy rate sits around ~9% — that's the signal worth ranking on.
+    # So we count offers/buys only from potions seen on a shop shelf: walk
+    # map_point_history -> shop locations -> potion_choices. `used` stays a
+    # run-level usage metric (independent of where the potion came from).
+    potion_shop = agg(
+        [
+            {"$match": match},
+            {"$unwind": "$map_point_history"},  # acts -> one act (list of locations)
+            {"$unwind": "$map_point_history"},  # locations -> one location dict
+            {"$match": {"map_point_history.rooms.room_type": "shop"}},
+            {"$unwind": "$map_point_history.player_stats"},
+            {"$unwind": "$map_point_history.player_stats.potion_choices"},
+            {
+                "$group": {
+                    "_id": "$map_point_history.player_stats.potion_choices.choice",
+                    "picked": {
+                        "$sum": {
+                            "$cond": [
+                                "$map_point_history.player_stats."
+                                "potion_choices.was_picked",
+                                1,
+                                0,
+                            ]
+                        }
+                    },
+                    "offered": {"$sum": 1},
+                }
+            },
+        ]
+    )
+    potion_used_rows = agg(
         [
             {"$match": match},
             {"$unwind": "$potions"},
             {
                 "$group": {
                     "_id": "$potions.id",
-                    "picked": {"$sum": {"$cond": ["$potions.was_picked", 1, 0]}},
-                    "offered": {"$sum": 1},
                     "used": {"$sum": {"$cond": ["$potions.was_used", 1, 0]}},
                 }
             },
         ]
     )
+    used_by_id = {r["_id"]: r["used"] for r in potion_used_rows}
+    # Strip the "POTION." namespace so shop ids line up with the clean ids
+    # used everywhere else (potion_owned, used_by_id, the entity routes).
+    potion_pu = [
+        {
+            "_id": (cid.split(".", 1)[1] if "." in cid else cid),
+            "offered": r["offered"],
+            "picked": r["picked"],
+            "used": used_by_id.get((cid.split(".", 1)[1] if "." in cid else cid), 0),
+        }
+        for r in potion_shop
+        if (cid := r["_id"])
+    ]
 
     # Per-character breakdown runs against match_no_char (drops the
     # character filter so the breakdown has one row per character).

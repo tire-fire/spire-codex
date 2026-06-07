@@ -9,7 +9,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useLangPrefix } from "@/lib/use-lang-prefix";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-import { imageUrl } from "@/lib/image-url";
+import { imageUrl, fullCardUrl } from "@/lib/image-url";
 
 function toUpperSnake(s: string): string {
   return s.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
@@ -141,10 +141,14 @@ const [characters, setCharacters] = useState<Character[]>(initialCharacters);
                     >
                       {cardName.replace(/([A-Z])/g, " $1").trim()}
                       {cardData && (
-                        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-52 px-2.5 py-2 rounded bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-secondary)] leading-snug shadow-lg opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
-                          <span className="block font-semibold text-[var(--text-primary)] mb-1">{cardData.name}</span>
-                          <span className="block text-[var(--text-muted)] mb-1">{cardData.type} · Cost {cardData.cost}</span>
-                          <span className="block"><RichDescription text={cleanDescription(cardData.description)} /></span>
+                        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-44 opacity-0 group-hover/card:opacity-100 transition-opacity z-20">
+                          <img
+                            src={fullCardUrl(cardData.id.toLowerCase(), false, "stable", lang)}
+                            alt={cardData.name}
+                            className="w-44 h-auto drop-shadow-[0_6px_18px_rgba(0,0,0,0.65)]"
+                            crossOrigin="anonymous"
+                            loading="lazy"
+                          />
                         </span>
                       )}
                     </span>
@@ -167,9 +171,19 @@ const [characters, setCharacters] = useState<Character[]>(initialCharacters);
                     >
                       {relicName.replace(/([A-Z])/g, " $1").trim()}
                       {relicData && (
-                        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-52 px-2.5 py-2 rounded bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-secondary)] leading-snug shadow-lg opacity-0 group-hover/relic:opacity-100 transition-opacity z-10">
-                          <span className="block font-semibold text-[var(--accent-gold)] mb-1">{relicData.name}</span>
-                          <span className="block"><RichDescription text={cleanDescription(relicData.description)} /></span>
+                        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-60 px-2.5 py-2 rounded bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-secondary)] leading-snug shadow-lg opacity-0 group-hover/relic:opacity-100 transition-opacity z-10 flex gap-2 items-start text-left">
+                          {relicData.image_url && (
+                            <img
+                              src={imageUrl(relicData.image_url)}
+                              alt=""
+                              className="w-9 h-9 object-contain flex-shrink-0 mt-0.5"
+                              crossOrigin="anonymous"
+                            />
+                          )}
+                          <span className="block">
+                            <span className="block font-semibold text-[var(--accent-gold)] mb-1">{relicData.name}</span>
+                            <span className="block"><RichDescription text={cleanDescription(relicData.description)} /></span>
+                          </span>
                         </span>
                       )}
                     </span>

@@ -1,6 +1,16 @@
 """Pydantic models for the API."""
 
-from pydantic import BaseModel
+import os
+
+from pydantic import BaseModel, computed_field
+
+# Base URL for the full game-rendered card images (the whole card: frame, art,
+# banner, animated flame). Stable channel by default; a beta deploy can point
+# this at the beta render set. Upgraded cards add the `_upg` suffix; ancients
+# are animated webps. `mad_science` has no full render.
+CARD_FULL_BASE = os.getenv(
+    "CARD_FULL_BASE", "https://cdn.spire-codex.com/cards-full/stable"
+).rstrip("/")
 
 
 class PowerApplied(BaseModel):
@@ -62,6 +72,24 @@ class Card(BaseModel):
     # surface the field when it's explicitly `false` to keep the payload tight.
     can_be_generated_in_combat: bool | None = None
     compendium_order: int = 0
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def image_url_card(self) -> str | None:
+        """Full game-rendered card image (frame + art + text; animated for
+        ancients). `null` when there's no render (mad_science)."""
+        if self.id.lower() == "mad_science":
+            return None
+        return f"{CARD_FULL_BASE}/{self.id.lower()}.webp"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def image_url_card_upg(self) -> str | None:
+        """Full game-rendered image of the upgraded card. `null` when the card
+        has no upgrade."""
+        if not self.upgrade or self.id.lower() == "mad_science":
+            return None
+        return f"{CARD_FULL_BASE}/{self.id.lower()}_upg.webp"
 
 
 class CharacterDialogueLine(BaseModel):

@@ -10,7 +10,7 @@ import {
 import ScoreBadge from "@/app/components/ScoreBadge";
 import RecentlyAdded from "@/app/components/RecentlyAdded";
 import CardsClient from "./CardsClient";
-import { imageUrl } from "@/lib/image-url";
+import { fullCardUrl } from "@/lib/image-url";
 
 const API =
   process.env.API_INTERNAL_URL ||
@@ -185,10 +185,23 @@ export default async function CardsPage() {
           building internal-link surface area to high-intent landing pages
           that compete for long-tail entity queries. */}
       {topByScore.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">
-            Highest-rated sts2 cards right now
-          </h2>
+        <section className="mb-10 rounded-2xl border border-[var(--accent-gold)]/25 bg-gradient-to-b from-[var(--accent-gold)]/[0.07] to-[var(--bg-card)] p-5 sm:p-6 shadow-lg shadow-black/20">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-[var(--accent-gold)] bg-[var(--accent-gold)]/10 border border-[var(--accent-gold)]/30 rounded px-2 py-0.5 mb-2">
+                ★ Top tier · live
+              </span>
+              <h2 className="text-xl font-semibold">
+                Highest-rated sts2 cards right now
+              </h2>
+            </div>
+            <Link
+              href="/tier-list/cards"
+              className="text-xs text-[var(--accent-gold)] hover:underline whitespace-nowrap"
+            >
+              Full tier list →
+            </Link>
+          </div>
           <p className="text-sm text-[var(--text-muted)] mb-4 max-w-3xl">
             Top picks by Codex Score, a Bayesian-shrunk win rate that
             adjusts for sample size, so a card with a 60% win rate over 5
@@ -198,29 +211,22 @@ export default async function CardsPage() {
           <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {topByScore.map(({ card, score }) => (
               <li key={card.id}>
-                <Link
-                  href={`/cards/${card.id.toLowerCase()}`}
-                  className="block group p-3 rounded-lg border border-[var(--border-subtle)] hover:border-[var(--accent-gold)] transition-colors"
-                >
-                  {card.image_url && (
-                    <img
-                      src={imageUrl(card.image_url)}
-                      alt={`${card.name} - Slay the Spire 2 card`}
-                      className="w-full h-28 object-contain mb-2"
-                      loading="lazy"
-                    />
-                  )}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium group-hover:text-[var(--accent-gold)] transition-colors truncate">
-                      {card.name}
+                <Link href={`/cards/${card.id.toLowerCase()}`} className="block group">
+                  <img
+                    src={fullCardUrl(card.id.toLowerCase())}
+                    alt={`${card.name} - Slay the Spire 2 card`}
+                    className="w-full h-auto transition-transform group-hover:scale-[1.04] drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+                    loading="lazy"
+                    crossOrigin="anonymous"
+                  />
+                  <div className="mt-1.5 flex items-center justify-center gap-2 text-xs">
+                    <span className="font-semibold text-[var(--accent-gold)]">
+                      {score.win_rate.toFixed(0)}% WR
                     </span>
-                    {score.score != null && (
-                      <ScoreBadge score={score.score} size="sm" />
-                    )}
-                  </div>
-                  <div className="text-xs text-[var(--text-muted)] mt-1">
-                    {score.win_rate.toFixed(1)}% win ·{" "}
-                    {score.picks.toLocaleString()} picks
+                    <span className="text-[var(--text-muted)]">
+                      {score.picks.toLocaleString()} picks
+                    </span>
+                    {score.score != null && <ScoreBadge score={score.score} size="sm" />}
                   </div>
                 </Link>
               </li>

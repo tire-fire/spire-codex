@@ -48,6 +48,18 @@ All data endpoints accept `?lang=` (default: `eng`). Rate limited to 60 req/min 
 | `GET /api/ancient-pools` | | Ancient relic offering pools |
 | `GET /api/ancient-pools/{id}` | | Single ancient's pools |
 
+### Card image fields
+
+Each card from `/api/cards` and `/api/cards/{id}` carries image URLs:
+
+| Field | Description |
+|-------|-------------|
+| `image_url` | Portrait art only (relative `/static/images/...` path, served via the CDN) |
+| `image_url_card` | Full game-rendered card (frame + art + banner + text). Absolute CDN URL. Ancient cards are animated webps. `null` for `mad_science` (no render), fall back to `image_url` |
+| `image_url_card_upg` | Full game-rendered **upgraded** card. `null` when the card has no upgrade |
+
+Full-card base URL is `https://cdn.spire-codex.com/cards-full/stable/<id>.webp` (and `<id>_upg.webp`). Override server-side with the `CARD_FULL_BASE` env var (e.g. to point at a beta render set).
+
 ## Guides
 
 | Endpoint | Method | Description |
@@ -68,6 +80,7 @@ All data endpoints accept `?lang=` (default: `eng`). Rate limited to 60 req/min 
 | `GET /api/runs/leaderboard/rank/{hash}` | GET | Rank of one winning run within its ladder. `category` filter. |
 | `POST /api/runs/claim` | POST | Body `{ username, hashes: [] }` — attaches a username to previously-submitted runs (only rows with a null/empty username). |
 | `GET /api/runs/scores/{type}` | GET | Codex Score per entity. `type` ∈ `cards` / `relics` / `potions`. Returns `{ id, score (0–100), tier (S/A/B/C/D/F), wins, losses, n }[]`. Bayesian-shrunk win rate graded against the per-type average, materialized to MongoDB by a single leader and read by all workers. See `services/run_entity_stats.py` and `/leaderboards/scoring`. |
+| `GET /api/runs/metrics/{type}` | GET | Dense metrics table (powers `/leaderboards/metrics`). `type` ∈ `cards` / `relics` / `potions`. Optional `cohort` ∈ `all` (default) / `solo` / `2p` / `3p` / `4p` / `a10` (ascension 10) / `daily` / `custom` slices to a pre-built run cohort (all cohorts are materialized in the same snapshot, so it stays a single cached read). Returns `{ entity_type, cohort, baseline_win_rate, total_runs, rows: [{ id, score, tier, elo, win_rate, pick_rate, picks, wins, losses, offered, picked, pick_rate_by_act:[A1,A2,A3] }] }`. **Codex Elo** is a revealed-preference Bradley-Terry rating built from card-reward picks (the card you take beats the cards you skip), so it's largely skill-agnostic. Cards only; relics/potions return `null` Elo/pick fields. Served from the same pre-built snapshot as `/scores` (no per-request aggregation). |
 | `GET /api/runs/encounter-stats` | GET | Per-encounter aggregation. Query params: `act` (comma-separated 1/2/3), `room_type` (comma-separated monster/elite/boss), `multiplayer` (`only`/`exclude`), `page`, `limit` (max 200, default 50). Returns `{ encounters: [{ encounter_id, act, room_type, total, fatal, avg_damage, avg_turns, characters: [{ character, total, fatal, avg_damage, avg_turns }] }], page, limit, total, has_next }`. Mongo-only; returns empty when no Mongo backend is configured. |
 | `GET /api/runs/versions` | GET | Distinct `build_id` values across submitted runs — powers the version filter dropdown |
 

@@ -13,7 +13,7 @@ import { t } from "@/lib/ui-translations";
 import LocalizedNames from "@/app/components/LocalizedNames";
 import EntityHistory from "@/app/components/EntityHistory";
 import RelatedCards from "@/app/components/RelatedCards";
-import { imageUrl } from "@/lib/image-url";
+import { imageUrl, fullCardUrl } from "@/lib/image-url";
 import EntityRunStats from "@/app/components/EntityRunStats";
 import HoverTooltip from "@/app/components/HoverTooltip";
 import { useLangPrefix } from "@/lib/use-lang-prefix";
@@ -164,6 +164,21 @@ export default function CardDetail({ initialCard }: { initialCard?: Card | null 
   const [notFound, setNotFound] = useState(false);
   const [upgraded, setUpgraded] = useState(false);
   const [betaArt, setBetaArt] = useState(false);
+  const [cardImgFailed, setCardImgFailed] = useState(false);
+  // Hero display: "card" = full game render image (default), "detail" = the
+  // interactive CSS card render.
+  const [cardMode, setCardMode] = useState<"card" | "detail">("card");
+  useEffect(() => {
+    // Key bumped to -v2 to reset everyone to the 1:1 card render once, since
+    // it's now the default. Visitors can still switch back to "detail".
+    const saved = localStorage.getItem("card-detail-view-v2");
+    if (saved === "card" || saved === "detail") setCardMode(saved);
+  }, []);
+  const toggleCardMode = () => {
+    const next = cardMode === "card" ? "detail" : "card";
+    setCardMode(next);
+    localStorage.setItem("card-detail-view-v2", next);
+  };
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
   const [powerData, setPowerData] = useState<Record<string, { id: string; name: string; description: string; type: string; image_url: string | null }>>({});
@@ -297,13 +312,31 @@ export default function CardDetail({ initialCard }: { initialCard?: Card | null 
             : colorMapSolid[card.color] || "border-[var(--border-subtle)]"
         } shadow-2xl shadow-black/50`}
       >
-        {/* Image */}
-        {imgUrl && (
-          <div className="bg-black/40 rounded-t-2xl overflow-hidden">
+        {cardMode === "card" ? (
+          // Full game-rendered card (engine render from the CDN). Margins are
+          // baked in so it can't clip; ancients animate. Falls back to the
+          // portrait if there's no full render (e.g. mad_science).
+          <div className="bg-black/40 rounded-t-2xl flex justify-center py-6 px-4">
+            <img
+              src={
+                cardImgFailed
+                  ? imageUrl(imgUrl)
+                  : fullCardUrl(card.id.toLowerCase(), isUpgraded, "stable", lang)
+              }
+              alt={`${card.name}${isUpgraded ? "+" : ""} - Slay the Spire 2`}
+              className="w-[300px] max-w-full h-auto drop-shadow-[0_4px_14px_rgba(0,0,0,0.55)]"
+              crossOrigin="anonymous"
+              onError={() => setCardImgFailed(true)}
+            />
+          </div>
+        ) : (
+          // Raw card artwork (the painting), the way spire-codex.com shows it.
+          // Respects the beta-art / variant toggles via imgUrl.
+          <div className="bg-black/40 rounded-t-2xl flex justify-center p-4">
             <img
               src={imageUrl(imgUrl)}
-              alt={`${card.name} - Slay the Spire 2 Card`}
-              className="w-full object-contain max-h-80"
+              alt={`${card.name} artwork - Slay the Spire 2`}
+              className="w-full max-w-[460px] h-auto rounded-lg"
               crossOrigin="anonymous"
             />
           </div>
@@ -400,6 +433,17 @@ export default function CardDetail({ initialCard }: { initialCard?: Card | null 
 
             {/* Toggle buttons in tab bar */}
             <div className="ml-auto flex items-center gap-1.5">
+              <button
+                onClick={toggleCardMode}
+                className={`text-sm w-8 h-8 flex items-center justify-center rounded transition-colors ${
+                  cardMode === "detail"
+                    ? "bg-sky-950/60 border border-sky-700/50"
+                    : "bg-[var(--bg-primary)] border border-[var(--border-subtle)] opacity-50 hover:opacity-100"
+                }`}
+                title={cardMode === "card" ? "Switch to detailed view" : "Switch to card view"}
+              >
+                🎨
+              </button>
               {hasBetaArt && (
                 <button
                   onClick={() => setBetaArt(!betaArt)}

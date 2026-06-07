@@ -8,7 +8,7 @@ import { useLangPrefix } from "@/lib/use-lang-prefix";
 import RichDescription from "@/app/components/RichDescription";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-import { imageUrl } from "@/lib/image-url";
+import { imageUrl, fullCardUrl } from "@/lib/image-url";
 
 interface UnlockEntity {
   id: string;
@@ -58,20 +58,44 @@ const CHAR_COLORS: Record<string, string> = {
 function EntityCard({ entity, type, lp }: { entity: UnlockEntity; type: string; lp: string }) {
   const href = `${lp}/${type}/${entity.id.toLowerCase()}`;
   const charColor = CHAR_COLORS[entity.character] || "var(--text-muted)";
+  const [cardFailed, setCardFailed] = useState(false);
+  const { lang } = useLanguage();
 
   return (
     <Link
       href={href}
       className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-[var(--accent-gold)]/50 transition-colors group"
     >
-      {entity.image_url && (
+      {type === "cards" && !cardFailed ? (
+        // Full game-rendered card in the picture area (falls back to the
+        // portrait art for anything without a full render, e.g. mad_science).
+        // Hovering pops a larger copy.
+        <span className="relative flex-shrink-0 group/pop">
+          <img
+            src={fullCardUrl(entity.id.toLowerCase(), false, "stable", lang)}
+            alt={entity.name}
+            className="w-10 h-auto drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
+            crossOrigin="anonymous"
+            loading="lazy"
+            onError={() => setCardFailed(true)}
+          />
+          <span className="pointer-events-none absolute left-0 bottom-full mb-2 w-44 opacity-0 group-hover/pop:opacity-100 transition-opacity z-30">
+            <img
+              src={fullCardUrl(entity.id.toLowerCase(), false, "stable", lang)}
+              alt=""
+              className="w-44 h-auto drop-shadow-[0_8px_24px_rgba(0,0,0,0.7)]"
+              crossOrigin="anonymous"
+            />
+          </span>
+        </span>
+      ) : entity.image_url ? (
         <img
           src={imageUrl(entity.image_url)}
           alt={entity.name}
           className="w-8 h-8 object-contain flex-shrink-0"
           crossOrigin="anonymous"
         />
-      )}
+      ) : null}
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-gold)] transition-colors truncate">
           {entity.name}

@@ -3,6 +3,7 @@ import type { Relic } from "@/lib/api";
 import JsonLd from "@/app/components/JsonLd";
 import { buildCollectionPageJsonLd, buildBreadcrumbJsonLd } from "@/lib/jsonld";
 import RecentlyAdded from "@/app/components/RecentlyAdded";
+import HighestRated from "@/app/components/HighestRated";
 import RelicsClient from "./RelicsClient";
 
 const API = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -36,6 +37,14 @@ export default async function RelicsPage() {
       <p className="text-sm text-[var(--text-muted)] mb-6">
         Browse every relic across Ironclad, Silent, Defect, Necrobinder, and Regent. Filter by rarity and character pool.
       </p>
+
+      <HighestRated
+        entityType="relics"
+        entities={relics}
+        label="relics"
+        pathPrefix="/relics"
+        tierHref="/tier-list/relics"
+      />
 
       <RecentlyAdded entityType="relics" label="Relic" pathPrefix="/relics" />
 

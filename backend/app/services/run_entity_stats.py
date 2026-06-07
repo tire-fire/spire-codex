@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import threading
 import time
@@ -56,6 +57,69 @@ _PREFIX_TO_TYPE = {
 _SCORE_PRIOR_WEIGHT = 50
 _SCORE_SCALE_RANGE = 0.15
 
+# Codex Score → letter tier bands. Mirrors the bands documented on
+# /leaderboards/scoring so the metrics table and the scoring page agree.
+_TIER_BANDS = (
+    (90, "S"),
+    (78, "A"),
+    (65, "B"),
+    (50, "C"),
+    (35, "D"),
+    (0, "F"),
+)
+
+# Codex Elo: a revealed-preference rating built from card-reward picks
+# (NOT win rate). Every reward screen is treated as a round-robin where
+# the card you take "beats" the cards you skip; a Bradley-Terry model
+# over every such head-to-head yields a skill-robust "which card do
+# players actually want when offered" score. Independent of who plays
+# the card and whether they won, which is the whole point: it sidesteps
+# the win-rate confound that the Codex Score can't.
+#   ANCHOR / SPREAD set the readable scale: strengths are normalized to a
+#   geometric mean of 1, then mapped to ANCHOR + SPREAD*log10(strength),
+#   so a card picked 10x as often as the field average sits ~SPREAD above
+#   the anchor. MIN_GAMES drops cards with too few head-to-heads to rate.
+#   MAX_ITERS / TOL bound the MM solver.
+_ELO_ANCHOR = 1500.0
+_ELO_SPREAD = 400.0
+_ELO_MIN_GAMES = 20
+_ELO_MAX_ITERS = 200
+_ELO_TOL = 1e-6
+# How many act buckets the per-act pick-rate split tracks (A1/A2/A3).
+# Acts beyond the third fold into the last bucket.
+_ACT_BUCKETS = 3
+
+# Run cohorts the metrics table can be sliced by. "all" is the default and
+# lives in the top-level entity fields (also what scores/stats read). The
+# rest are pre-built in the same snapshot walk and stored nested per entity,
+# so switching cohort on the page is still a single cached read with no
+# per-request aggregation. A run contributes to "all" plus every cohort it
+# matches (a solo A10 daily run lands in solo, a10, daily).
+_COHORT_KEYS = ["solo", "2p", "3p", "4p", "a10", "daily", "custom"]
+
+
+def _run_extra_cohorts(player_count: int, ascension: int, game_mode: str) -> list[str]:
+    """Non-"all" cohort keys a single run belongs to."""
+    out: list[str] = []
+    pc = player_count or 1
+    if pc <= 1:
+        out.append("solo")
+    elif pc == 2:
+        out.append("2p")
+    elif pc == 3:
+        out.append("3p")
+    elif pc >= 4:
+        out.append("4p")
+    if (ascension or 0) >= 10:
+        out.append("a10")
+    gm = (game_mode or "standard").lower()
+    if gm == "daily":
+        out.append("daily")
+    elif gm == "custom":
+        out.append("custom")
+    return out
+
+
 _RUNS_DIR = (
     Path(os.environ.get("DATA_DIR", Path(__file__).resolve().parents[3] / "data"))
     / "runs"
@@ -86,6 +150,10 @@ _global_totals: dict[str, int] = {"total_runs": 0, "total_wins": 0}
 # / early-quit runs that contain almost no entities, which pushed nearly
 # every card and relic above baseline and piled everything into S-tier.
 _type_baselines: dict[str, float] = {}
+# Per-cohort baselines + totals for the metrics table's run-cohort filter
+# (solo/2p/3p/4p/a10/daily/custom). Keyed by cohort, then entity type.
+_cohort_baselines: dict[str, dict[str, float]] = {}
+_cohort_totals: dict[str, dict[str, int]] = {}
 _cache_built_at: float = 0.0
 _building: bool = False
 
@@ -131,16 +199,262 @@ def _walk_run_entities(blob: dict) -> Iterable[tuple[str, str]]:
                 yield stripped
 
 
-def _build_cache_data() -> tuple[dict, dict, dict]:
+def _walk_deck_upgrade_split(blob: dict) -> tuple[set[str], set[str]]:
+    """Per-run card-id sets: those present at base level vs upgraded
+    (current_upgrade_level > 0). A card lands in both sets if the deck holds
+    a base AND an upgraded copy. Used so the metrics table can show, e.g.,
+    Aggression and Aggression+ as separate rows."""
+    base_cards: set[str] = set()
+    upg_cards: set[str] = set()
+    for player in blob.get("players") or []:
+        for card in player.get("deck") or []:
+            stripped = _strip_prefix(card.get("id", ""))
+            if not stripped or stripped[0] != "cards":
+                continue
+            if (card.get("current_upgrade_level") or 0) > 0:
+                upg_cards.add(stripped[1])
+            else:
+                base_cards.add(stripped[1])
+    return base_cards, upg_cards
+
+
+def _walk_card_reward_screens(blob: dict) -> Iterable[tuple[int, list[str], list[str]]]:
+    """Emit one (act_index, picked_ids, skipped_ids) tuple per card-reward
+    screen in this run.
+
+    A "screen" is a single `card_choices` list under one floor's
+    `player_stats` entry, exactly the set of cards offered together. The
+    cards flagged `was_picked` beat the rest in that screen's round-robin.
+    `act_index` is the 0-based outer index of `map_point_history` (0 → A1).
+    Only CARD entities are emitted; ids are namespace-stripped to match
+    the cache keys ("CARD.ADRENALINE" → "ADRENALINE").
+    """
+    for act_index, act_floors in enumerate(blob.get("map_point_history") or []):
+        for floor in act_floors or []:
+            for ps in floor.get("player_stats") or []:
+                choices = ps.get("card_choices") or []
+                if not choices:
+                    continue
+                picked: list[str] = []
+                skipped: list[str] = []
+                for choice in choices:
+                    raw = (choice.get("card") or {}).get("id", "")
+                    stripped = _strip_prefix(raw)
+                    if not stripped or stripped[0] != "cards":
+                        continue
+                    cid = stripped[1]
+                    if choice.get("was_picked"):
+                        picked.append(cid)
+                    else:
+                        skipped.append(cid)
+                if picked or skipped:
+                    yield act_index, picked, skipped
+
+
+def _compute_codex_elo(
+    pair_wins: dict[tuple[str, str], int],
+) -> dict[str, float]:
+    """Bradley-Terry MM solver → Codex Elo per card.
+
+    `pair_wins[(i, j)]` is the number of reward screens where card i was
+    taken over card j. We fit latent strengths p_i maximizing the
+    Bradley-Terry likelihood via the standard minorization-maximization
+    update p_i ← W_i / Σ_j n_ij/(p_i+p_j), where W_i is i's total wins and
+    n_ij the total i-vs-j comparisons. Strengths are renormalized to a
+    geometric mean of 1 each iteration (the model is scale-invariant), and
+    finally mapped to a readable Elo via ANCHOR + SPREAD·log10(p).
+
+    Cards with fewer than `_ELO_MIN_GAMES` total head-to-heads are dropped
+    (too thin to rate). Returns {} when there's no comparison data.
+    """
+    if not pair_wins:
+        return {}
+
+    # Aggregate per-card wins (W_i) and symmetric comparison counts (n_ij).
+    wins: dict[str, float] = {}
+    games: dict[str, dict[str, float]] = {}
+    total_games: dict[str, float] = {}
+    for (i, j), c in pair_wins.items():
+        if c <= 0:
+            continue
+        wins[i] = wins.get(i, 0.0) + c
+        wins.setdefault(j, 0.0)
+        games.setdefault(i, {}).setdefault(j, 0.0)
+        games.setdefault(j, {}).setdefault(i, 0.0)
+        games[i][j] += c
+        games[j][i] += c
+        total_games[i] = total_games.get(i, 0.0) + c
+        total_games[j] = total_games.get(j, 0.0) + c
+
+    nodes = list(games.keys())
+    if not nodes:
+        return {}
+
+    # MM needs strictly-positive wins to be identifiable. A card that was
+    # never once preferred (W_i == 0) would collapse to strength 0 and
+    # stall the update; seed every card with a tiny pseudo-win so the
+    # solver stays well-defined. With real data this is negligible.
+    eps = 1e-3
+    p = {n: 1.0 for n in nodes}
+    w = {n: wins.get(n, 0.0) + eps for n in nodes}
+
+    for _ in range(_ELO_MAX_ITERS):
+        new_p: dict[str, float] = {}
+        for i in nodes:
+            denom = 0.0
+            gi = games[i]
+            pi = p[i]
+            for j, n_ij in gi.items():
+                denom += n_ij / (pi + p[j])
+            new_p[i] = w[i] / denom if denom > 0 else p[i]
+        # Renormalize to geometric mean 1 (scale-invariance) so the values
+        # don't drift toward 0/∞ across iterations.
+        log_sum = 0.0
+        for v in new_p.values():
+            log_sum += math.log(v) if v > 0 else 0.0
+        gmean = math.exp(log_sum / len(new_p))
+        if gmean > 0:
+            for n in new_p:
+                new_p[n] /= gmean
+        # Convergence check on the max relative move.
+        delta = 0.0
+        for n in nodes:
+            d = abs(new_p[n] - p[n])
+            if d > delta:
+                delta = d
+        p = new_p
+        if delta < _ELO_TOL:
+            break
+
+    out: dict[str, float] = {}
+    for n in nodes:
+        if total_games.get(n, 0.0) < _ELO_MIN_GAMES:
+            continue
+        strength = p[n]
+        if strength <= 0:
+            continue
+        out[n] = round(_ELO_ANCHOR + _ELO_SPREAD * math.log10(strength), 1)
+    return out
+
+
+def _score_to_tier(score: int | None) -> str | None:
+    """Map a 0-100 Codex Score to its S/A/B/C/D/F letter tier."""
+    if score is None:
+        return None
+    for floor_, tier in _TIER_BANDS:
+        if score >= floor_:
+            return tier
+    return "F"
+
+
+def _empty_pick_entry() -> dict[str, Any]:
+    return {
+        "offered": 0,
+        "picked": 0,
+        "off_act": [0] * _ACT_BUCKETS,
+        "pick_act": [0] * _ACT_BUCKETS,
+    }
+
+
+def _accumulate_screen(
+    pick_counts: dict[str, dict[str, Any]],
+    pair_wins: dict[tuple[str, str], int],
+    act_index: int,
+    picked_ids: list[str],
+    skipped_ids: list[str],
+) -> None:
+    """Fold one card-reward screen into a (pick_counts, pair_wins) pair.
+
+    Shared by the all-runs pass and each cohort pass so the offer/pick and
+    head-to-head bookkeeping stays identical across cohorts.
+    """
+    bucket = min(act_index, _ACT_BUCKETS - 1)
+    for cid in picked_ids:
+        pc = pick_counts.setdefault(cid, _empty_pick_entry())
+        pc["offered"] += 1
+        pc["picked"] += 1
+        pc["off_act"][bucket] += 1
+        pc["pick_act"][bucket] += 1
+    for cid in skipped_ids:
+        pc = pick_counts.setdefault(cid, _empty_pick_entry())
+        pc["offered"] += 1
+        pc["off_act"][bucket] += 1
+    for winner in picked_ids:
+        for loser in skipped_ids:
+            if winner == loser:
+                continue
+            key = (winner, loser)
+            pair_wins[key] = pair_wins.get(key, 0) + 1
+
+
+def _new_cohort_acc() -> dict[str, Any]:
+    """Lightweight per-cohort accumulator (the metrics table doesn't need
+    by_character / last-submission, so cohorts carry only what it reads)."""
+    return {
+        "cache": {},  # (etype, eid) -> {picks, wins}
+        "pick_counts": {},  # cid -> pick entry
+        "pair_wins": {},  # (i, j) -> count
+        "totals": {"total_runs": 0, "total_wins": 0},
+    }
+
+
+def _finalize_cohort(acc: dict[str, Any]) -> tuple[dict, dict]:
+    """Turn a cohort accumulator into (entities, type_baselines).
+
+    entities[(etype, eid)] = {picks, wins, offered, picked, off_act,
+    pick_act, elo}. Mirrors the all-runs finalize so a cohort row reads
+    the same as an all-runs row.
+    """
+    cache = acc["cache"]
+    elo = _compute_codex_elo(acc["pair_wins"])
+    for cid, pc in acc["pick_counts"].items():
+        key = ("cards", cid)
+        agg = cache.setdefault(key, {"picks": 0, "wins": 0})
+        agg["offered"] = pc["offered"]
+        agg["picked"] = pc["picked"]
+        agg["off_act"] = pc["off_act"]
+        agg["pick_act"] = pc["pick_act"]
+        agg["elo"] = elo.get(cid)
+    # Per-type pick-weighted baseline within this cohort.
+    type_totals: dict[str, dict[str, int]] = {}
+    for (etype, _), agg in cache.items():
+        tt = type_totals.setdefault(etype, {"wins": 0, "picks": 0})
+        tt["wins"] += agg["wins"]
+        tt["picks"] += agg["picks"]
+    baselines = {
+        etype: (tt["wins"] / tt["picks"]) if tt["picks"] else 0.5
+        for etype, tt in type_totals.items()
+    }
+    return cache, baselines
+
+
+def _build_cache_data() -> tuple[dict, dict, dict, dict]:
     """Walk every run JSON + DB row and return (cache, totals,
-    type_baselines) WITHOUT mutating module globals. The heavy 100k-file
-    walk lives here so the leader refresher can compute + persist a
-    snapshot, and the in-process fallback can reuse the same logic."""
+    type_baselines, cohort_meta) WITHOUT mutating module globals. The heavy
+    100k-file walk lives here so the leader refresher can compute + persist a
+    snapshot, and the in-process fallback can reuse the same logic.
+
+    The all-runs aggregate lives in the top-level entity fields (what
+    scores/stats read). Each run ALSO feeds the cohorts it matches
+    (solo/2p/3p/4p/a10/daily/custom); those land nested under each entity's
+    ``cohorts`` key, and `cohort_meta` carries their baselines + totals.
+    """
     new_cache: dict[tuple[str, str], dict[str, Any]] = {}
     new_totals = {"total_runs": 0, "total_wins": 0}
 
-    # Source of truth depends on which DB the app is using. Either way
-    # we end up with an iterable of (run_hash, character, win, submitted_at).
+    # Card-reward pick stats (offered/picked, overall + per act) and the
+    # pairwise preference matrix that feeds Codex Elo. Keyed by stripped
+    # card id; cards only (rewards never offer relics/potions this way).
+    pick_counts: dict[str, dict[str, Any]] = {}
+    pair_wins: dict[tuple[str, str], int] = {}
+    # Parallel lightweight accumulators, one per non-"all" cohort.
+    cohort_accs: dict[str, dict[str, Any]] = {
+        k: _new_cohort_acc() for k in _COHORT_KEYS
+    }
+
+    # Source of truth depends on which DB the app is using. Either way we end
+    # up with rows carrying win/character/submission + the cohort fields
+    # (player_count / ascension / game_mode).
     if _USING_MONGO:
         from .runs_db_mongo import _get_collection
 
@@ -148,7 +462,15 @@ def _build_cache_data() -> tuple[dict, dict, dict]:
         rows = list(
             coll.find(
                 {},
-                {"_id": 1, "character": 1, "win": 1, "submitted_at": 1},
+                {
+                    "_id": 1,
+                    "character": 1,
+                    "win": 1,
+                    "submitted_at": 1,
+                    "player_count": 1,
+                    "ascension": 1,
+                    "game_mode": 1,
+                },
             )
         )
         # Normalise to a common dict-like shape so the loop below
@@ -159,13 +481,17 @@ def _build_cache_data() -> tuple[dict, dict, dict]:
                 "character": d.get("character") or "",
                 "win": bool(d.get("win")),
                 "submitted_at": d.get("submitted_at"),
+                "player_count": d.get("player_count") or 1,
+                "ascension": d.get("ascension") or 0,
+                "game_mode": d.get("game_mode") or "standard",
             }
             for d in rows
         ]
     else:
         with get_conn() as conn:
             rows = conn.execute(
-                "SELECT run_hash, character, win, submitted_at FROM runs"
+                "SELECT run_hash, character, win, submitted_at, "
+                "player_count, ascension, game_mode FROM runs"
             ).fetchall()
             rows = [dict(r) for r in rows]
 
@@ -176,6 +502,16 @@ def _build_cache_data() -> tuple[dict, dict, dict]:
         run_hash = row["run_hash"]
         character = _strip_character_prefix(row["character"])
         is_win = bool(row["win"])
+        extra_cohorts = _run_extra_cohorts(
+            row.get("player_count") or 1,
+            row.get("ascension") or 0,
+            row.get("game_mode") or "standard",
+        )
+        for ck in extra_cohorts:
+            ct = cohort_accs[ck]["totals"]
+            ct["total_runs"] += 1
+            if is_win:
+                ct["total_wins"] += 1
         submitted = row["submitted_at"]
         # Mongo returns datetimes; SQLite returns ISO strings. Normalise
         # to ISO string so the max() comparison below sorts correctly.
@@ -228,6 +564,75 @@ def _build_cache_data() -> tuple[dict, dict, dict]:
                 agg["last_submitted_at"] = submitted
                 agg["last_run_hash"] = run_hash
 
+            # Deck membership for each matched cohort (lighter: picks/wins).
+            for ck in extra_cohorts:
+                cagg = cohort_accs[ck]["cache"].setdefault(
+                    entity, {"picks": 0, "wins": 0}
+                )
+                cagg["picks"] += 1
+                if is_win:
+                    cagg["wins"] += 1
+
+        # Base vs upgraded deck membership, so the metrics table can split
+        # each card into its base and "+" rows. The merged picks/wins above
+        # stays the source for the Codex Score / tier list (unchanged).
+        base_cards, upg_cards = _walk_deck_upgrade_split(blob)
+        for cid in base_cards:
+            agg = new_cache.get(("cards", cid))
+            if agg is None:
+                continue
+            sub = agg.setdefault("base", {"picks": 0, "wins": 0})
+            sub["picks"] += 1
+            if is_win:
+                sub["wins"] += 1
+        for cid in upg_cards:
+            agg = new_cache.get(("cards", cid))
+            if agg is None:
+                continue
+            sub = agg.setdefault("upg", {"picks": 0, "wins": 0})
+            sub["picks"] += 1
+            if is_win:
+                sub["wins"] += 1
+
+        # Card-reward decisions: count offers/picks per act and record the
+        # picked-beats-skipped head-to-heads for the Bradley-Terry fit, for
+        # the all-runs pass AND every cohort this run belongs to.
+        for act_index, picked_ids, skipped_ids in _walk_card_reward_screens(blob):
+            _accumulate_screen(
+                pick_counts, pair_wins, act_index, picked_ids, skipped_ids
+            )
+            for ck in extra_cohorts:
+                _accumulate_screen(
+                    cohort_accs[ck]["pick_counts"],
+                    cohort_accs[ck]["pair_wins"],
+                    act_index,
+                    picked_ids,
+                    skipped_ids,
+                )
+
+    # Fold the card-reward pick stats + fitted Codex Elo into the cache.
+    # Cards that were offered but never decked still get an entry (picks=0
+    # → no Win%/Score, but a valid Pick%/Elo). Starter cards that are
+    # never offered keep no pick stats (correct, they have no reward Elo).
+    elo = _compute_codex_elo(pair_wins)
+    for cid, pc in pick_counts.items():
+        key = ("cards", cid)
+        agg = new_cache.setdefault(
+            key,
+            {
+                "picks": 0,
+                "wins": 0,
+                "by_character": {},
+                "last_submitted_at": None,
+                "last_run_hash": None,
+            },
+        )
+        agg["offered"] = pc["offered"]
+        agg["picked"] = pc["picked"]
+        agg["off_act"] = pc["off_act"]
+        agg["pick_act"] = pc["pick_act"]
+        agg["elo"] = elo.get(cid)
+
     # Per-type baselines: pick-weighted average win rate across all
     # entities of each type. Computed once per rebuild so scoring reads
     # are O(1).
@@ -240,15 +645,55 @@ def _build_cache_data() -> tuple[dict, dict, dict]:
         etype: (tt["wins"] / tt["picks"]) if tt["picks"] else 0.5
         for etype, tt in type_totals.items()
     }
-    return new_cache, new_totals, new_type_baselines
+
+    # Finalize each cohort and embed it nested under the entity it belongs
+    # to. An entity only carries a cohort key if it has data in that cohort.
+    cohort_baselines: dict[str, dict[str, float]] = {}
+    cohort_totals: dict[str, dict[str, int]] = {}
+    for ck, acc in cohort_accs.items():
+        cohort_cache, baselines = _finalize_cohort(acc)
+        cohort_baselines[ck] = baselines
+        cohort_totals[ck] = acc["totals"]
+        for entity, cagg in cohort_cache.items():
+            host = new_cache.get(entity)
+            if host is None:
+                # Card seen only in this cohort's reward screens (never in
+                # an all-runs deck/choice). Rare, but keep it addressable.
+                host = new_cache.setdefault(
+                    entity,
+                    {
+                        "picks": 0,
+                        "wins": 0,
+                        "by_character": {},
+                        "last_submitted_at": None,
+                        "last_run_hash": None,
+                    },
+                )
+            host.setdefault("cohorts", {})[ck] = {
+                "picks": cagg.get("picks", 0),
+                "wins": cagg.get("wins", 0),
+                "offered": cagg.get("offered", 0),
+                "picked": cagg.get("picked", 0),
+                "off_act": cagg.get("off_act", [0] * _ACT_BUCKETS),
+                "pick_act": cagg.get("pick_act", [0] * _ACT_BUCKETS),
+                "elo": cagg.get("elo"),
+            }
+    cohort_meta = {"baselines": cohort_baselines, "totals": cohort_totals}
+    return new_cache, new_totals, new_type_baselines, cohort_meta
 
 
-def _apply_cache(cache: dict, totals: dict, baselines: dict) -> None:
+def _apply_cache(
+    cache: dict, totals: dict, baselines: dict, cohort_meta: dict | None = None
+) -> None:
     """Swap freshly-built (or snapshot-loaded) data into module globals."""
     global _cache, _cache_built_at, _global_totals, _type_baselines
+    global _cohort_baselines, _cohort_totals
     _cache = cache
     _global_totals = totals
     _type_baselines = baselines
+    cohort_meta = cohort_meta or {}
+    _cohort_baselines = cohort_meta.get("baselines", {})
+    _cohort_totals = cohort_meta.get("totals", {})
     _cache_built_at = time.time()
 
 
@@ -257,8 +702,8 @@ def _build_cache() -> None:
 
     Only used when the Mongo snapshot is unavailable (SQLite path, or a
     cold start before the leader has written the first snapshot)."""
-    cache, totals, baselines = _build_cache_data()
-    _apply_cache(cache, totals, baselines)
+    cache, totals, baselines, cohort_meta = _build_cache_data()
+    _apply_cache(cache, totals, baselines, cohort_meta)
     logger.info(
         "run-entity-stats cache rebuilt (local): %d entities across %d runs",
         len(cache),
@@ -275,26 +720,42 @@ def _snapshot_coll():
     return _get_collection().database[SNAPSHOT_COLLECTION_NAME]
 
 
-def _persist_snapshot(cache: dict, totals: dict, baselines: dict) -> None:
+def _persist_snapshot(
+    cache: dict, totals: dict, baselines: dict, cohort_meta: dict | None = None
+) -> None:
     """Write the built cache to Mongo as one doc per entity type plus a
     meta doc. Entities are stored as arrays (not dicts) so entity IDs
     never collide with Mongo field-name restrictions."""
     coll = _snapshot_coll()
     by_type: dict[str, list] = {}
     for (etype, eid), agg in cache.items():
-        by_type.setdefault(etype, []).append(
-            {
-                "id": eid,
-                "picks": agg["picks"],
-                "wins": agg["wins"],
-                "by_character": [
-                    {"character": ch, "picks": s["picks"], "wins": s["wins"]}
-                    for ch, s in agg["by_character"].items()
-                ],
-                "last_submitted_at": agg["last_submitted_at"],
-                "last_run_hash": agg["last_run_hash"],
-            }
-        )
+        entry = {
+            "id": eid,
+            "picks": agg["picks"],
+            "wins": agg["wins"],
+            "by_character": [
+                {"character": ch, "picks": s["picks"], "wins": s["wins"]}
+                for ch, s in agg["by_character"].items()
+            ],
+            "last_submitted_at": agg["last_submitted_at"],
+            "last_run_hash": agg["last_run_hash"],
+        }
+        # Card-reward metrics (cards only; absent on relics/potions).
+        if "offered" in agg:
+            entry["offered"] = agg["offered"]
+            entry["picked"] = agg["picked"]
+            entry["off_act"] = agg["off_act"]
+            entry["pick_act"] = agg["pick_act"]
+            entry["elo"] = agg.get("elo")
+        # Per-cohort metrics (nested; only cohorts this entity appears in).
+        if agg.get("cohorts"):
+            entry["cohorts"] = agg["cohorts"]
+        # Base vs upgraded deck membership (cards only).
+        if agg.get("base") is not None:
+            entry["base"] = agg["base"]
+        if agg.get("upg") is not None:
+            entry["upg"] = agg["upg"]
+        by_type.setdefault(etype, []).append(entry)
     now = datetime.now(timezone.utc)
     for etype, entities in by_type.items():
         coll.replace_one(
@@ -302,12 +763,15 @@ def _persist_snapshot(cache: dict, totals: dict, baselines: dict) -> None:
             {"_id": etype, "entities": entities, "updated_at": now},
             upsert=True,
         )
+    cohort_meta = cohort_meta or {}
     coll.replace_one(
         {"_id": "__meta__"},
         {
             "_id": "__meta__",
             "global_totals": totals,
             "type_baselines": baselines,
+            "cohort_baselines": cohort_meta.get("baselines", {}),
+            "cohort_totals": cohort_meta.get("totals", {}),
             "entity_types": list(by_type.keys()),
             "built_at": now,
         },
@@ -332,17 +796,34 @@ def _load_snapshot() -> bool:
                 c["character"]: {"picks": c["picks"], "wins": c["wins"]}
                 for c in e.get("by_character", [])
             }
-            new_cache[(etype, e["id"])] = {
+            agg: dict[str, Any] = {
                 "picks": e["picks"],
                 "wins": e["wins"],
                 "by_character": by_char,
                 "last_submitted_at": e.get("last_submitted_at"),
                 "last_run_hash": e.get("last_run_hash"),
             }
+            if "offered" in e:
+                agg["offered"] = e["offered"]
+                agg["picked"] = e["picked"]
+                agg["off_act"] = e.get("off_act", [0] * _ACT_BUCKETS)
+                agg["pick_act"] = e.get("pick_act", [0] * _ACT_BUCKETS)
+                agg["elo"] = e.get("elo")
+            if e.get("cohorts"):
+                agg["cohorts"] = e["cohorts"]
+            if e.get("base") is not None:
+                agg["base"] = e["base"]
+            if e.get("upg") is not None:
+                agg["upg"] = e["upg"]
+            new_cache[(etype, e["id"])] = agg
     _apply_cache(
         new_cache,
         meta.get("global_totals", {"total_runs": 0, "total_wins": 0}),
         meta.get("type_baselines", {}),
+        {
+            "baselines": meta.get("cohort_baselines", {}),
+            "totals": meta.get("cohort_totals", {}),
+        },
     )
     return True
 
@@ -363,9 +844,9 @@ def refresh_entity_stats_snapshot() -> int:
         ):
             return 0  # snapshot still fresh
 
-    cache, totals, baselines = _build_cache_data()
-    _persist_snapshot(cache, totals, baselines)
-    _apply_cache(cache, totals, baselines)
+    cache, totals, baselines, cohort_meta = _build_cache_data()
+    _persist_snapshot(cache, totals, baselines, cohort_meta)
+    _apply_cache(cache, totals, baselines, cohort_meta)
     logger.info(
         "entity-stats snapshot rebuilt: %d entities across %d runs",
         len(cache),
@@ -464,6 +945,137 @@ def get_all_entity_scores(entity_type: str) -> dict[str, dict[str, Any]]:
             "win_rate": round(wins / picks * 100, 1) if picks else 0.0,
         }
     return out
+
+
+def get_entity_metrics_table(entity_type: str, cohort: str = "all") -> dict[str, Any]:
+    """Dense per-entity metrics for the /leaderboards/metrics table.
+
+    One row per entity carrying both the win-outcome metrics (Codex Score,
+    Win%) and the revealed-preference metrics (Codex Elo, Pick%, per-act
+    pick splits), plus raw counts. Pre-aggregated from the same snapshot
+    walk so the route is a single in-memory pass, no per-request DB work.
+    The frontend renders + sorts this table entirely client-side.
+
+    `cohort` slices to a pre-built run cohort. "all" reads the top-level
+    entity fields; any of _COHORT_KEYS reads the nested per-cohort block
+    (its own picks/wins/offered/picked/elo + baseline). Unknown cohorts
+    fall back to "all".
+    """
+    _maybe_rebuild()
+    use_cohort = cohort in _COHORT_KEYS
+    if use_cohort:
+        baseline = _cohort_baselines.get(cohort, {}).get(
+            entity_type, _baseline_win_rate()
+        )
+        total_runs = _cohort_totals.get(cohort, {}).get("total_runs", 0)
+    else:
+        cohort = "all"
+        baseline = _type_baseline(entity_type)
+        total_runs = _global_totals["total_runs"]
+
+    z3 = [0] * _ACT_BUCKETS
+
+    def _row(eid, picks, wins, *, elo, offered, picked, off_act, pick_act, upgraded):
+        score = _compute_score(wins, picks, baseline)
+        return {
+            "id": eid,
+            "upgraded": upgraded,
+            "score": score,
+            "tier": _score_to_tier(score),
+            "elo": elo,
+            "win_rate": round(wins / picks * 100, 1) if picks else None,
+            "pick_rate": round(picked / offered * 100, 1) if offered else None,
+            "picks": picks,
+            "wins": wins,
+            "losses": picks - wins,
+            "offered": offered,
+            "picked": picked,
+            # Per-act pick rate (A1/A2/A3); None where the card was never
+            # offered in that act so the cell reads blank not "0%".
+            "pick_rate_by_act": [
+                round(pick_act[i] / off_act[i] * 100, 1) if off_act[i] else None
+                for i in range(_ACT_BUCKETS)
+            ],
+        }
+
+    rows: list[dict[str, Any]] = []
+    for (etype, eid), agg in _cache.items():
+        if etype != entity_type:
+            continue
+        if use_cohort:
+            # Cohort views stay merged (no base/upg split is tracked per cohort).
+            data = (agg.get("cohorts") or {}).get(cohort)
+            if not data:
+                continue
+            rows.append(
+                _row(
+                    eid,
+                    data.get("picks", 0),
+                    data.get("wins", 0),
+                    elo=data.get("elo"),
+                    offered=data.get("offered", 0),
+                    picked=data.get("picked", 0),
+                    off_act=data.get("off_act") or z3,
+                    pick_act=data.get("pick_act") or z3,
+                    upgraded=False,
+                )
+            )
+            continue
+        # All-runs view: split cards into base + "+" rows. Reward picks
+        # (Elo/Pick%/per-act) only exist for the base card, since reward
+        # screens never offer the upgraded version; the "+" row carries
+        # deck win rate / Codex Score only.
+        if entity_type == "cards" and ("base" in agg or "upg" in agg):
+            base = agg.get("base") or {"picks": 0, "wins": 0}
+            rows.append(
+                _row(
+                    eid,
+                    base["picks"],
+                    base["wins"],
+                    elo=agg.get("elo"),
+                    offered=agg.get("offered", 0),
+                    picked=agg.get("picked", 0),
+                    off_act=agg.get("off_act") or z3,
+                    pick_act=agg.get("pick_act") or z3,
+                    upgraded=False,
+                )
+            )
+            upg = agg.get("upg")
+            if upg and upg.get("picks", 0) > 0:
+                rows.append(
+                    _row(
+                        eid,
+                        upg["picks"],
+                        upg["wins"],
+                        elo=None,
+                        offered=0,
+                        picked=0,
+                        off_act=z3,
+                        pick_act=z3,
+                        upgraded=True,
+                    )
+                )
+        else:
+            rows.append(
+                _row(
+                    eid,
+                    agg.get("picks", 0),
+                    agg.get("wins", 0),
+                    elo=agg.get("elo"),
+                    offered=agg.get("offered", 0),
+                    picked=agg.get("picked", 0),
+                    off_act=agg.get("off_act") or z3,
+                    pick_act=agg.get("pick_act") or z3,
+                    upgraded=False,
+                )
+            )
+    return {
+        "entity_type": entity_type,
+        "cohort": cohort,
+        "baseline_win_rate": round(baseline * 100, 1),
+        "total_runs": total_runs,
+        "rows": rows,
+    }
 
 
 def get_top_entities_for_character(

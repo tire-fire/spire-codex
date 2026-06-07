@@ -14,25 +14,35 @@ export function Chip({
   dragging = false,
   hasComment = false,
   commentText,
+  card = false,
 }: {
   entity: TierEntity;
   size?: number;
   dragging?: boolean;
   hasComment?: boolean;
   commentText?: string;
+  /** Card chips are taller (card aspect) so the full render is legible. */
+  card?: boolean;
 }) {
+  // Card chips render the full card, so make them much bigger and card-shaped
+  // (~150px wide → roughly 5-6 per row, legible). Auto-detected from the
+  // full-card CDN path so every usage picks it up without threading a prop
+  // through the tier rows.
+  const isCard = card || (entity.image?.includes("cards-full") ?? false);
+  const width = isCard ? 150 : size;
+  const height = isCard ? Math.round(width * 1.32) : size;
   return (
     <div
       className="group relative shrink-0"
-      style={{ width: size, height: size }}
+      style={{ width, height }}
     >
       <div
         // Native title for the name only when there's no rich note tooltip,
         // so a commented chip doesn't show two overlapping tooltips.
         title={commentText ? undefined : entity.name}
-        className={`relative h-full w-full overflow-hidden rounded bg-neutral-800 ring-1 ring-black/40 ${
-          dragging ? "shadow-lg" : ""
-        }`}
+        className={`relative h-full w-full overflow-hidden rounded ${
+          isCard ? "" : "bg-neutral-800 ring-1 ring-black/40"
+        } ${dragging ? "shadow-lg" : ""}`}
       >
         {entity.image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -81,12 +91,14 @@ export function SortableItem({
   hasComment = false,
   commentText,
   onClick,
+  card = false,
 }: {
   entity: TierEntity;
   size?: number;
   hasComment?: boolean;
   commentText?: string;
   onClick?: () => void;
+  card?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: entity.id });
@@ -112,6 +124,7 @@ export function SortableItem({
         size={size}
         hasComment={hasComment}
         commentText={commentText}
+        card={card}
       />
     </div>
   );

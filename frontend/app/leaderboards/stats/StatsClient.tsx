@@ -7,18 +7,12 @@ import { useLanguage } from "@/app/contexts/LanguageContext";
 import { t } from "@/lib/ui-translations";
 import { cachedFetch } from "@/lib/fetch-cache";
 import RichDescription from "@/app/components/RichDescription";
+import { fullCardUrl } from "@/lib/image-url";
+import { characterHex } from "@/lib/character-colors";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const BETA_SITE = "https://beta.spire-codex.com";
 const BETA_API = BETA_SITE;
-
-const CHAR_COLORS: Record<string, string> = {
-  IRONCLAD: "#d53b27",
-  SILENT: "#23935b",
-  DEFECT: "#3873a9",
-  NECROBINDER: "#bf5a85",
-  REGENT: "#f07c1e",
-};
 
 const CHARACTERS = ["IRONCLAD", "SILENT", "DEFECT", "NECROBINDER", "REGENT"] as const;
 
@@ -127,6 +121,7 @@ function EntityRowPill({
   isBeta: boolean;
 }) {
   const [show, setShow] = useState(false);
+  const { lang } = useLanguage();
   const href = isBeta
     ? `${BETA_SITE}/${kind}s/${id.toLowerCase()}`
     : `${lp}/${kind}s/${id.toLowerCase()}`;
@@ -153,7 +148,21 @@ function EntityRowPill({
         {name}
         {isBeta && <BetaBadge />}
       </span>
-      {show && (
+      {show && kind === "card" && (
+        // Cards pop the full rendered card image, not the text tooltip.
+        <span className="pointer-events-none absolute z-[100] bottom-full left-0 mb-2 w-40">
+          <img
+            src={fullCardUrl(id.toLowerCase(), false, "stable", lang)}
+            alt=""
+            className="w-40 h-auto drop-shadow-[0_8px_24px_rgba(0,0,0,0.7)]"
+            crossOrigin="anonymous"
+            onError={(e) => {
+              if (imageSrc) (e.target as HTMLImageElement).src = imageSrc;
+            }}
+          />
+        </span>
+      )}
+      {show && kind !== "card" && (
         <span className="absolute z-[100] bottom-full left-0 mb-2 w-60 p-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-xl pointer-events-none text-left">
           <span className="flex items-start gap-2 mb-1.5">
             {imageSrc && (
@@ -161,11 +170,7 @@ function EntityRowPill({
               <img
                 src={imageSrc}
                 alt=""
-                className={
-                  kind === "card"
-                    ? "w-10 h-10 object-cover rounded"
-                    : "w-8 h-8 object-contain"
-                }
+                className="w-8 h-8 object-contain"
                 crossOrigin="anonymous"
               />
             )}
@@ -216,6 +221,7 @@ type TopTab = "overview" | "cards" | "relics" | "potions" | "encounters";
 type CardSort = "pick_rate" | "win_pct" | "count" | "name";
 type RelicSort = "pick_rate" | "win_pct" | "count" | "name";
 type PotionSort = "pick_rate" | "use_rate" | "win_pct" | "count" | "name";
+type SortDir = "asc" | "desc";
 
 function PercentBar({ value, max = 100, color }: { value: number; max?: number; color: string }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
@@ -276,14 +282,32 @@ export default function StatsClient() {
   const [cardRarity, setCardRarity] = useState("");
   const [cardCost, setCardCost] = useState("");
   const [cardSort, setCardSort] = useState<CardSort>("pick_rate");
+  const [cardDir, setCardDir] = useState<SortDir>("desc");
 
   // Relic filters
   const [relicRarity, setRelicRarity] = useState("");
   const [relicSort, setRelicSort] = useState<RelicSort>("pick_rate");
+  const [relicDir, setRelicDir] = useState<SortDir>("desc");
 
   // Potion filters
   const [potionRarity, setPotionRarity] = useState("");
   const [potionSort, setPotionSort] = useState<PotionSort>("pick_rate");
+  const [potionDir, setPotionDir] = useState<SortDir>("desc");
+
+  // Clicking a column header sorts by it; clicking the active column again
+  // toggles asc/desc. New columns default to descending, except name (A→Z).
+  const onCardHeader = (col: CardSort) => {
+    if (col === cardSort) setCardDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setCardSort(col); setCardDir(col === "name" ? "asc" : "desc"); }
+  };
+  const onRelicHeader = (col: RelicSort) => {
+    if (col === relicSort) setRelicDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setRelicSort(col); setRelicDir(col === "name" ? "asc" : "desc"); }
+  };
+  const onPotionHeader = (col: PotionSort) => {
+    if (col === potionSort) setPotionDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setPotionSort(col); setPotionDir(col === "name" ? "asc" : "desc"); }
+  };
 
   useEffect(() => {
     async function loadEntityData() {
@@ -363,7 +387,12 @@ export default function StatsClient() {
     const pickMap = new Map((stats.pick_rates || []).map((p) => [p.card_id, p]));
     const deckMap = new Map((stats.top_cards || []).map((c) => [c.card_id, c]));
     const allIds = new Set<string>([...pickMap.keys(), ...deckMap.keys()]);
-    const rows = [...allIds].map((id) => {
+    // Only official (Megacrit) cards: a run can carry modded cards whose ids
+    // aren't in the game data; those have no entry in cardData and would
+    // otherwise render with a raw "—CARD_ID" fallback name.
+    const rows = [...allIds]
+      .filter((id) => cardData[id])
+      .map((id) => {
       const pick = pickMap.get(id);
       const deck = deckMap.get(id);
       const winRuns = deck?.win_runs || 0;
@@ -414,20 +443,25 @@ export default function StatsClient() {
       }
       return true;
     });
+    const mul = cardDir === "asc" ? 1 : -1;
     filtered.sort((a, b) => {
-      if (cardSort === "name") return a.name.localeCompare(b.name);
-      if (cardSort === "pick_rate") return b.pick_rate - a.pick_rate || b.offered - a.offered;
-      if (cardSort === "win_pct") return b.win_pct - a.win_pct || b.win_runs - a.win_runs;
-      if (cardSort === "count") return b.count - a.count;
-      return 0;
+      let v = 0;
+      if (cardSort === "name") v = a.name.localeCompare(b.name);
+      else if (cardSort === "pick_rate") v = a.pick_rate - b.pick_rate || a.offered - b.offered;
+      else if (cardSort === "win_pct") v = a.win_pct - b.win_pct || a.win_runs - b.win_runs;
+      else if (cardSort === "count") v = a.count - b.count;
+      return mul * v;
     });
     return filtered;
-  }, [cardRows, cardType, cardRarity, cardCost, cardSort]);
+  }, [cardRows, cardType, cardRarity, cardCost, cardSort, cardDir]);
 
   // Relics
   const relicRows = useMemo(() => {
     if (!stats || stats.total_runs === 0) return [];
-    return (stats.top_relics || []).map((r) => {
+    // Official relics only (drop modded relic ids not in the game data).
+    return (stats.top_relics || [])
+      .filter((r) => relicData[r.relic_id])
+      .map((r) => {
       const info = relicData[r.relic_id];
       const winPct =
         r.total_runs_with > 0 ? Math.round((r.win_runs / r.total_runs_with) * 1000) / 10 : 0;
@@ -456,20 +490,25 @@ export default function StatsClient() {
 
   const filteredRelics = useMemo(() => {
     const filtered = relicRows.filter((r) => !relicRarity || r.rarity === relicRarity);
+    const mul = relicDir === "asc" ? 1 : -1;
     filtered.sort((a, b) => {
-      if (relicSort === "name") return a.name.localeCompare(b.name);
-      if (relicSort === "pick_rate") return b.pick_rate - a.pick_rate || b.count - a.count;
-      if (relicSort === "win_pct") return b.win_pct - a.win_pct || b.win_runs - a.win_runs;
-      if (relicSort === "count") return b.count - a.count;
-      return 0;
+      let v = 0;
+      if (relicSort === "name") v = a.name.localeCompare(b.name);
+      else if (relicSort === "pick_rate") v = a.pick_rate - b.pick_rate || a.count - b.count;
+      else if (relicSort === "win_pct") v = a.win_pct - b.win_pct || a.win_runs - b.win_runs;
+      else if (relicSort === "count") v = a.count - b.count;
+      return mul * v;
     });
     return filtered;
-  }, [relicRows, relicRarity, relicSort]);
+  }, [relicRows, relicRarity, relicSort, relicDir]);
 
   // Potions
   const potionRows = useMemo(() => {
     if (!stats || stats.total_runs === 0) return [];
-    return (stats.top_potions || []).map((p) => {
+    // Official potions only (drop modded potion ids not in the game data).
+    return (stats.top_potions || [])
+      .filter((p) => potionData[p.potion_id])
+      .map((p) => {
       const info = potionData[p.potion_id];
       const winPct =
         p.total_runs_with > 0 ? Math.round((p.win_runs / p.total_runs_with) * 1000) / 10 : 0;
@@ -501,16 +540,18 @@ export default function StatsClient() {
 
   const filteredPotions = useMemo(() => {
     const filtered = potionRows.filter((p) => !potionRarity || p.rarity === potionRarity);
+    const mul = potionDir === "asc" ? 1 : -1;
     filtered.sort((a, b) => {
-      if (potionSort === "name") return a.name.localeCompare(b.name);
-      if (potionSort === "pick_rate") return b.pick_rate - a.pick_rate || b.offered - a.offered;
-      if (potionSort === "use_rate") return b.use_rate - a.use_rate || b.used - a.used;
-      if (potionSort === "win_pct") return b.win_pct - a.win_pct || b.win_runs - a.win_runs;
-      if (potionSort === "count") return b.total_runs_with - a.total_runs_with;
-      return 0;
+      let v = 0;
+      if (potionSort === "name") v = a.name.localeCompare(b.name);
+      else if (potionSort === "pick_rate") v = a.pick_rate - b.pick_rate || a.offered - b.offered;
+      else if (potionSort === "use_rate") v = a.use_rate - b.use_rate || a.used - b.used;
+      else if (potionSort === "win_pct") v = a.win_pct - b.win_pct || a.win_runs - b.win_runs;
+      else if (potionSort === "count") v = a.total_runs_with - b.total_runs_with;
+      return mul * v;
     });
     return filtered;
-  }, [potionRows, potionRarity, potionSort]);
+  }, [potionRows, potionRarity, potionSort, potionDir]);
 
   if (loading && !stats) {
     return (
@@ -582,7 +623,7 @@ export default function StatsClient() {
           onChange={(e) => setCharacter(e.target.value)}
           className={selectClass}
           style={{
-            borderColor: character ? CHAR_COLORS[character] : undefined,
+            borderColor: character ? characterHex(character) : undefined,
           }}
         >
           <option value="">All Characters</option>
@@ -656,7 +697,8 @@ export default function StatsClient() {
               cardCost={cardCost}
               setCardCost={setCardCost}
               cardSort={cardSort}
-              setCardSort={setCardSort}
+              cardDir={cardDir}
+              onCardHeader={onCardHeader}
               lp={lp}
               betaIds={betaIds}
               imgBaseFor={imgBaseFor}
@@ -669,7 +711,8 @@ export default function StatsClient() {
               relicRarity={relicRarity}
               setRelicRarity={setRelicRarity}
               relicSort={relicSort}
-              setRelicSort={setRelicSort}
+              relicDir={relicDir}
+              onRelicHeader={onRelicHeader}
               lp={lp}
               betaIds={betaIds}
               imgBaseFor={imgBaseFor}
@@ -682,7 +725,8 @@ export default function StatsClient() {
               potionRarity={potionRarity}
               setPotionRarity={setPotionRarity}
               potionSort={potionSort}
-              setPotionSort={setPotionSort}
+              potionDir={potionDir}
+              onPotionHeader={onPotionHeader}
               lp={lp}
               betaIds={betaIds}
               imgBaseFor={imgBaseFor}
@@ -745,7 +789,7 @@ function OverviewTab({
           </h2>
           <div className="space-y-2">
             {stats.characters.map((c) => {
-              const charColor = CHAR_COLORS[c.character] || "var(--text-muted)";
+              const charColor = characterHex(c.character) || "var(--text-muted)";
               const totalPct = (c.total / maxCharTotal) * 100;
               const winPct = c.total > 0 ? (c.wins / c.total) * 100 : 0;
               return (
@@ -869,7 +913,8 @@ function CardsTab({
   cardCost,
   setCardCost,
   cardSort,
-  setCardSort,
+  cardDir,
+  onCardHeader,
   lp,
   betaIds,
   imgBaseFor,
@@ -885,7 +930,8 @@ function CardsTab({
   cardCost: string;
   setCardCost: (s: string) => void;
   cardSort: CardSort;
-  setCardSort: (s: CardSort) => void;
+  cardDir: SortDir;
+  onCardHeader: (col: CardSort) => void;
   lp: string;
   betaIds: Set<string>;
   imgBaseFor: (id: string) => string;
@@ -933,7 +979,8 @@ function CardsTab({
       <CardTable
         rows={rows}
         cardSort={cardSort}
-        setCardSort={setCardSort}
+        cardDir={cardDir}
+        onCardHeader={onCardHeader}
         lp={lp}
         betaIds={betaIds}
         imgBaseFor={imgBaseFor}
@@ -945,12 +992,14 @@ function CardsTab({
 function SortHeader<T extends string>({
   column,
   current,
+  dir = "desc",
   onClick,
   children,
   align = "right",
 }: {
   column: T;
   current: T;
+  dir?: SortDir;
   onClick: (col: T) => void;
   children: React.ReactNode;
   align?: "left" | "right";
@@ -965,7 +1014,7 @@ function SortHeader<T extends string>({
     >
       <span className="inline-flex items-center gap-1">
         {children}
-        {active && <span className="text-[10px]">▼</span>}
+        {active && <span className="text-[10px]">{dir === "asc" ? "▲" : "▼"}</span>}
       </span>
     </th>
   );
@@ -974,14 +1023,16 @@ function SortHeader<T extends string>({
 function CardTable({
   rows,
   cardSort,
-  setCardSort,
+  cardDir,
+  onCardHeader,
   lp,
   betaIds,
   imgBaseFor,
 }: {
   rows: CardRow[];
   cardSort: CardSort;
-  setCardSort: (s: CardSort) => void;
+  cardDir: SortDir;
+  onCardHeader: (col: CardSort) => void;
   lp: string;
   betaIds: Set<string>;
   imgBaseFor: (id: string) => string;
@@ -997,16 +1048,16 @@ function CardTable({
         <thead>
           <tr className="border-b border-[var(--border-subtle)]">
             <th className="text-left py-2 font-medium text-[var(--text-muted)] w-10">#</th>
-            <SortHeader column="name" current={cardSort} onClick={setCardSort} align="left">
+            <SortHeader column="name" current={cardSort} dir={cardDir} onClick={onCardHeader} align="left">
               Card
             </SortHeader>
-            <SortHeader column="pick_rate" current={cardSort} onClick={setCardSort}>
+            <SortHeader column="pick_rate" current={cardSort} dir={cardDir} onClick={onCardHeader}>
               Pick Rate
             </SortHeader>
-            <SortHeader column="win_pct" current={cardSort} onClick={setCardSort}>
+            <SortHeader column="win_pct" current={cardSort} dir={cardDir} onClick={onCardHeader}>
               Win Rate
             </SortHeader>
-            <SortHeader column="count" current={cardSort} onClick={setCardSort}>
+            <SortHeader column="count" current={cardSort} dir={cardDir} onClick={onCardHeader}>
               Count
             </SortHeader>
           </tr>
@@ -1080,7 +1131,8 @@ function RelicsTab({
   relicRarity,
   setRelicRarity,
   relicSort,
-  setRelicSort,
+  relicDir,
+  onRelicHeader,
   lp,
   betaIds,
   imgBaseFor,
@@ -1090,7 +1142,8 @@ function RelicsTab({
   relicRarity: string;
   setRelicRarity: (s: string) => void;
   relicSort: RelicSort;
-  setRelicSort: (s: RelicSort) => void;
+  relicDir: SortDir;
+  onRelicHeader: (col: RelicSort) => void;
   lp: string;
   betaIds: Set<string>;
   imgBaseFor: (id: string) => string;
@@ -1124,16 +1177,16 @@ function RelicsTab({
             <thead>
               <tr className="border-b border-[var(--border-subtle)]">
                 <th className="text-left py-2 font-medium text-[var(--text-muted)] w-10">#</th>
-                <SortHeader column="name" current={relicSort} onClick={setRelicSort} align="left">
+                <SortHeader column="name" current={relicSort} dir={relicDir} onClick={onRelicHeader} align="left">
                   Relic
                 </SortHeader>
-                <SortHeader column="pick_rate" current={relicSort} onClick={setRelicSort}>
+                <SortHeader column="pick_rate" current={relicSort} dir={relicDir} onClick={onRelicHeader}>
                   Pick Rate
                 </SortHeader>
-                <SortHeader column="win_pct" current={relicSort} onClick={setRelicSort}>
+                <SortHeader column="win_pct" current={relicSort} dir={relicDir} onClick={onRelicHeader}>
                   Win Rate
                 </SortHeader>
-                <SortHeader column="count" current={relicSort} onClick={setRelicSort}>
+                <SortHeader column="count" current={relicSort} dir={relicDir} onClick={onRelicHeader}>
                   Count
                 </SortHeader>
               </tr>
@@ -1208,7 +1261,8 @@ function PotionsTab({
   potionRarity,
   setPotionRarity,
   potionSort,
-  setPotionSort,
+  potionDir,
+  onPotionHeader,
   lp,
   betaIds,
   imgBaseFor,
@@ -1218,7 +1272,8 @@ function PotionsTab({
   potionRarity: string;
   setPotionRarity: (s: string) => void;
   potionSort: PotionSort;
-  setPotionSort: (s: PotionSort) => void;
+  potionDir: SortDir;
+  onPotionHeader: (col: PotionSort) => void;
   lp: string;
   betaIds: Set<string>;
   imgBaseFor: (id: string) => string;
@@ -1252,19 +1307,21 @@ function PotionsTab({
             <thead>
               <tr className="border-b border-[var(--border-subtle)]">
                 <th className="text-left py-2 font-medium text-[var(--text-muted)] w-10">#</th>
-                <SortHeader column="name" current={potionSort} onClick={setPotionSort} align="left">
+                <SortHeader column="name" current={potionSort} dir={potionDir} onClick={onPotionHeader} align="left">
                   Potion
                 </SortHeader>
-                <SortHeader column="pick_rate" current={potionSort} onClick={setPotionSort}>
-                  Pick Rate
+                <SortHeader column="pick_rate" current={potionSort} dir={potionDir} onClick={onPotionHeader}>
+                  <span title="How often a potion is bought when it appears on a shop shelf. Combat-drop potions are excluded: with an open slot you take almost every free potion, so drop pick-rate just measures slot availability, not quality. A shop buy is a real gold decision.">
+                    Shop Buy %
+                  </span>
                 </SortHeader>
-                <SortHeader column="use_rate" current={potionSort} onClick={setPotionSort}>
+                <SortHeader column="use_rate" current={potionSort} dir={potionDir} onClick={onPotionHeader}>
                   Use Rate
                 </SortHeader>
-                <SortHeader column="win_pct" current={potionSort} onClick={setPotionSort}>
+                <SortHeader column="win_pct" current={potionSort} dir={potionDir} onClick={onPotionHeader}>
                   Win Rate
                 </SortHeader>
-                <SortHeader column="count" current={potionSort} onClick={setPotionSort}>
+                <SortHeader column="count" current={potionSort} dir={potionDir} onClick={onPotionHeader}>
                   Count
                 </SortHeader>
               </tr>
