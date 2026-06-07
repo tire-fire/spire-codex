@@ -1035,7 +1035,7 @@ def get_entity_metrics_table(entity_type: str, cohort: str = "all") -> dict[str,
         }
 
     rows: list[dict[str, Any]] = []
-    excluded_cards = _excluded_card_ids() if entity_type == "card" else frozenset()
+    excluded_cards = _excluded_card_ids() if entity_type == "cards" else frozenset()
     for (etype, eid), agg in _cache.items():
         if etype != entity_type:
             continue
