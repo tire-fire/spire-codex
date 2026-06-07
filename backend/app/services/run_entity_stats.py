@@ -176,6 +176,38 @@ def _strip_character_prefix(raw: str | None) -> str:
     return raw.split(".", 1)[1] if raw.startswith("CHARACTER.") else raw
 
 
+# Card colors that are never a real card-reward choice: curses and status
+# cards are forced into the deck, event/quest cards come from events, and
+# tokens are generated mid-combat. A forced grant isn't a revealed
+# preference, so these are excluded from Codex Elo / Pick% (where they'd read
+# as "offered and always picked" → top of every ranking) and dropped from the
+# metrics table entirely.
+_NON_REWARD_CARD_COLORS = frozenset({"curse", "status", "event", "quest", "token"})
+_excluded_card_ids_cache: frozenset[str] | None = None
+
+
+def _excluded_card_ids() -> frozenset[str]:
+    """Card ids (bare, e.g. "DOUBT") excluded from card metrics. Loaded once
+    from the game card data by color; empty if the data can't be read."""
+    global _excluded_card_ids_cache
+    if _excluded_card_ids_cache is None:
+        try:
+            from .data_service import load_cards
+
+            _excluded_card_ids_cache = frozenset(
+                c["id"]
+                for c in load_cards()
+                if c.get("id")
+                and (c.get("color") or "").lower() in _NON_REWARD_CARD_COLORS
+            )
+        except Exception:
+            logger.warning(
+                "could not load card colors for metrics exclusion", exc_info=True
+            )
+            _excluded_card_ids_cache = frozenset()
+    return _excluded_card_ids_cache
+
+
 def _walk_run_entities(blob: dict) -> Iterable[tuple[str, str]]:
     """Emit every (entity_type, entity_id) seen in this run.
 
@@ -229,6 +261,7 @@ def _walk_card_reward_screens(blob: dict) -> Iterable[tuple[int, list[str], list
     Only CARD entities are emitted; ids are namespace-stripped to match
     the cache keys ("CARD.ADRENALINE" → "ADRENALINE").
     """
+    excluded = _excluded_card_ids()
     for act_index, act_floors in enumerate(blob.get("map_point_history") or []):
         for floor in act_floors or []:
             for ps in floor.get("player_stats") or []:
@@ -243,6 +276,9 @@ def _walk_card_reward_screens(blob: dict) -> Iterable[tuple[int, list[str], list
                     if not stripped or stripped[0] != "cards":
                         continue
                     cid = stripped[1]
+                    # Curses/status/event/token: forced grants, not a choice.
+                    if cid in excluded:
+                        continue
                     if choice.get("was_picked"):
                         picked.append(cid)
                     else:
@@ -999,8 +1035,12 @@ def get_entity_metrics_table(entity_type: str, cohort: str = "all") -> dict[str,
         }
 
     rows: list[dict[str, Any]] = []
+    excluded_cards = _excluded_card_ids() if entity_type == "card" else frozenset()
     for (etype, eid), agg in _cache.items():
         if etype != entity_type:
+            continue
+        # Drop curses/status/event/token cards: not reward-pickable.
+        if eid in excluded_cards:
             continue
         if use_cohort:
             # Cohort views stay merged (no base/upg split is tracked per cohort).
