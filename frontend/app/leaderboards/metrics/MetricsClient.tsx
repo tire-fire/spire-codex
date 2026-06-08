@@ -83,7 +83,7 @@ interface Column {
 const COLUMNS: Column[] = [
   { key: "name", label: "Card", title: "Card name", align: "left", descFirst: false },
   { key: "score", label: "Score", title: "Codex Score (0-100, Bayesian win rate)", align: "right", descFirst: true },
-  { key: "elo", label: "Elo", title: "Codex Elo (revealed preference from card-reward picks)", align: "right", descFirst: true },
+  { key: "elo", label: "Elo", title: "Codex Elo (revealed preference). Base rows: card-reward picks. + rows: rest-site Smith upgrade choices.", align: "right", descFirst: true },
   { key: "winRate", label: "Win%", title: "Win rate of runs containing this card", align: "right", descFirst: true },
   { key: "pickRate", label: "Pick%", title: "How often this card is taken when offered", align: "right", descFirst: true },
   { key: "offered", label: "Seen", title: "Times offered in a card reward", align: "right", descFirst: true },

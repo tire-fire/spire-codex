@@ -15,6 +15,14 @@ export interface TierEntity {
   image_url: string | null;
   /** Codex Score 0-100, or null if entity has no submitted-run data. */
   score: number | null;
+  /** Precomputed tier letter. When set, it overrides score-based banding.
+   *  Used by the Codex Elo view, which bands by percentile within the rated
+   *  pool rather than the 0-100 score scale (raw Elo has no calibrated
+   *  bands). null/undefined falls back to banding `score`. */
+  tier?: "S" | "A" | "B" | "C" | "D" | "F" | null;
+  /** Number shown on each tile and used for in-tier sorting. Defaults to
+   *  `score` when omitted (so the Elo view shows the Elo, not the score). */
+  value?: number | null;
 }
 
 interface Tier {
@@ -32,8 +40,8 @@ const TIERS: Tier[] = [
   { letter: "A", min: 78, className: "bg-emerald-950/40 border-emerald-700/60 text-emerald-300", label: "Strong" },
   { letter: "B", min: 65, className: "bg-sky-950/40 border-sky-700/60 text-sky-300",           label: "Solid" },
   { letter: "C", min: 50, className: "bg-zinc-800/60 border-zinc-600/60 text-zinc-300",        label: "Average" },
-  { letter: "D", min: 35, className: "bg-orange-950/40 border-orange-700/60 text-orange-300",  label: "Weak" },
-  { letter: "F", min: 0,  className: "bg-rose-950/40 border-rose-800/60 text-rose-300",        label: "Avoid" },
+  { letter: "D", min: 35, className: "bg-orange-950/40 border-orange-700/60 text-orange-300",  label: "Below average" },
+  { letter: "F", min: 0,  className: "bg-rose-950/40 border-rose-800/60 text-rose-300",        label: "Underperforming" },
 ];
 
 function tierForScore(score: number): Tier {
@@ -51,6 +59,8 @@ interface TierListProps {
   entities: TierEntity[];
   /** Show scoreless entities in their own row at the bottom. */
   showUnrated?: boolean;
+  /** Label for the per-tile number in the hover title (e.g. "Score", "Elo"). */
+  valueLabel?: string;
 }
 
 /**
@@ -60,29 +70,34 @@ interface TierListProps {
  * within the tier. Designed for the /tier-list/* pages but reusable
  * anywhere we want a tier-grouped display.
  */
-export default function TierList({ route, entities, showUnrated = true }: TierListProps) {
-  // Group entities by tier, scoreless go to the bottom in a separate
+export default function TierList({ route, entities, showUnrated = true, valueLabel = "Score" }: TierListProps) {
+  // Group entities by tier, the unrated go to the bottom in a separate
   // "Unrated" row so they're still discoverable but don't pollute the
-  // tier signal. Within each tier, sort by score desc, then by name
-  // for deterministic ordering at score ties.
+  // tier signal. Within each tier, sort by value desc, then by name
+  // for deterministic ordering at ties. The value is the precomputed
+  // `value` when present (the Elo view passes Elo here), else the score.
   const grouped = new Map<string, TierEntity[]>();
   const unrated: TierEntity[] = [];
+  const tileValue = (e: TierEntity) => e.value ?? e.score;
 
   for (const ent of entities) {
-    if (ent.score == null) {
+    // Prefer a precomputed tier (Elo percentile banding); fall back to
+    // banding the 0-100 score. No tier and no score → Unrated.
+    const letter =
+      ent.tier ?? (ent.score != null ? tierForScore(ent.score).letter : null);
+    if (letter == null) {
       unrated.push(ent);
       continue;
     }
-    const tier = tierForScore(ent.score);
-    const bucket = grouped.get(tier.letter) ?? [];
+    const bucket = grouped.get(letter) ?? [];
     bucket.push(ent);
-    grouped.set(tier.letter, bucket);
+    grouped.set(letter, bucket);
   }
 
   for (const bucket of grouped.values()) {
     bucket.sort((a, b) => {
-      const sa = a.score ?? 0;
-      const sb = b.score ?? 0;
+      const sa = tileValue(a) ?? 0;
+      const sb = tileValue(b) ?? 0;
       if (sb !== sa) return sb - sa;
       return a.name.localeCompare(b.name);
     });
@@ -137,7 +152,7 @@ export default function TierList({ route, entities, showUnrated = true }: TierLi
                 <Link
                   key={ent.id}
                   href={`/cards/${ent.id.toLowerCase()}`}
-                  title={ent.score != null ? `${ent.name} (Score ${ent.score})` : ent.name}
+                  title={tileValue(ent) != null ? `${ent.name} (${valueLabel} ${tileValue(ent)})` : ent.name}
                   className="group relative flex flex-col items-center gap-0.5 w-[130px] sm:w-[150px] hover:scale-[1.04] transition-transform"
                 >
                   <img
@@ -147,9 +162,9 @@ export default function TierList({ route, entities, showUnrated = true }: TierLi
                     loading="lazy"
                     crossOrigin="anonymous"
                   />
-                  {ent.score != null && (
+                  {tileValue(ent) != null && (
                     <span className="text-[9px] font-mono tabular-nums text-[var(--text-muted)]">
-                      {ent.score}
+                      {tileValue(ent)}
                     </span>
                   )}
                 </Link>
@@ -157,7 +172,7 @@ export default function TierList({ route, entities, showUnrated = true }: TierLi
                 <Link
                   key={ent.id}
                   href={`/${route}/${ent.id.toLowerCase()}`}
-                  title={ent.score != null ? `${ent.name} (Score ${ent.score})` : ent.name}
+                  title={tileValue(ent) != null ? `${ent.name} (${valueLabel} ${tileValue(ent)})` : ent.name}
                   className="group relative flex flex-col items-center gap-1 w-16 sm:w-20 p-1.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-primary)] hover:border-[var(--accent-gold)]/50 transition-colors"
                 >
                   {ent.image_url ? (
@@ -176,9 +191,9 @@ export default function TierList({ route, entities, showUnrated = true }: TierLi
                   <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] text-center leading-tight line-clamp-2 min-h-[1.5rem]">
                     {ent.name}
                   </span>
-                  {ent.score != null && (
+                  {tileValue(ent) != null && (
                     <span className="text-[9px] font-mono tabular-nums text-[var(--text-muted)]">
-                      {ent.score}
+                      {tileValue(ent)}
                     </span>
                   )}
                 </Link>

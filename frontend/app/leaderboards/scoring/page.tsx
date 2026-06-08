@@ -42,17 +42,17 @@ const EXAMPLES: ExampleRow[] = [
   { label: "Mid-N solid", picks: 500, wins: 280, score: 68 },
   { label: "Small-N perfect", picks: 5, wins: 5, score: 65 },
   { label: "Average performer", picks: 50, wins: 25, score: 50 },
-  { label: "Small-N total loss", picks: 5, wins: 0, score: 35 },
-  { label: "High-N weak", picks: 200, wins: 60, score: 0 },
+  { label: "Small sample, no wins yet", picks: 5, wins: 0, score: 35 },
+  { label: "High sample, underperforming", picks: 200, wins: 60, score: 0 },
 ];
 
 const TIERS = [
-  { range: "90 – 100", letter: "S", label: "Top tier", note: "Genuinely elite. Out-of-distribution win rate sustained over hundreds of picks." },
-  { range: "78 – 89",  letter: "A", label: "Strong",   note: "Reliable engine pieces. Picking these is rarely a mistake." },
-  { range: "65 – 77",  letter: "B", label: "Solid",    note: "Above-average. Pick when nothing better is offered." },
-  { range: "50 – 64",  letter: "C", label: "Average",  note: "The middle of the curve. Most cards live here." },
-  { range: "35 – 49",  letter: "D", label: "Weak",     note: "Niche or filler. Skippable in most builds." },
-  { range: "0 – 34",   letter: "F", label: "Avoid",    note: "Actively pulls runs toward losses. Take only if forced." },
+  { range: "90 – 100", letter: "S", label: "Top tier",      note: "Top of the win-rate signal. An out-of-distribution win rate sustained over hundreds of picks." },
+  { range: "78 – 89",  letter: "A", label: "Strong",        note: "Wins above the baseline reliably across a large sample." },
+  { range: "65 – 77",  letter: "B", label: "Solid",         note: "Above-average win rate. A safe pick when nothing better is offered." },
+  { range: "50 – 64",  letter: "C", label: "Average",       note: "The middle of the curve. Most entities live here." },
+  { range: "35 – 49",  letter: "D", label: "Below average", note: "Below the baseline. Often niche or situational, sometimes just high-exposure (see the biases below)." },
+  { range: "0 – 34",   letter: "F", label: "Underperforming", note: "Bottom of the win-rate signal. Frequently a staple dragged down by being in nearly every run, not necessarily a bad card." },
 ];
 
 export default function ScoringPage() {
@@ -82,7 +82,7 @@ export default function ScoringPage() {
     {
       question: "What do the S, A, B, C, D, F tier grades mean?",
       answer:
-        "S (90–100) is genuinely elite. A (78–89) is reliable and strong. B (65–77) is above average. C (50–64) is average, most entities live here. D (35–49) is niche or filler. F (0–34) actively pulls runs toward losses.",
+        "S (90–100) is the top of the win-rate signal. A (78–89) wins above baseline reliably. B (65–77) is above average. C (50–64) is average, most entities live here. D (35–49) is below average, often niche or high-exposure. F (0–34) is the bottom of the signal, which can mean a genuinely weak entity or just a staple seen in nearly every run. The grade is a data signal, not a verdict.",
     },
     {
       question: "How often does the Codex Score update?",
@@ -118,11 +118,12 @@ export default function ScoringPage() {
         </div>
         <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
           Every card, relic, and potion in <em>Slay the Spire 2</em> gets a single number that
-          summarizes <strong>how strongly it pulls toward winning runs</strong>, based purely
+          summarizes <strong>how its presence correlates with winning runs</strong>, based purely
           on community-submitted run data, not opinion. <strong>50</strong> is neutral
-          (the average run wins roughly half the time at A0), <strong>100</strong> is best-in-class,
-          <strong>0</strong> is worst. The same number drives the &ldquo;Top tier&rdquo; sort on
-          every list page and the badge on every detail page.
+          (the average run wins roughly half the time at A0), <strong>100</strong> is the top of
+          the signal, <strong>0</strong> the bottom. It is a naive correlation with known biases
+          (spelled out below), not a verdict on whether a card is good. The same number drives the
+          default sort on every list page and the badge on every detail page.
         </p>
       </section>
 
@@ -227,7 +228,7 @@ score      = clamp(raw, 0, 100)            # rounded to integer`}
       </section>
 
       {/* Codex Elo */}
-      <section className="mb-10">
+      <section id="codex-elo" className="mb-10 scroll-mt-20">
         <h2 className="text-xl font-semibold text-[var(--accent-gold)] mb-4">
           Codex Elo, the other half
         </h2>
@@ -252,13 +253,22 @@ score      = clamp(raw, 0, 100)            # rounded to integer`}
           </li>
           <li>
             <strong>Cards only.</strong> Reward screens offer cards, not relics or potions, so
-            Elo exists for cards. Starter cards and cards never offered in a reward have no Elo.
+            base-card Elo exists only for cards.
+          </li>
+          <li>
+            <strong>Upgraded cards get their own Elo.</strong> Reward screens never offer an
+            upgraded card, so the base Elo can&apos;t speak for the &ldquo;+&rdquo; version.
+            Instead the upgraded variant is rated from a different revealed preference: the
+            rest-site Smith decision. When you upgrade a card, it &ldquo;beats&rdquo; the other
+            cards in your deck you could have upgraded but didn&apos;t. Fit the same Bradley-Terry
+            model over those choices and the &ldquo;+&rdquo; row gets a genuine Upgrade Elo, not a
+            copy of the base number. Starters can earn one this way too (you can Smith a Strike).
           </li>
         </ul>
         <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
           Use them together: Score says &ldquo;this wins games,&rdquo; Elo says &ldquo;players
           want this when they see it.&rdquo; Cards high on both are unambiguous; a gap between
-          them is usually a build-around or a trap. Both, side by side, live on the{" "}
+          them is usually a build-around or a situational pick. Both, side by side, live on the{" "}
           <Link href="/leaderboards/metrics" className="text-[var(--accent-gold)] hover:underline">
             Card Metrics
           </Link>{" "}
@@ -267,9 +277,29 @@ score      = clamp(raw, 0, 100)            # rounded to integer`}
       </section>
 
       {/* Limitations / disclaimers */}
-      <section className="mb-10">
+      <section id="limitations" className="mb-10 scroll-mt-20">
         <h2 className="text-xl font-semibold text-[var(--accent-gold)] mb-4">What the score is not</h2>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4">
+          Codex Score is a naive win-rate correlation, and a correlation carries baggage. The two
+          biggest confounds below are why some obviously good cards can land low and some niche
+          ones can land high. Read a grade as a signal with caveats, not a ruling. Where a card
+          has been offered in reward screens, <Link href="#codex-elo" className="text-[var(--accent-gold)] hover:underline">Codex Elo</Link>{" "}
+          is the less-confounded counterweight, it is skill-agnostic and not exposure-weighted.
+        </p>
         <ul className="text-sm text-[var(--text-secondary)] space-y-3 list-disc pl-5">
+          <li>
+            <strong>Exposure-time / pick-frequency bias.</strong> A card that sits in the deck
+            longer, or gets picked in nearly every run (starters, commons, high-pick staples),
+            absorbs more of every loss it was present for. So heavily-used cards score low even
+            when they&apos;re fine, which is why some staples land in the bottom tiers. An F often
+            means &ldquo;high exposure,&rdquo; not &ldquo;bad card.&rdquo;
+          </li>
+          <li>
+            <strong>Survivorship bias.</strong> Late-game rares and uncommons only get offered in
+            runs that already got deep, runs that were, on average, already going well. Their win
+            rate is inflated by the run being healthy <em>before</em> the pick, so they can look
+            stronger than they are.
+          </li>
           <li>
             <strong>Not a personal recommendation.</strong> Score answers &ldquo;what wins for the
             average submitter?&rdquo; It can&apos;t see your deck, your character, your ascension,
@@ -298,6 +328,13 @@ score      = clamp(raw, 0, 100)            # rounded to integer`}
             submit right now will affect the next score rebuild, not the one in your browser.
           </li>
         </ul>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mt-4">
+          To cut the obvious confounds yourself, the{" "}
+          <Link href="/leaderboards/metrics" className="text-[var(--accent-gold)] hover:underline">
+            Card Metrics
+          </Link>{" "}
+          table puts Codex Elo next to Score and slices both by per-character and per-run cohorts.
+        </p>
       </section>
 
       {/* Further reading / cross-links */}
