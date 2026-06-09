@@ -136,7 +136,8 @@ SNAPSHOT_COLLECTION_NAME = "entity_stats_snapshot"
 # Mongo) clobbering the snapshot: loaders reject a mismatched version and
 # keep serving what they have, and the leader rebuilds right over it instead
 # of trusting its freshness. Version 2 = elo + base/upg + cohorts + community.
-SNAPSHOT_VERSION = 2
+# Version 3 adds per-act relic pickup splits (act_picks / act_wins).
+SNAPSHOT_VERSION = 3
 # Leader rebuilds the heavy walk at most this often.
 _SNAPSHOT_REBUILD_SECONDS = 10 * 60
 # Workers reload the snapshot from Mongo this often (cheap read).
@@ -791,6 +792,48 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
         except Exception:
             logger.warning("smith-choice walk failed for %s", run_hash, exc_info=True)
 
+        # Relic acquisition act: bucket each relic pickup into A1/A2/A3+ by
+        # comparing its global pickup floor (floor_added_to_deck) against this
+        # run's act lengths from map_point_history. Powers the act filter on
+        # the relic tier list. Acts past the third fold into the last bucket.
+        try:
+            act_floors_list = blob.get("map_point_history") or []
+            if act_floors_list:
+                bounds: list[int] = []
+                running = 0
+                for act_floors in act_floors_list:
+                    running += len(act_floors or [])
+                    bounds.append(running)
+                seen_relic_acts: set[tuple[str, int]] = set()
+                for player in blob.get("players") or []:
+                    for rel in player.get("relics") or []:
+                        fl = rel.get("floor_added_to_deck")
+                        stripped = _strip_prefix(rel.get("id", ""))
+                        if (
+                            not stripped
+                            or stripped[0] != "relics"
+                            or not isinstance(fl, (int, float))
+                            or fl < 1
+                        ):
+                            continue
+                        bucket = _ACT_BUCKETS - 1
+                        for i, bound in enumerate(bounds):
+                            if fl <= bound:
+                                bucket = min(i, _ACT_BUCKETS - 1)
+                                break
+                        seen_relic_acts.add((stripped[1], bucket))
+                for rid, bucket in seen_relic_acts:
+                    agg = new_cache.get(("relics", rid))
+                    if agg is None:
+                        continue
+                    arr_p = agg.setdefault("act_picks", [0] * _ACT_BUCKETS)
+                    arr_w = agg.setdefault("act_wins", [0] * _ACT_BUCKETS)
+                    arr_p[bucket] += 1
+                    if is_win:
+                        arr_w[bucket] += 1
+        except Exception:
+            logger.warning("relic act walk failed for %s", run_hash, exc_info=True)
+
         # Card-reward decisions: count offers/picks per act and record the
         # picked-beats-skipped head-to-heads for the Bradley-Terry fit, for
         # the all-runs pass AND every cohort this run belongs to.
@@ -970,6 +1013,10 @@ def _persist_snapshot(
             entry["base"] = agg["base"]
         if agg.get("upg") is not None:
             entry["upg"] = agg["upg"]
+        # Per-act pickup splits (relics only).
+        if agg.get("act_picks") is not None:
+            entry["act_picks"] = agg["act_picks"]
+            entry["act_wins"] = agg.get("act_wins") or [0] * _ACT_BUCKETS
         by_type.setdefault(etype, []).append(entry)
     now = datetime.now(timezone.utc)
     for etype, entities in by_type.items():
@@ -1042,6 +1089,9 @@ def _load_snapshot() -> bool:
                 agg["base"] = e["base"]
             if e.get("upg") is not None:
                 agg["upg"] = e["upg"]
+            if e.get("act_picks") is not None:
+                agg["act_picks"] = e["act_picks"]
+                agg["act_wins"] = e.get("act_wins") or [0] * _ACT_BUCKETS
             new_cache[(etype, e["id"])] = agg
     _apply_cache(
         new_cache,
@@ -1169,7 +1219,9 @@ def get_community_stats() -> dict[str, Any]:
     return _community_stats or community_stats.empty()
 
 
-def get_all_entity_scores(entity_type: str) -> dict[str, dict[str, Any]]:
+def get_all_entity_scores(
+    entity_type: str, act: int | None = None
+) -> dict[str, dict[str, Any]]:
     """All entities of one type, keyed by ID, with score + counts + elo.
 
     Drives list-page tier sorting and the (planned) tooltip-widget
@@ -1179,8 +1231,17 @@ def get_all_entity_scores(entity_type: str) -> dict[str, dict[str, Any]]:
     `elo` is the Codex Elo (revealed-preference rating) where it exists, else
     null. It only exists for reward-offered cards, so starters and upgraded
     variants are null — that's the basis for the dual Score/Elo tier view.
+
+    `act` (relics only, 1-3 where 3 folds in later acts) restricts the stats
+    to pickups made during that act: picks/wins/score come from the act
+    bucket, graded against a per-act baseline. Later-act pickups only happen
+    in runs that already got there, so their raw win rates are survivorship-
+    inflated; comparing act-mates against each other cancels that out.
+    Entities never picked up in that act are omitted.
     """
     _maybe_rebuild()
+    if act is not None:
+        return _entity_scores_for_act(entity_type, act)
     baseline = _type_baseline(entity_type)
     # Cards: drop non-reward colors (curse/status/event/quest/token) AND
     # starters (Basic rarity). Neither is reward-pickable, so a tier "rating"
@@ -1206,6 +1267,43 @@ def get_all_entity_scores(entity_type: str) -> dict[str, dict[str, Any]]:
             "picks": picks,
             "wins": wins,
             "win_rate": round(wins / picks * 100, 1) if picks else 0.0,
+        }
+    return out
+
+
+def _entity_scores_for_act(entity_type: str, act: int) -> dict[str, dict[str, Any]]:
+    """Scores restricted to pickups made during one act (1-based; 3 = act 3+).
+
+    Same shape as the all-acts response (`elo` stays null: Codex Elo is a
+    card-reward signal, not a relic one). The baseline is the pick-weighted
+    average win rate of every pickup in that act, so each entity is graded
+    against its act-mates rather than the global pool.
+    """
+    idx = min(max(act, 1), _ACT_BUCKETS) - 1
+    total_picks = total_wins = 0
+    for (etype, _), agg in _cache.items():
+        if etype != entity_type:
+            continue
+        act_picks = agg.get("act_picks")
+        if act_picks:
+            total_picks += act_picks[idx]
+            total_wins += (agg.get("act_wins") or [0] * _ACT_BUCKETS)[idx]
+    baseline = (total_wins / total_picks) if total_picks else _baseline_win_rate()
+    out: dict[str, dict[str, Any]] = {}
+    for (etype, eid), agg in _cache.items():
+        if etype != entity_type:
+            continue
+        act_picks = agg.get("act_picks")
+        if not act_picks or not act_picks[idx]:
+            continue
+        picks = act_picks[idx]
+        wins = (agg.get("act_wins") or [0] * _ACT_BUCKETS)[idx]
+        out[eid] = {
+            "score": _compute_score(wins, picks, baseline),
+            "elo": None,
+            "picks": picks,
+            "wins": wins,
+            "win_rate": round(wins / picks * 100, 1),
         }
     return out
 

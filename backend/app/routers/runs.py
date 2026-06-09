@@ -5,7 +5,7 @@ import os
 import time
 from functools import lru_cache
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from ..services.runs_db import submit_run, get_stats, claim_runs
@@ -670,22 +670,41 @@ def get_entity_run_stats(request: Request, entity_type: str, entity_id: str):
 
 @router.get("/scores/{entity_type}", tags=["Runs"])
 @limiter.limit("60/minute")
-def get_entity_scores(request: Request, entity_type: str):
+def get_entity_scores(
+    request: Request,
+    entity_type: str,
+    act: int | None = Query(
+        None,
+        ge=1,
+        le=3,
+        description=(
+            "Relics only: restrict to pickups made during this act "
+            "(3 includes later acts). Scores are graded against a per-act "
+            "baseline so survivorship into later acts doesn't inflate them."
+        ),
+    ),
+):
     """All Codex Scores for one entity type, keyed by ID.
 
     Each entry carries the 0-100 Codex Score plus picks/wins/win_rate, and
     for cards the Codex Elo (null for entities without one). Cards that are
     never a reward pick (curses, statuses, events, tokens, starters) are
-    excluded. Used by list pages to render the score column / sort by tier
-    without N round-trips to /stats/{type}/{id}. Cached at the same TTL as
-    the per-entity stats since both derive from the same walk.
+    excluded. With `act` set (relics only), stats cover only pickups made
+    during that act, graded against that act's baseline. Used by list pages
+    to render the score column / sort by tier without N round-trips to
+    /stats/{type}/{id}. Cached at the same TTL as the per-entity stats since
+    both derive from the same walk.
     """
     if entity_type not in _ENTITY_STATS_TYPES:
         raise HTTPException(
             status_code=400,
             detail=f"entity_type must be one of {sorted(_ENTITY_STATS_TYPES)}",
         )
-    return get_all_entity_scores(entity_type)
+    if act is not None and entity_type != "relics":
+        raise HTTPException(
+            status_code=400, detail="act filtering is only available for relics"
+        )
+    return get_all_entity_scores(entity_type, act=act)
 
 
 @router.get("/community-stats", tags=["Runs"])
