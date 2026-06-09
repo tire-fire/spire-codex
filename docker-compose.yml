@@ -23,6 +23,22 @@ services:
       - GITHUB_APP_INSTALLATION_ID=${GITHUB_APP_INSTALLATION_ID:-}
       - GITHUB_APP_REPO=${GITHUB_APP_REPO:-}
       - GITHUB_APP_PRIVATE_KEY_PATH=${GITHUB_APP_PRIVATE_KEY_PATH:-/secrets/knowledge-demon.private-key.pem}
+      # Application cache (issue #388). Unset -> every cache call no-ops and
+      # the existing data paths run unchanged.
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      - redis
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    # Cache only: hard memory cap with LRU eviction, no persistence.
+    # Everything in here is rebuildable from Mongo / the run files on miss.
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --appendonly no --save ""
     logging:
       driver: json-file
       options:

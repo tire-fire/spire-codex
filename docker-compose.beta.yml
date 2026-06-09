@@ -40,6 +40,26 @@ services:
       - FRONTEND_URL=${FRONTEND_URL:-https://beta.spire-codex.com}
       - SPIRE_CODEX_PUBLIC_BASE=${SPIRE_CODEX_PUBLIC_BASE:-https://beta.spire-codex.com}
       - ENVIRONMENT=${ENVIRONMENT:-production}
+      # Application cache (issue #388). Container name, not the "redis"
+      # service alias: prod and beta share the external nginx_web-network,
+      # so a bare alias would be ambiguous between the two stacks.
+      - REDIS_URL=${REDIS_URL:-redis://spire-codex-beta-redis:6379/0}
+    depends_on:
+      - redis
+    networks:
+      - nginx_web-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  redis:
+    image: redis:7-alpine
+    container_name: spire-codex-beta-redis
+    # Cache only: LRU eviction, no persistence; rebuildable on miss.
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --appendonly no --save ""
+    restart: unless-stopped
     networks:
       - nginx_web-network
     logging:
