@@ -26,8 +26,8 @@ function scoreToTier(score: number): Tier {
   if (score >= 78) return { letter: "A", label: "Strong",   className: "bg-emerald-950/40 border-emerald-700/60 text-emerald-300" };
   if (score >= 65) return { letter: "B", label: "Solid",    className: "bg-sky-950/40 border-sky-700/60 text-sky-300" };
   if (score >= 50) return { letter: "C", label: "Average",  className: "bg-zinc-800/60 border-zinc-600/60 text-zinc-300" };
-  if (score >= 35) return { letter: "D", label: "Weak",     className: "bg-orange-950/40 border-orange-700/60 text-orange-300" };
-  return { letter: "F", label: "Avoid", className: "bg-rose-950/40 border-rose-800/60 text-rose-300" };
+  if (score >= 35) return { letter: "D", label: "Below average", className: "bg-orange-950/40 border-orange-700/60 text-orange-300" };
+  return { letter: "F", label: "Underperforming", className: "bg-rose-950/40 border-rose-800/60 text-rose-300" };
 }
 
 export default function ScoreBadge({ score, size = "md", showNumber = false }: ScoreBadgeProps) {

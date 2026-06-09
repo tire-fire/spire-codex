@@ -358,18 +358,24 @@ export default async function TierListIndex() {
           500-pick reliable one. Scores map to letter grades:
         </p>
         <div className="text-xs text-[var(--text-muted)] space-y-1">
-          <div><strong className="text-amber-300">S (90+)</strong> · genuinely elite</div>
-          <div><strong className="text-emerald-300">A (78–89)</strong> · reliable engine pieces</div>
+          <div><strong className="text-amber-300">S (90+)</strong> · top of the win-rate signal</div>
+          <div><strong className="text-emerald-300">A (78–89)</strong> · wins above baseline reliably</div>
           <div><strong className="text-sky-300">B (65–77)</strong> · above-average</div>
           <div><strong className="text-zinc-300">C (50–64)</strong> · average</div>
-          <div><strong className="text-orange-300">D (35–49)</strong> · niche or filler</div>
-          <div><strong className="text-rose-300">F (0–34)</strong> · actively pulls toward losses</div>
+          <div><strong className="text-orange-300">D (35–49)</strong> · below average, often niche</div>
+          <div><strong className="text-rose-300">F (0–34)</strong> · bottom of the signal, often a high-exposure staple</div>
         </div>
+        <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-3">
+          This is a naive win-rate signal, not a ruling. It carries known biases, heavily-used
+          staples sink even when they&apos;re fine, and late-game rares float because they only
+          show up in runs already going well. Read a low grade as &ldquo;high exposure&rdquo; as
+          often as &ldquo;weak.&rdquo;
+        </p>
         <Link
-          href="/leaderboards/scoring"
+          href="/leaderboards/scoring#limitations"
           className="inline-block mt-4 text-sm font-medium text-[var(--accent-gold)] hover:underline"
         >
-          → Full methodology
+          → How the score works and where it&apos;s biased
         </Link>
       </section>
 

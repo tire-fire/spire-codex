@@ -208,6 +208,58 @@ def _excluded_card_ids() -> frozenset[str]:
     return _excluded_card_ids_cache
 
 
+_starter_card_ids_cache: frozenset[str] | None = None
+
+
+def _starter_card_ids() -> frozenset[str]:
+    """Starter card ids (rarity "Basic": STRIKE_*, DEFEND_*, BASH, ...).
+
+    These carry real character colors so _excluded_card_ids misses them, but
+    they're never reward-pickable, sit in nearly every deck, and crater on
+    exposure-time bias. Dropped from the Codex Score tier surfaces so a
+    misleading "rating" isn't implied for them. Empty if data can't be read."""
+    global _starter_card_ids_cache
+    if _starter_card_ids_cache is None:
+        try:
+            from .data_service import load_cards
+
+            _starter_card_ids_cache = frozenset(
+                c["id"]
+                for c in load_cards()
+                if c.get("id")
+                and (c.get("rarity_key") or c.get("rarity") or "").lower() == "basic"
+            )
+        except Exception:
+            logger.warning(
+                "could not load card rarities for score exclusion", exc_info=True
+            )
+            _starter_card_ids_cache = frozenset()
+    return _starter_card_ids_cache
+
+
+_upgradeable_card_ids_cache: frozenset[str] | None = None
+
+
+def _upgradeable_card_ids() -> frozenset[str]:
+    """Card ids that have an upgrade (a non-null `upgrade` block in the game
+    data). Used to keep the Upgrade Elo head-to-heads honest: only cards that
+    can actually be smithed belong in the "eligible but not chosen" pool."""
+    global _upgradeable_card_ids_cache
+    if _upgradeable_card_ids_cache is None:
+        try:
+            from .data_service import load_cards
+
+            _upgradeable_card_ids_cache = frozenset(
+                c["id"] for c in load_cards() if c.get("id") and c.get("upgrade")
+            )
+        except Exception:
+            logger.warning(
+                "could not load card upgrades for upgrade-elo", exc_info=True
+            )
+            _upgradeable_card_ids_cache = frozenset()
+    return _upgradeable_card_ids_cache
+
+
 def _walk_run_entities(blob: dict) -> Iterable[tuple[str, str]]:
     """Emit every (entity_type, entity_id) seen in this run.
 
@@ -285,6 +337,69 @@ def _walk_card_reward_screens(blob: dict) -> Iterable[tuple[int, list[str], list
                         skipped.append(cid)
                 if picked or skipped:
                     yield act_index, picked, skipped
+
+
+# Rest-site action recorded when a player chooses to upgrade (Smith) a card.
+_SMITH_REST_CHOICE = "SMITH"
+
+
+def _walk_rest_upgrade_choices(blob: dict) -> Iterable[tuple[list[str], list[str]]]:
+    """Emit (upgraded_ids, eligible_skipped_ids) per rest-site Smith decision.
+
+    At a rest site a player may choose SMITH and upgrade a specific card. The
+    card they upgrade is a revealed preference: it "beats" the other cards
+    that were in the deck and eligible to upgrade at that point but weren't
+    chosen. Those head-to-heads feed a Bradley-Terry "Upgrade Elo" for the
+    upgraded variants, the upgrade-decision analogue of card-reward Codex Elo
+    (which only ever covers base cards, since rewards never offer upgrades).
+
+    The eligible pool is reconstructed from the final deck via
+    `floor_added_to_deck` (cards present by this floor), minus cards already
+    smithed earlier in the run and minus non-upgradeable cards. It's
+    approximate, it ignores mid-run removals and non-Smith upgrades, but it's
+    a sound preference signal at the card-type level. ids are namespace-
+    stripped ("CARD.WISP" -> "WISP") to match the cache keys.
+    """
+    upgradeable = _upgradeable_card_ids()
+    players = blob.get("players") or []
+    solo = len(players) == 1
+    for player in players:
+        pid = player.get("id")
+        # (floor_added, card_id) for this player's final deck, upgradeable only.
+        deck_cards: list[tuple[int, str]] = []
+        for c in player.get("deck") or []:
+            stripped = _strip_prefix(c.get("id", ""))
+            if not stripped or stripped[0] != "cards":
+                continue
+            cid = stripped[1]
+            if cid in upgradeable:
+                deck_cards.append((c.get("floor_added_to_deck") or 0, cid))
+        if not deck_cards:
+            continue
+        already: set[str] = set()
+        gfloor = 0
+        for act_floors in blob.get("map_point_history") or []:
+            for floor in act_floors or []:
+                gfloor += 1
+                for ps in floor.get("player_stats") or []:
+                    # Match this player's stats; in solo runs accept all rows
+                    # so a player_id/id scheme mismatch can't drop the signal.
+                    if not solo and ps.get("player_id") != pid:
+                        continue
+                    if _SMITH_REST_CHOICE not in (ps.get("rest_site_choices") or []):
+                        continue
+                    winners = []
+                    for raw in ps.get("upgraded_cards") or []:
+                        stripped = _strip_prefix(raw)
+                        if stripped and stripped[0] == "cards":
+                            winners.append(stripped[1])
+                    if not winners:
+                        continue
+                    eligible = {cid for fa, cid in deck_cards if fa <= gfloor}
+                    losers = sorted(eligible - set(winners) - already)
+                    already.update(winners)
+                    if winners and losers:
+                        yield winners, losers
 
 
 def _compute_codex_elo(
@@ -483,6 +598,9 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
     # card id; cards only (rewards never offer relics/potions this way).
     pick_counts: dict[str, dict[str, Any]] = {}
     pair_wins: dict[tuple[str, str], int] = {}
+    # Rest-site Smith decisions → Upgrade Elo for upgraded card variants.
+    # All-runs only; the metrics table doesn't split base/upg per cohort.
+    upgrade_pair_wins: dict[tuple[str, str], int] = {}
     # Parallel lightweight accumulators, one per non-"all" cohort.
     cohort_accs: dict[str, dict[str, Any]] = {
         k: _new_cohort_acc() for k in _COHORT_KEYS
@@ -630,6 +748,16 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
             if is_win:
                 sub["wins"] += 1
 
+        # Rest-site Smith decisions: the upgraded card beats the other
+        # eligible-but-unupgraded cards in the deck. Feeds the Upgrade Elo.
+        for winners, losers in _walk_rest_upgrade_choices(blob):
+            for winner in winners:
+                for loser in losers:
+                    if winner == loser:
+                        continue
+                    key = (winner, loser)
+                    upgrade_pair_wins[key] = upgrade_pair_wins.get(key, 0) + 1
+
         # Card-reward decisions: count offers/picks per act and record the
         # picked-beats-skipped head-to-heads for the Bradley-Terry fit, for
         # the all-runs pass AND every cohort this run belongs to.
@@ -668,6 +796,19 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
         agg["off_act"] = pc["off_act"]
         agg["pick_act"] = pc["pick_act"]
         agg["elo"] = elo.get(cid)
+
+    # Upgrade Elo: fit the same Bradley-Terry solver over the Smith
+    # head-to-heads and hang it on each card's "upg" sub-aggregate, so the
+    # metrics table's "+" row carries its own preference rating instead of
+    # echoing the base card's reward Elo. Only cards that actually appear
+    # upgraded in a deck have an "upg" block to attach it to.
+    upgrade_elo = _compute_codex_elo(upgrade_pair_wins)
+    for (etype, cid), agg in new_cache.items():
+        if etype != "cards":
+            continue
+        upg = agg.get("upg")
+        if upg is not None:
+            upg["elo"] = upgrade_elo.get(cid)
 
     # Per-type baselines: pick-weighted average win rate across all
     # entities of each type. Computed once per rebuild so scoring reads
@@ -960,22 +1101,39 @@ def _compute_score(wins: int, picks: int, baseline: float) -> int | None:
 
 
 def get_all_entity_scores(entity_type: str) -> dict[str, dict[str, Any]]:
-    """All entities of one type, keyed by ID, with score + counts.
+    """All entities of one type, keyed by ID, with score + counts + elo.
 
     Drives list-page tier sorting and the (planned) tooltip-widget
     score badge — fetched once by the client and cached locally instead
     of N round-trips to /stats/{type}/{id}.
+
+    `elo` is the Codex Elo (revealed-preference rating) where it exists, else
+    null. It only exists for reward-offered cards, so starters and upgraded
+    variants are null — that's the basis for the dual Score/Elo tier view.
     """
     _maybe_rebuild()
     baseline = _type_baseline(entity_type)
+    # Cards: drop non-reward colors (curse/status/event/quest/token) AND
+    # starters (Basic rarity). Neither is reward-pickable, so a tier "rating"
+    # for them misleads. This is the single source feeding the /tier-list hub,
+    # /tier-list/cards and the /cards "Highest-rated" rail, mirroring (and
+    # extending, with starters) get_entity_metrics_table's exclusion.
+    excluded = (
+        _excluded_card_ids() | _starter_card_ids()
+        if entity_type == "cards"
+        else frozenset()
+    )
     out: dict[str, dict[str, Any]] = {}
     for (etype, eid), agg in _cache.items():
         if etype != entity_type:
+            continue
+        if eid in excluded:
             continue
         picks = agg["picks"]
         wins = agg["wins"]
         out[eid] = {
             "score": _compute_score(wins, picks, baseline),
+            "elo": agg.get("elo"),
             "picks": picks,
             "wins": wins,
             "win_rate": round(wins / picks * 100, 1) if picks else 0.0,
@@ -1061,9 +1219,10 @@ def get_entity_metrics_table(entity_type: str, cohort: str = "all") -> dict[str,
                 )
             )
             continue
-        # All-runs view: split cards into base + "+" rows. Both rows share the
-        # card's reward metrics (Elo/Pick%/per-act); they differ in the
-        # deck-outcome columns (Codex Score / Win% / picks).
+        # All-runs view: split cards into base + "+" rows. Reward Pick%/per-act
+        # only exist for the base card (reward screens never offer the upgraded
+        # version). Elo differs by row: the base row carries the card-reward
+        # Codex Elo, the "+" row carries the Upgrade Elo from Smith decisions.
         if entity_type == "cards" and ("base" in agg or "upg" in agg):
             base = agg.get("base") or {"picks": 0, "wins": 0}
             rows.append(
@@ -1081,21 +1240,19 @@ def get_entity_metrics_table(entity_type: str, cohort: str = "all") -> dict[str,
             )
             upg = agg.get("upg")
             if upg and upg.get("picks", 0) > 0:
-                # Reward picks (Elo/Pick%/per-act) are a property of the card,
-                # not its upgrade level: you pick the base card in the reward,
-                # then upgrade it later. So the "+" row carries the same
-                # card-level reward metrics as the base row and differs only in
-                # the deck-outcome columns (Codex Score / Win% / picks).
+                # Reward screens never offer the upgraded card, so the "+" row
+                # has no reward Pick%/per-act; its Elo is the Upgrade Elo (which
+                # cards players choose to Smith), not the base card's reward Elo.
                 rows.append(
                     _row(
                         eid,
                         upg["picks"],
                         upg["wins"],
-                        elo=agg.get("elo"),
-                        offered=agg.get("offered", 0),
-                        picked=agg.get("picked", 0),
-                        off_act=agg.get("off_act") or z3,
-                        pick_act=agg.get("pick_act") or z3,
+                        elo=upg.get("elo"),
+                        offered=0,
+                        picked=0,
+                        off_act=z3,
+                        pick_act=z3,
                         upgraded=True,
                     )
                 )
