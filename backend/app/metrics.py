@@ -173,3 +173,25 @@ db_operation_duration = Histogram(
     ["operation"],
     buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0],
 )
+
+# ── Application cache (Redis) ────────────────────────────────
+# Labeled by key namespace (the part before the first ":"), e.g. stats,
+# leaderboard, run, entity_scores. Errors cover Redis being unreachable or
+# slow; the cache layer is fail-safe so an error is a miss, never a 500.
+cache_hits = Counter(
+    "spire_codex_cache_hits_total",
+    "Application cache hits",
+    ["namespace"],
+)
+
+cache_misses = Counter(
+    "spire_codex_cache_misses_total",
+    "Application cache misses",
+    ["namespace"],
+)
+
+cache_errors = Counter(
+    "spire_codex_cache_errors_total",
+    "Application cache errors (treated as misses)",
+    ["namespace", "operation"],
+)
