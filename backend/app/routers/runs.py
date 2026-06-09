@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from ..services.runs_db import submit_run, get_stats, claim_runs
+from ..services import cache as app_cache
 from ..services.run_entity_stats import (
     get_all_entity_scores,
     get_community_stats as get_community_fun_stats,
@@ -356,10 +357,20 @@ def get_leaderboard(
     Single-player and multiplayer runs aren't directly comparable, so the
     frontend reads them as disjoint pools.
     """
+    # Redis layer (60s TTL, matching the refresher cycle): one cluster-wide
+    # copy per filter combination instead of per-worker recomputation. Misses
+    # fall straight through to the existing data paths.
+    cache_key = (
+        f"leaderboard:{category}:{(character or '').upper()}:{players or ''}:"
+        f"{game_mode or ''}:{int(today)}:{page}:{limit}"
+    )
+    cached = app_cache.get_json(cache_key)
+    if cached is not None:
+        return cached
     if os.environ.get("MONGO_URL", "").strip():
         from ..services.runs_db_mongo import leaderboard as _lb_mongo
 
-        return _lb_mongo(
+        result = _lb_mongo(
             category=category,
             character=character,
             players=players,
@@ -368,6 +379,8 @@ def get_leaderboard(
             page=page,
             limit=limit,
         )
+        app_cache.set_json(cache_key, result, ttl_seconds=60)
+        return result
 
     from ..services.runs_db import get_conn
 
@@ -412,7 +425,7 @@ def get_leaderboard(
             query_params,
         ).fetchall()
 
-        return {
+        result = {
             "runs": [dict(r) for r in rows],
             "total": total,
             "page": max(page, 1),
@@ -420,6 +433,8 @@ def get_leaderboard(
             "total_pages": (total + per_page - 1) // per_page,
             "category": category,
         }
+        app_cache.set_json(cache_key, result, ttl_seconds=60)
+        return result
 
 
 @router.get("/leaderboard/rank/{run_hash}", tags=["Runs"])
@@ -563,6 +578,14 @@ def get_shared_run(run_hash: str, request: Request):
     """
     using_mongo = bool(os.environ.get("MONGO_URL", "").strip())
 
+    # Redis layer (15min TTL): runs are immutable so this is safe to serve
+    # straight from cache; the short TTL absorbs share-link bursts without
+    # every viewed run squatting in memory forever. 404s are never cached.
+    redis_key = f"run:{run_hash}"
+    redis_cached = app_cache.get_json(redis_key)
+    if redis_cached is not None:
+        return redis_cached
+
     def _attach_username(blob: dict) -> dict:
         if using_mongo:
             from ..services.runs_db_mongo import get_username_for_hash
@@ -584,7 +607,9 @@ def get_shared_run(run_hash: str, request: Request):
 
     cached = _load_run_blob(run_hash)
     if cached is not None:
-        return _attach_username(json.loads(cached))
+        result = _attach_username(json.loads(cached))
+        app_cache.set_json(redis_key, result, ttl_seconds=15 * 60)
+        return result
 
     # Fallback for multiplayer: find sibling player runs by seed.
     if using_mongo:
@@ -625,7 +650,9 @@ def get_shared_run(run_hash: str, request: Request):
             shutil.copy2(sib_file, run_file)
             _load_run_blob.cache_clear()
             with open(run_file, "r", encoding="utf-8") as f:
-                return _attach_username(json.load(f))
+                result = _attach_username(json.load(f))
+            app_cache.set_json(redis_key, result, ttl_seconds=15 * 60)
+            return result
 
     raise HTTPException(status_code=404, detail="Run data not available")
 
@@ -704,7 +731,16 @@ def get_entity_scores(
         raise HTTPException(
             status_code=400, detail="act filtering is only available for relics"
         )
-    return get_all_entity_scores(entity_type, act=act)
+    # Redis layer (5min TTL): hit constantly by tier-list pages and detail
+    # sort columns. Key carries every response-shaping param; extend it if
+    # the endpoint grows new ones (e.g. per-character scoring).
+    cache_key = f"entity_scores:{entity_type}:{act or 'all'}"
+    cached = app_cache.get_json(cache_key)
+    if cached is not None:
+        return cached
+    result = get_all_entity_scores(entity_type, act=act)
+    app_cache.set_json(cache_key, result, ttl_seconds=5 * 60)
+    return result
 
 
 @router.get("/community-stats", tags=["Runs"])
@@ -853,11 +889,23 @@ def get_community_stats(
     `username` to narrow to a single uploader.
 
     Read path:
+      0. Redis (60s TTL, cluster-wide).
       1. Try the materialized stats_summary collection (sub-ms).
       2. If the filter combo isn't in the hot list / hasn't been
          materialized yet, fall through to a process-local TTL cache.
       3. On cache miss, run the live aggregation (slow, ~5-10s).
     """
+    # 0. Redis layer: one cluster-wide copy per filter combo, refreshed on
+    # the same cadence as the refresher cycle. Misses fall through to the
+    # existing chain unchanged.
+    redis_key = (
+        f"stats:{character or ''}:{win or ''}:{ascension or ''}:"
+        f"{game_mode or ''}:{players or ''}:{username or ''}"
+    )
+    redis_cached = app_cache.get_json(redis_key)
+    if redis_cached is not None:
+        return redis_cached
+
     # 1. Materialized view path
     try:
         from ..services.runs_db_mongo import read_stats_summary
@@ -871,6 +919,7 @@ def get_community_stats(
             username=username,
         )
         if materialized is not None:
+            app_cache.set_json(redis_key, materialized, ttl_seconds=60)
             return materialized
     except Exception:
         # Not on the Mongo path (SQLite fallback) — keep going.
@@ -899,6 +948,7 @@ def get_community_stats(
         username=username,
     )
     _stats_fallback_cache[cache_key] = (now, result)
+    app_cache.set_json(redis_key, result, ttl_seconds=60)
 
     # Lazy write-through to stats_summary so subsequent requests for this
     # combo -- on any worker -- serve from the materialized view instead
