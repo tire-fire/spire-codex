@@ -162,10 +162,13 @@ export default async function CommunityStatsPage() {
           <RankBars
             color={EMERALD}
             data={stats.by_character.map((c) => ({
-              name: c.name,
+              name: c.name.replace(/^The\s+/i, ""),
               value: c.win_rate,
               display: `${c.win_rate}%`,
               detail: `${c.win_rate}% win rate · ${c.share}% of runs`,
+              // Each character's site-wide color; unknown ids fall back to the
+              // chart's base color inside RankBars.
+              color: `var(--color-${c.id})`,
             }))}
           />
         </div>

@@ -14,6 +14,7 @@ import {
   Tooltip,
   type ChartOptions,
   type TooltipItem,
+  type TooltipModel,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Bar, Doughnut } from "react-chartjs-2";
@@ -46,6 +47,17 @@ const TOOLTIP_BASE = {
 // carries the full name, so nothing is lost on hover.
 const MAX_LABEL = 24;
 
+/** Resolve "var(--color-x)" through the live stylesheet so chart colors track
+ *  the theme; plain hexes pass through. Empty when the var doesn't exist, so
+ *  callers can fall back. Canvas drawing only happens client-side. */
+function resolveColor(color: string): string {
+  if (!color.startsWith("var(")) return color;
+  if (typeof window === "undefined") return "";
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(color.slice(4, -1))
+    .trim();
+}
+
 interface Datum {
   name: string;
   value: number;
@@ -53,6 +65,8 @@ interface Datum {
   display: string;
   /** Optional longer hover text (e.g. "55.2% win rate · 31% of runs"). */
   detail?: string;
+  /** Optional per-bar color; takes a hex or a "var(--color-x)" reference. */
+  color?: string;
 }
 
 /** Horizontal bar chart for ranked lists and win-rate breakdowns. */
@@ -123,7 +137,9 @@ export function RankBars({
           datasets: [
             {
               data: data.map((d) => d.value),
-              backgroundColor: color,
+              // Scriptable so per-bar CSS vars resolve at draw time (client).
+              backgroundColor: (ctx) =>
+                resolveColor(data[ctx.dataIndex]?.color ?? color) || color,
               borderRadius: 4,
               barPercentage: 0.85,
               categoryPercentage: 0.9,
@@ -136,10 +152,54 @@ export function RankBars({
   );
 }
 
+// Shared HTML tooltip for the donuts. Chart.js draws native tooltips inside
+// the canvas, and a 96px canvas would clip them, so hover renders one
+// absolutely positioned element on <body> instead (one element total, reused
+// by every donut on the page).
+let donutTip: HTMLDivElement | null = null;
+
+function donutTooltip(ctx: { chart: ChartJS; tooltip: TooltipModel<"doughnut"> }) {
+  const { chart, tooltip } = ctx;
+  if (!donutTip) {
+    donutTip = document.createElement("div");
+    Object.assign(donutTip.style, {
+      position: "absolute",
+      pointerEvents: "none",
+      background: "#15151a",
+      border: "1px solid #33333a",
+      borderRadius: "6px",
+      padding: "4px 8px",
+      fontSize: "12px",
+      whiteSpace: "nowrap",
+      zIndex: "50",
+      transform: "translate(-50%, -130%)",
+      opacity: "0",
+    });
+    document.body.appendChild(donutTip);
+  }
+  if (tooltip.opacity === 0) {
+    donutTip.style.opacity = "0";
+    return;
+  }
+  const item = tooltip.dataPoints?.[0];
+  if (!item) return;
+  donutTip.replaceChildren();
+  const label = document.createElement("span");
+  label.style.color = TEXT_SECONDARY;
+  label.textContent = String(item.label ?? "");
+  const value = document.createElement("span");
+  Object.assign(value.style, { color: "#e5e5e5", fontWeight: "600", marginLeft: "6px" });
+  value.textContent = `${item.parsed}%`;
+  donutTip.append(label, value);
+  const rect = chart.canvas.getBoundingClientRect();
+  donutTip.style.left = `${rect.left + window.scrollX + tooltip.caretX}px`;
+  donutTip.style.top = `${rect.top + window.scrollY + tooltip.caretY}px`;
+  donutTip.style.opacity = "1";
+}
+
 /** Fixed-size donut for one event's option split. Non-responsive (a wall of
- *  these shouldn't spin up dozens of ResizeObservers) and non-interactive:
- *  the page renders a full legend with label + pct next to every donut, so a
- *  canvas tooltip would only repeat it. */
+ *  these shouldn't spin up dozens of ResizeObservers); hovering a slice shows
+ *  its option label and share via the shared HTML tooltip above. */
 export function EventDonut({
   options,
   size = 96,
@@ -167,11 +227,13 @@ export function EventDonut({
           maintainAspectRatio: false,
           animation: false,
           cutout: "62%",
-          events: [],
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false, external: donutTooltip },
+          },
         }}
       />
-      <span className="absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums text-[var(--text-primary)]">
+      <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums text-[var(--text-primary)]">
         {options[0]?.pct}%
       </span>
     </div>
