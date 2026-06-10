@@ -15,6 +15,20 @@ interface RawEntity {
   pool?: string;
   // Cards/relics/potions carry a clean rarity key (Common, Rare, Ancient, …).
   rarity_key?: string;
+  // Monsters carry their encounters, each tagged with the act it appears in.
+  encounters?: { act?: string | null }[];
+}
+
+/** Tray group for a monster: the act of its first encounter that has one
+ * ("Act 1 - Overgrowth" -> "act1-overgrowth"), or "other" for event/special
+ * monsters with no act of their own (the Architect, battle friends, ...). */
+function monsterActGroup(encounters?: { act?: string | null }[]): string {
+  for (const enc of encounters ?? []) {
+    if (enc.act) {
+      return enc.act.toLowerCase().replace(/\s*-\s*/g, "-").replace(/\s+/g, "");
+    }
+  }
+  return "other";
 }
 
 /** Map every ancient relic to the single ancient that offers it, e.g.
@@ -84,7 +98,9 @@ export async function fetchEntities(type: EntityType): Promise<TierEntity[]> {
       group:
         type === "relics"
           ? ancientMap[e.id.toUpperCase()] ?? e.pool ?? undefined
-          : e.color ?? undefined,
+          : type === "monsters"
+            ? monsterActGroup(e.encounters)
+            : e.color ?? undefined,
       // "None" is the API's placeholder for the odd un-raritied entry; treat
       // it as no rarity so it doesn't pollute the rarity dropdown.
       rarity: e.rarity_key && e.rarity_key !== "None" ? e.rarity_key : undefined,
