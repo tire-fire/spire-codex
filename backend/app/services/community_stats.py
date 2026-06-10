@@ -74,6 +74,7 @@ def new_accumulator() -> dict[str, Any]:
         "rest": {},  # rest-site choice -> count
         "ancient": {},  # relic_id -> count (chosen from the 3-relic offer)
         "removed": {},  # card_id -> count (purged at a shop/event)
+        "stolen": {},  # card_id -> count (taken by the Thieving Hopper)
         "reward_screens": 0,
         "reward_skips": 0,
         "fastest_win": None,  # (run_time, run_hash)
@@ -136,6 +137,14 @@ def accumulate(
     # Per-floor choices.
     for act_floors in blob.get("map_point_history") or []:
         for floor in act_floors or []:
+            # The Thieving Hopper steals cards mid-fight; those show up in
+            # cards_removed on its encounter floor. Route them to "stolen" so
+            # most-removed only counts removals the player chose.
+            hopper_floor = any(
+                "THIEVING_HOPPER" in (room.get("model_id") or "")
+                for room in floor.get("rooms") or []
+                if isinstance(room, dict)
+            )
             for ps in floor.get("player_stats") or []:
                 # Event decisions: keys look like
                 # "BYRDONIS_NEST.pages.INITIAL.options.TAKE.title".
@@ -167,14 +176,14 @@ def accumulate(
                         if rid:
                             _bump(acc["ancient"], rid)
 
-                # Cards purged at a shop / event.
+                # Cards purged at a shop / event, or stolen by the Hopper.
                 for rem in ps.get("cards_removed") or []:
                     raw = rem.get("id") if isinstance(rem, dict) else rem
                     if isinstance(rem, dict) and "card" in rem:
                         raw = (rem.get("card") or {}).get("id")
                     cid = _merge_starter(_bare(raw))
                     if cid:
-                        _bump(acc["removed"], cid)
+                        _bump(acc["stolen" if hopper_floor else "removed"], cid)
 
                 # Card-reward screens: a screen with nothing picked is a skip.
                 choices = ps.get("card_choices") or []
@@ -233,6 +242,22 @@ def _name_maps() -> dict[str, dict[str, str]]:
         logger.warning("community-stats event options load failed", exc_info=True)
     out["_event_options"] = event_opts  # type: ignore[assignment]
     return out
+
+
+def _quest_card_ids() -> frozenset[str]:
+    """Quest items (Byrdonis Egg, Lantern Key, ...). They only enter and
+    leave a deck through events, so counting them as removals is noise."""
+    from . import data_service
+
+    try:
+        return frozenset(
+            c["id"]
+            for c in data_service.load_cards()
+            if c.get("id") and (c.get("color") or "").lower() == "quest"
+        )
+    except Exception:
+        logger.warning("community-stats quest card load failed", exc_info=True)
+        return frozenset()
 
 
 def _pct(part: int, whole: int) -> float:
@@ -323,6 +348,9 @@ def finalize(acc: dict[str, Any]) -> dict[str, Any]:
             return None
         return {value_key: rec[0], "run_hash": rec[1]}
 
+    quest_ids = _quest_card_ids()
+    removed = {k: v for k, v in acc["removed"].items() if k not in quest_ids}
+
     return {
         "total_runs": total_runs,
         "total_wins": total_wins,
@@ -345,7 +373,8 @@ def finalize(acc: dict[str, Any]) -> dict[str, Any]:
             for c, n in sorted(acc["rest"].items(), key=lambda kv: kv[1], reverse=True)
         ],
         "ancient_picks": _ranked(acc["ancient"], names["relics"], _TOP_N),
-        "most_removed": _ranked(acc["removed"], names["cards"], _TOP_N),
+        "most_removed": _ranked(removed, names["cards"], _TOP_N),
+        "hopper_stolen": _ranked(acc.get("stolen") or {}, names["cards"], 10),
         "reward_skip_rate": _pct(acc["reward_skips"], acc["reward_screens"]),
         "records": {
             "fastest_win": _rec(acc["fastest_win"], "run_time"),
