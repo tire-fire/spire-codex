@@ -198,7 +198,7 @@ spire-codex/
 - `POST /api/guides` — Guide submission (Discord webhook, rate-limited)
 - `POST /api/runs` — Run submission / `GET /api/runs/list` (filters: character, win, username, seed, build_id, sort, page, limit) / `GET /api/runs/shared/{hash}` (merges `username` from DB) / `GET /api/runs/stats`
 - `GET /api/runs/leaderboard` — ranked wins-only list (category: fastest|highest_ascension, character, page, limit)
-- `GET /api/runs/scores/{type}`: Bulk Codex Scores + Codex Elo for cards/relics/potions (Bayesian-shrunk win rate mapped 0-100 to S/A/B/C/D/F; non-reward cards + starters excluded; materialized to Mongo by a single leader)
+- `GET /api/runs/scores/{type}`: Bulk Codex Scores + Codex Elo for cards/relics/potions (Bayesian-shrunk win rate mapped 0-100 to S/A/B/C/D/F; non-reward cards + starters excluded; relics accept `?act=1|2|3` for acquisition-act views graded per-act; materialized to Mongo by a single leader)
 - `GET /api/runs/community-stats`: Fun community datasets for `/community-stats` (per-event decision splits, deadliest encounters/events, win rates by ascension/character, records; official content only)
 - `GET /api/runs/leaderboard/rank/{hash}` — rank of one winning run; `POST /api/runs/claim` — attach username to prior runs
 - `GET /api/runs/encounter-stats` — per-encounter aggregates (Mongo-only)
