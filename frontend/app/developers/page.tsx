@@ -248,7 +248,7 @@ export default function DevelopersPage() {
                 { method: "POST", path: "/api/guides", desc: "Submit a guide (Discord webhook, rate-limited)" },
                 { method: "POST", path: "/api/runs", desc: "Submit a run for community stats and leaderboards" },
                 { method: "POST", path: "/api/runs/claim", desc: "Attach a username to previously-submitted runs by hash" },
-                { method: "GET", path: "/api/runs/list", desc: "Browse submitted runs with filters and pagination" },
+                { method: "GET", path: "/api/runs/list", desc: "Browse submitted runs with filters and pagination (incl. winrate_min/winrate_max by submitter win rate)" },
                 { method: "GET", path: "/api/runs/leaderboard", desc: "Run leaderboards (fastest, highest_ascension)" },
                 { method: "GET", path: "/api/runs/shared/{run_hash}", desc: "Single submitted run by hash (rate-limited)" },
                 { method: "GET", path: "/api/runs/stats", desc: "Aggregate community stats (filter by character, ascension, username)" },

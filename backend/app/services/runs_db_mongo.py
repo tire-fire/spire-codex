@@ -1606,11 +1606,46 @@ def _row_to_dict(doc: dict) -> dict:
     return out
 
 
+# Submitters need at least this many runs before a winrate filter counts
+# them: without a floor, every one-run winner floods "winrate:100".
+WINRATE_MIN_RUNS = 5
+
+
+def get_user_winrates() -> dict[str, list[int]]:
+    """Per-username [total runs, wins], cached in Redis for 5 minutes.
+
+    One $group over the collection (a few hundred ms) once per TTL instead
+    of per request. Anonymous runs (no username) are excluded; abandoned
+    runs count as losses, matching the profile-page win rate.
+    """
+    cached = app_cache.get_json("user_winrates:all")
+    if cached is not None:
+        return cached
+    coll = _get_collection()
+    pipeline = [
+        {"$match": {"username": {"$nin": [None, ""]}}},
+        {
+            "$group": {
+                "_id": "$username",
+                "total": {"$sum": 1},
+                "wins": {"$sum": {"$cond": [{"$in": ["$win", [True, 1]]}, 1, 0]}},
+            }
+        },
+    ]
+    out: dict[str, list[int]] = {}
+    for row in coll.aggregate(pipeline, allowDiskUse=True):
+        out[str(row["_id"])] = [int(row["total"]), int(row["wins"])]
+    app_cache.set_json("user_winrates:all", out, ttl_seconds=300)
+    return out
+
+
 @_instrument("list_runs")
 def list_runs(
     character: str | None = None,
     win: str | None = None,
     username: str | None = None,
+    winrate_min: float | None = None,
+    winrate_max: float | None = None,
     seed: str | None = None,
     sort: str | None = None,
     build_id: str | None = None,
@@ -1638,6 +1673,32 @@ def list_runs(
         q["was_abandoned"] = {"$in": [False, 0]}
     if username:
         q["username"] = {"$regex": username, "$options": "i"}
+    if winrate_min is not None or winrate_max is not None:
+        # Filter runs by their submitter's overall win rate. The per-user
+        # map is one cached aggregation; the run query then becomes an $in
+        # over the qualifying usernames (composable with the regex above,
+        # since both live under the same field's operator object).
+        lo = winrate_min if winrate_min is not None else 0.0
+        hi = winrate_max if winrate_max is not None else 100.0
+        rates = get_user_winrates()
+        names = [
+            name
+            for name, (total, wins) in rates.items()
+            if total >= WINRATE_MIN_RUNS and lo <= (wins / total * 100) <= hi
+        ]
+        if not names:
+            return {
+                "runs": [],
+                "total": 0,
+                "page": max(page, 1),
+                "per_page": min(limit, 100),
+                "total_pages": 0,
+            }
+        user_q = q.get("username")
+        if isinstance(user_q, dict):
+            user_q["$in"] = names
+        else:
+            q["username"] = {"$in": names}
     if seed:
         # Anchored prefix, case-sensitive: uses the seed index instead of
         # scanning every document. Daily seeds are date-prefixed so the
