@@ -17,6 +17,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from .routers import (
     cards,
+    search,
     characters,
     relics,
     monsters,
@@ -469,6 +470,7 @@ Instrumentator(
 ).instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
 app.include_router(cards.router)
+app.include_router(search.router)
 app.include_router(characters.router)
 app.include_router(relics.router)
 app.include_router(monsters.router)
