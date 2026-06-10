@@ -102,7 +102,7 @@ services:
     # Cache only: hard memory cap with LRU eviction, no persistence (no AOF,
     # no RDB snapshots). Everything in here is rebuildable from Mongo / the
     # run files on a miss, so losing it on restart costs one warmup, not data.
-    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly no --save ""
+    command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --appendonly no --save ""
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
