@@ -26,47 +26,72 @@ interface SearchSection {
   items: SearchItem[];
 }
 
+// The route inventory is GENERATED from the App Router file tree by
+// scripts/generate-site-pages.mjs (predev/prebuild hooks), so new pages
+// show up in search automatically. This map only adds nicer display
+// names and keyword synonyms on top; entries here are optional and
+// nothing breaks when a page ships without one.
+import sitePages from "@/lib/site-pages.json";
+
+const PAGE_OVERRIDES: Record<string, { name?: string; keywords?: string[] }> = {
+  "/cards": { keywords: ["card", "deck", "attack", "skill", "power"] },
+  "/cards/browse": { name: "Card Browse", keywords: ["browse", "filter", "matrix"] },
+  "/characters": { keywords: ["character", "class", "hero", "ironclad", "silent", "defect", "necrobinder", "regent"] },
+  "/relics": { keywords: ["relic", "artifact"] },
+  "/monsters": { keywords: ["monster", "enemy", "boss", "bestiary"] },
+  "/potions": { keywords: ["potion", "flask"] },
+  "/powers": { keywords: ["power", "buff", "debuff", "status"] },
+  "/enchantments": { keywords: ["enchantment", "enchant"] },
+  "/encounters": { keywords: ["encounter", "fight", "combat"] },
+  "/events": { keywords: ["event"] },
+  "/merchant": { keywords: ["merchant", "shop", "store", "buy", "sell", "price", "gold", "removal"] },
+  "/ancients": { keywords: ["ancient", "neow", "darv", "orobas", "pael", "tezcatara", "vakuu", "nonupeipe", "tanx", "offering"] },
+  "/unlocks": { keywords: ["unlock", "unlockable", "progression", "epoch", "achievement"] },
+  "/keywords": { keywords: ["keyword", "exhaust", "ethereal", "innate", "retain", "sly", "eternal", "unplayable"] },
+  "/compare": { name: "Compare Characters", keywords: ["compare", "comparison", "versus", "vs"] },
+  "/modifiers": { name: "Custom Mode", keywords: ["modifier", "custom", "mode", "mutator"] },
+  "/runs": { keywords: ["run", "upload", "submit", "history", "win", "loss"] },
+  "/tier-list": { keywords: ["tier", "tier list", "ranking", "best", "worst", "s tier"] },
+  "/tier-list/cards": { name: "Card Tier List", keywords: ["tier", "best cards"] },
+  "/tier-list/relics": { name: "Relic Tier List", keywords: ["tier", "best relics", "act"] },
+  "/tier-list/potions": { name: "Potion Tier List", keywords: ["tier", "best potions"] },
+  "/tier-list-maker": { name: "Tier List Maker", keywords: ["tier", "maker", "builder", "custom tier"] },
+  "/leaderboards": { keywords: ["leaderboard", "fastest", "ascension", "ladder", "ranking"] },
+  "/leaderboards/metrics": { name: "Card Metrics", keywords: ["metrics", "elo", "codex elo", "pick rate", "win rate", "table"] },
+  "/leaderboards/scoring": { name: "Codex Score", keywords: ["score", "codex score", "scoring", "methodology", "tier bands"] },
+  "/leaderboards/stats": { name: "Run Stats", keywords: ["stats", "win rate", "pick rate"] },
+  "/leaderboards/encounters": { name: "Encounter Stats", keywords: ["encounter", "deadliest", "stats"] },
+  "/leaderboards/submit": { name: "Submit a Run", keywords: ["submit", "upload", "run file"] },
+  "/community-stats": { keywords: ["community", "stats", "statistics", "event votes", "deadliest", "records"] },
+  "/badges": { keywords: ["badge", "frame", "cosmetic"] },
+  "/mechanics": { keywords: ["mechanic", "formula", "odds", "chance", "drop rate", "probability", "rng"] },
+  "/guides": { keywords: ["guide", "strategy", "tip", "walkthrough", "tutorial"] },
+  "/guides/submit": { name: "Submit Guide", keywords: ["submit", "write", "contribute"] },
+  "/timeline": { keywords: ["timeline", "epoch", "era", "story", "lore"] },
+  "/reference": { keywords: ["reference", "intent", "orb", "affliction", "modifier", "achievement", "ascension", "act"] },
+  "/images": { keywords: ["image", "sprite", "asset", "art", "download"] },
+  "/developers": { keywords: ["developer", "api", "widget", "tooltip", "export", "data"] },
+  "/showcase": { keywords: ["showcase", "community", "project", "built with"] },
+  "/changelog": { keywords: ["changelog", "patch", "update", "version", "what changed"] },
+  "/about": { keywords: ["about", "info", "credits"] },
+  "/news": { keywords: ["news", "patch", "patch notes", "announcement", "update", "steam", "press"] },
+  "/knowledge-demon": { name: "Knowledge Demon", keywords: ["discord bot", "bot"] },
+  "/overlay": { keywords: ["overlay", "overwolf", "in-game", "companion", "app"] },
+};
+
+// Entries that aren't App Router pages (external links).
+const EXTRA_PAGES = [
+  { name: "Discord", path: "https://discord.gg/xMsTBeh", keywords: ["discord", "chat", "community"], external: true },
+];
+
 const PAGES = [
-  { name: "Cards", path: "/cards", keywords: ["card", "deck", "attack", "skill", "power"] },
-  { name: "Characters", path: "/characters", keywords: ["character", "class", "hero", "ironclad", "silent", "defect", "necrobinder", "regent"] },
-  { name: "Relics", path: "/relics", keywords: ["relic", "artifact"] },
-  { name: "Monsters", path: "/monsters", keywords: ["monster", "enemy", "boss", "bestiary"] },
-  { name: "Potions", path: "/potions", keywords: ["potion", "flask"] },
-  { name: "Powers", path: "/powers", keywords: ["power", "buff", "debuff", "status"] },
-  { name: "Enchantments", path: "/enchantments", keywords: ["enchantment", "enchant"] },
-  { name: "Encounters", path: "/encounters", keywords: ["encounter", "fight", "combat"] },
-  { name: "Events", path: "/events", keywords: ["event"] },
-  { name: "Merchant", path: "/merchant", keywords: ["merchant", "shop", "store", "buy", "sell", "price", "gold", "removal"] },
-  { name: "Ancients", path: "/ancients", keywords: ["ancient", "neow", "darv", "orobas", "pael", "tezcatara", "vakuu", "nonupeipe", "tanx", "offering"] },
-  { name: "Unlocks", path: "/unlocks", keywords: ["unlock", "unlockable", "progression", "epoch"] },
-  { name: "Keywords", path: "/keywords", keywords: ["keyword", "exhaust", "ethereal", "innate", "retain", "sly", "eternal", "unplayable"] },
-  { name: "Compare Characters", path: "/compare", keywords: ["compare", "comparison", "versus", "vs"] },
-  { name: "Custom Mode", path: "/modifiers", keywords: ["modifier", "custom", "mode", "mutator"] },
-  { name: "Runs", path: "/runs", keywords: ["run", "upload", "submit", "history", "win", "loss"] },
-  { name: "Tier List", path: "/tier-list", keywords: ["tier", "tier list", "ranking", "best", "worst", "s tier"] },
-  { name: "Card Tier List", path: "/tier-list/cards", keywords: ["tier", "card tier", "best cards"] },
-  { name: "Relic Tier List", path: "/tier-list/relics", keywords: ["tier", "relic tier", "best relics"] },
-  { name: "Potion Tier List", path: "/tier-list/potions", keywords: ["tier", "potion tier", "best potions"] },
-  { name: "Leaderboards", path: "/leaderboards", keywords: ["leaderboard", "fastest", "ascension", "ladder", "ranking"] },
-  { name: "Card Metrics", path: "/leaderboards/metrics", keywords: ["metrics", "elo", "codex elo", "pick rate", "win rate", "table"] },
-  { name: "Codex Score", path: "/leaderboards/scoring", keywords: ["score", "codex score", "scoring", "methodology", "tier bands"] },
-  { name: "Community Stats", path: "/community-stats", keywords: ["community", "stats", "statistics", "event votes", "deadliest", "records"] },
-  { name: "Submit a Run", path: "/leaderboards/submit", keywords: ["submit", "upload", "run file"] },
-  { name: "Badges", path: "/badges", keywords: ["badge", "frame", "cosmetic"] },
-  { name: "Mechanics", path: "/mechanics", keywords: ["mechanic", "formula", "odds", "chance", "drop rate", "probability", "rng"] },
-  { name: "Guides", path: "/guides", keywords: ["guide", "strategy", "tip", "walkthrough", "tutorial"] },
-  { name: "Submit Guide", path: "/guides/submit", keywords: ["submit", "write", "contribute", "guide"] },
-  { name: "Meta", path: "/meta", keywords: ["meta", "stats", "statistics", "community", "win rate", "pick rate"] },
-  { name: "Timeline", path: "/timeline", keywords: ["timeline", "epoch", "era", "story", "lore"] },
-  { name: "Reference", path: "/reference", keywords: ["reference", "intent", "orb", "affliction", "modifier", "achievement", "ascension", "act"] },
-  { name: "Images", path: "/images", keywords: ["image", "sprite", "asset", "art", "download"] },
-  { name: "Developers", path: "/developers", keywords: ["developer", "api", "widget", "tooltip", "export", "data"] },
-  { name: "Showcase", path: "/showcase", keywords: ["showcase", "community", "project", "built with"] },
-  { name: "Changelog", path: "/changelog", keywords: ["changelog", "patch", "update", "version", "what changed"] },
-  { name: "About", path: "/about", keywords: ["about", "info", "credits"] },
-  { name: "Discord", path: "https://discord.gg/xMsTBeh", keywords: ["discord", "chat", "community"] },
-  { name: "Card Browse", path: "/cards/browse", keywords: ["browse", "filter", "matrix"] },
-  { name: "News", path: "/news", keywords: ["news", "patch", "patch notes", "announcement", "update", "steam", "press"] },
+  ...(sitePages as { path: string; name: string; keywords: string[] }[]).map((p) => ({
+    name: PAGE_OVERRIDES[p.path]?.name ?? p.name,
+    path: p.path,
+    keywords: [...p.keywords, ...(PAGE_OVERRIDES[p.path]?.keywords ?? [])],
+    external: false,
+  })),
+  ...EXTRA_PAGES,
 ];
 
 const MAX_PER_CATEGORY = 5;
@@ -96,7 +121,7 @@ export default function GlobalSearch() {
 
   // Build flat list of all visible results for keyboard navigation
   const flatResults: SearchItem[] = [
-    ...matchedPages.map((p) => ({ name: p.name, path: p.path })),
+    ...matchedPages.map((p) => ({ name: p.name, path: p.path, external: p.external })),
     ...sections.flatMap((s) => s.items),
   ];
 
@@ -300,10 +325,7 @@ export default function GlobalSearch() {
                         ? "bg-[var(--bg-card-hover)]"
                         : "hover:bg-[var(--bg-card-hover)]"
                     }`}
-                    onClick={() => {
-                      setOpen(false);
-                      router.push(p.path);
-                    }}
+                    onClick={() => navigate({ name: p.name, path: p.path, external: p.external })}
                     onMouseEnter={() => setSelectedIndex(i)}
                   >
                     <svg className="w-4 h-4 text-[var(--text-muted)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
