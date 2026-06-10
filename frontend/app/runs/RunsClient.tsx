@@ -438,7 +438,9 @@ export default function RunsClient() {
     if (browseWin) params.set("win", browseWin);
     if (browseUser) params.set("username", browseUser);
     params.set("page", String(browsePage));
-    fetch(`${API}/api/runs/list?${params}&_t=${Date.now()}`)
+    // No cache-buster: the API sends Cache-Control max-age=30, so the edge
+    // and browser absorb repeat hits; new runs appear within seconds anyway.
+    fetch(`${API}/api/runs/list?${params}`)
       .then((r) => r.ok ? r.json() : { runs: [], total: 0, total_pages: 0 })
       .then((data) => {
         setRunList(data.runs || []);

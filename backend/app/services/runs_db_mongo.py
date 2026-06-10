@@ -45,6 +45,7 @@ from pymongo import ASCENDING, DESCENDING, MongoClient
 from pymongo.errors import DuplicateKeyError
 
 from ..metrics import db_operations, db_operation_duration
+from . import cache as app_cache
 
 OFFICIAL_CHARACTERS = {"IRONCLAD", "SILENT", "DEFECT", "NECROBINDER", "REGENT"}
 
@@ -155,6 +156,52 @@ def _ensure_indexes(coll) -> None:
     coll.create_index([("deck.id", ASCENDING)])
     coll.create_index([("relics.id", ASCENDING)])
     coll.create_index([("killed_by", ASCENDING)])
+    # /api/runs/list hot shapes: filter+sort compounds so Mongo never
+    # in-memory-sorts a 40k-doc subset, plus seed for anchored prefix search.
+    coll.create_index([("seed", ASCENDING)])
+    coll.create_index([("run_time", ASCENDING)])
+    coll.create_index([("ascension", DESCENDING), ("run_time", ASCENDING)])
+    coll.create_index([("character", ASCENDING), ("submitted_at", DESCENDING)])
+    coll.create_index([("character", ASCENDING), ("run_time", ASCENDING)])
+    # /api/runs/leaderboard real traffic: the frontend always sends
+    # players=single and game_mode=standard, so the ladders need compounds
+    # with those equality fields ahead of the sort key.
+    coll.create_index(
+        [
+            ("win", ASCENDING),
+            ("game_mode", ASCENDING),
+            ("player_count", ASCENDING),
+            ("run_time", ASCENDING),
+        ]
+    )
+    coll.create_index(
+        [
+            ("win", ASCENDING),
+            ("game_mode", ASCENDING),
+            ("player_count", ASCENDING),
+            ("ascension", DESCENDING),
+            ("run_time", ASCENDING),
+        ]
+    )
+    coll.create_index(
+        [
+            ("win", ASCENDING),
+            ("game_mode", ASCENDING),
+            ("character", ASCENDING),
+            ("player_count", ASCENDING),
+            ("run_time", ASCENDING),
+        ]
+    )
+    coll.create_index(
+        [
+            ("win", ASCENDING),
+            ("game_mode", ASCENDING),
+            ("character", ASCENDING),
+            ("player_count", ASCENDING),
+            ("ascension", DESCENDING),
+            ("run_time", ASCENDING),
+        ]
+    )
     coll.create_index([("user_id", ASCENDING), ("submitted_at", DESCENDING)])
     # Backfill query on sign-in matches runs by submitter steam_id / discord_id.
     coll.create_index([("steam_id", ASCENDING)])
@@ -1253,11 +1300,14 @@ def _leaderboard_summary_coll():
 def _leaderboard_key(
     category: str = "fastest",
     character: str | None = None,
+    players: str | None = None,
+    game_mode: str | None = None,
 ) -> str:
     """Composite cache key for leaderboard_summary docs. Mirrors the
-    HOT_LEADERBOARD_COMBOS shape -- only (category, character) so the
-    common per-character ladder is O(1)."""
-    return f"{category}|{character or '_'}"
+    HOT_LEADERBOARD_COMBOS shape: (category, character, players,
+    game_mode), covering both the bare API default and the combo the
+    frontend actually sends (players=single, game_mode=standard)."""
+    return f"{category}|{character or '_'}|{players or '_'}|{game_mode or '_'}"
 
 
 def _lease_coll():
@@ -1334,12 +1384,13 @@ HOT_FILTER_COMBOS: list[dict] = [
 # query, which the new sort indexes already keep at ~500ms.
 _LEADERBOARD_CATEGORIES = ("fastest", "highest_ascension")
 _LEADERBOARD_CHARACTERS = ("IRONCLAD", "SILENT", "DEFECT", "NECROBINDER", "REGENT")
+# Two variants per (category, character): the bare API default, and the
+# players=single + game_mode=standard combo the frontend always sends.
 HOT_LEADERBOARD_COMBOS: list[dict] = [
-    {"category": cat} for cat in _LEADERBOARD_CATEGORIES
-] + [
-    {"category": cat, "character": ch}
+    {"category": cat, "character": ch, "players": pl, "game_mode": gm}
     for cat in _LEADERBOARD_CATEGORIES
-    for ch in _LEADERBOARD_CHARACTERS
+    for ch in (None, *_LEADERBOARD_CHARACTERS)
+    for (pl, gm) in ((None, None), ("single", "standard"))
 ]
 
 
@@ -1394,6 +1445,14 @@ def refresh_stats_summary() -> int:
             key = _filter_key(**filters)
             doc = {**result, "_id": key, "updated_at": datetime.now(timezone.utc)}
             summary.replace_one({"_id": key}, doc, upsert=True)
+            # Proactive warm: write the fresh result straight into Redis so
+            # readers hit the cache instead of Mongo. Refreshed every cycle;
+            # the long TTL is only a safety net if this loop dies.
+            app_cache.set_json(
+                app_cache.stats_key(**filters),
+                result,
+                ttl_seconds=app_cache.WARM_TTL_SECONDS,
+            )
             written += 1
         except Exception:
             # Best-effort; if one filter combo fails, keep going.
@@ -1410,21 +1469,47 @@ def refresh_leaderboard_summary() -> int:
     written = 0
     for combo in HOT_LEADERBOARD_COMBOS:
         try:
+            category = combo.get("category", "fastest")
+            character = combo.get("character")
+            players = combo.get("players")
+            game_mode = combo.get("game_mode")
             result = _leaderboard_live(
-                category=combo.get("category", "fastest"),
-                character=combo.get("character"),
-                players=None,
-                game_mode=None,
+                category=category,
+                character=character,
+                players=players,
+                game_mode=game_mode,
                 today=False,
                 page=1,
                 limit=50,
             )
             key = _leaderboard_key(
-                category=combo.get("category", "fastest"),
-                character=combo.get("character"),
+                category=category,
+                character=character,
+                players=players,
+                game_mode=game_mode,
             )
             doc = {**result, "_id": key, "updated_at": datetime.now(timezone.utc)}
             summary.replace_one({"_id": key}, doc, upsert=True)
+            # Proactive Redis warm with route-shaped keys: once for the API
+            # default page size and once sliced to the frontend's 20.
+            for warm_limit in (50, 20):
+                sliced = {
+                    **result,
+                    "runs": result["runs"][:warm_limit],
+                    "per_page": warm_limit,
+                    "total_pages": (result["total"] + warm_limit - 1) // warm_limit,
+                }
+                app_cache.set_json(
+                    app_cache.leaderboard_key(
+                        category=category,
+                        character=character,
+                        players=players,
+                        game_mode=game_mode,
+                        limit=warm_limit,
+                    ),
+                    sliced,
+                    ttl_seconds=app_cache.WARM_TTL_SECONDS,
+                )
             written += 1
         except Exception:
             pass
@@ -1545,7 +1630,12 @@ def list_runs(
     if username:
         q["username"] = {"$regex": username, "$options": "i"}
     if seed:
-        q["seed"] = {"$regex": seed, "$options": "i"}
+        # Anchored prefix, case-sensitive: uses the seed index instead of
+        # scanning every document. Daily seeds are date-prefixed so the
+        # common "find today's daily" search stays a prefix match.
+        import re as _re
+
+        q["seed"] = {"$regex": "^" + _re.escape(seed)}
     if build_ids:
         q["build_id"] = {"$in": [b for b in build_ids.split(",") if b]}
     elif build_id:
@@ -1592,7 +1682,14 @@ def list_runs(
     }
     sort_clause = sort_map.get(sort or "date", [("submitted_at", -1)])
 
-    total = coll.count_documents(q)
+    # Counting was the hidden cost: count_documents({}) walks all 216k+
+    # heavyweight docs (~8s). Unfiltered uses the instant metadata count;
+    # filtered counts stop at 10k, which caps pagination far beyond what
+    # anyone pages through anyway.
+    if q:
+        total = coll.count_documents(q, limit=10_000)
+    else:
+        total = coll.estimated_document_count()
     per_page = min(limit, 100)
     offset = (max(page, 1) - 1) * per_page
     cursor = (
@@ -1630,21 +1727,25 @@ def leaderboard(
          directly. The new sort indexes keep this at ~500ms even when the
          summary doesn't cover the combo.
     """
-    # Fast path: serve from the materialized summary if this is the
-    # default ladder view and the combo is one we materialize.
-    if (
-        not today
-        and page == 1
-        and limit == 50
-        and players is None
-        and game_mode is None
-    ):
+    # Fast path: serve from the materialized summary when the combo is one
+    # we materialize (find_one misses otherwise and we fall to live). Docs
+    # store 50 rows, so any page-1 request up to that size can be sliced.
+    if not today and page == 1 and limit <= 50:
         try:
-            key = _leaderboard_key(category=category, character=character)
+            key = _leaderboard_key(
+                category=category,
+                character=character,
+                players=players,
+                game_mode=game_mode,
+            )
             doc = _leaderboard_summary_coll().find_one({"_id": key})
             if doc:
                 doc.pop("_id", None)
                 doc.pop("updated_at", None)
+                if limit < 50:
+                    doc["runs"] = doc.get("runs", [])[:limit]
+                    doc["per_page"] = limit
+                    doc["total_pages"] = (doc.get("total", 0) + limit - 1) // limit
                 return doc
         except Exception:
             pass
@@ -1699,7 +1800,14 @@ def _leaderboard_live(
     else:
         sort_clause = [("run_time", 1)]
 
-    total = coll.count_documents(q)
+    # Counting was the hidden cost: count_documents({}) walks all 216k+
+    # heavyweight docs (~8s). Unfiltered uses the instant metadata count;
+    # filtered counts stop at 10k, which caps pagination far beyond what
+    # anyone pages through anyway.
+    if q:
+        total = coll.count_documents(q, limit=10_000)
+    else:
+        total = coll.estimated_document_count()
     per_page = min(limit, 100)
     offset = (max(page, 1) - 1) * per_page
     cursor = (

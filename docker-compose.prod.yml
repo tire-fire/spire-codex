@@ -58,6 +58,12 @@ services:
       # path. Falls through to local /data/runs.db SQLite otherwise
       # (the current state while the migration is in progress).
       - MONGO_URL=${MONGO_URL:-}
+      # Application cache (issue #388). Fail-safe: unset or unreachable ->
+      # cache calls no-op and the existing data paths run unchanged. Uses the
+      # container name (not the service alias) because prod and beta share
+      # the external nginx_web-network and a bare "redis" alias would be
+      # ambiguous between the two stacks.
+      - REDIS_URL=${REDIS_URL:-redis://spire-codex-redis:6379/0}
       # User accounts (Steam/Discord OAuth + JWT sessions). Values live
       # in the host .env; passed through so the auth endpoints work.
       - JWT_SECRET=${JWT_SECRET:-}
@@ -78,6 +84,31 @@ services:
       # to node_exporter (`node_cpu_*`, `node_memory_*`) or cAdvisor
       # (`container_cpu_*`, `container_memory_*`).
       - PROMETHEUS_MULTIPROC_DIR=/tmp/prom_multiproc
+    # Ordering only (no health condition): the backend must boot fine with
+    # Redis down, since the cache layer is fail-safe by design.
+    depends_on:
+      - redis
+    networks:
+      - nginx_web-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  redis:
+    image: redis:7-alpine
+    container_name: spire-codex-redis
+    # Cache only: hard memory cap with LRU eviction, no persistence (no AOF,
+    # no RDB snapshots). Everything in here is rebuildable from Mongo / the
+    # run files on a miss, so losing it on restart costs one warmup, not data.
+    command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --appendonly no --save ""
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
     networks:
       - nginx_web-network
     logging:

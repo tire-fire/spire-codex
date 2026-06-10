@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from ..services.runs_db import submit_run, get_stats, claim_runs
+from ..services import cache as app_cache
 from ..services.run_entity_stats import (
     get_all_entity_scores,
     get_community_stats as get_community_fun_stats,
@@ -217,6 +218,7 @@ async def claim_runs_endpoint(request: Request):
 @limiter.limit("120/minute")
 def list_runs(
     request: Request,
+    response: Response,
     character: str | None = None,
     win: str | None = None,
     username: str | None = None,
@@ -236,10 +238,41 @@ def list_runs(
     limit: int = 50,
 ):
     """List submitted runs with optional filters, sorting, and pagination."""
+    # Browser/edge caching: new runs arrive constantly, but 30s of staleness
+    # on a browse page is invisible and lets Cloudflare absorb repeat hits.
+    response.headers["Cache-Control"] = "public, max-age=30"
+    # Redis layer (60s TTL): the default landing view and any repeated or
+    # shared search serve from cache; the long tail of unique filter combos
+    # falls through to Mongo, which the bounded counts + indexes keep fast.
+    cache_key = "runs_list:" + ":".join(
+        str(v if v is not None else "")
+        for v in (
+            character,
+            win,
+            username,
+            seed,
+            sort,
+            build_id,
+            build_ids,
+            players,
+            game_mode,
+            ascension,
+            ascension_min,
+            ascension_max,
+            card,
+            relic,
+            int(today),
+            page,
+            limit,
+        )
+    )
+    cached = app_cache.get_json(cache_key)
+    if cached is not None:
+        return cached
     if os.environ.get("MONGO_URL", "").strip():
         from ..services.runs_db_mongo import list_runs as _list_runs_mongo
 
-        return _list_runs_mongo(
+        result = _list_runs_mongo(
             character=character,
             win=win,
             username=username,
@@ -258,6 +291,8 @@ def list_runs(
             page=page,
             limit=limit,
         )
+        app_cache.set_json(cache_key, result, ttl_seconds=60)
+        return result
 
     from ..services.runs_db import get_conn
 
@@ -337,6 +372,7 @@ def list_runs(
 @limiter.limit("120/minute")
 def get_leaderboard(
     request: Request,
+    response: Response,
     category: str = "fastest",
     character: str | None = None,
     players: str | None = None,
@@ -356,10 +392,28 @@ def get_leaderboard(
     Single-player and multiplayer runs aren't directly comparable, so the
     frontend reads them as disjoint pools.
     """
+    # Edge/browser caching: 30s of ladder staleness is invisible and lets
+    # Cloudflare absorb repeat hits now that the frontend stopped cache-busting.
+    response.headers["Cache-Control"] = "public, max-age=30"
+    # Redis layer (60s TTL, matching the refresher cycle): one cluster-wide
+    # copy per filter combination instead of per-worker recomputation. Misses
+    # fall straight through to the existing data paths.
+    cache_key = app_cache.leaderboard_key(
+        category=category,
+        character=character,
+        players=players,
+        game_mode=game_mode,
+        today=today,
+        page=page,
+        limit=limit,
+    )
+    cached = app_cache.get_json(cache_key)
+    if cached is not None:
+        return cached
     if os.environ.get("MONGO_URL", "").strip():
         from ..services.runs_db_mongo import leaderboard as _lb_mongo
 
-        return _lb_mongo(
+        result = _lb_mongo(
             category=category,
             character=character,
             players=players,
@@ -368,6 +422,8 @@ def get_leaderboard(
             page=page,
             limit=limit,
         )
+        app_cache.set_json(cache_key, result, ttl_seconds=60)
+        return result
 
     from ..services.runs_db import get_conn
 
@@ -412,7 +468,7 @@ def get_leaderboard(
             query_params,
         ).fetchall()
 
-        return {
+        result = {
             "runs": [dict(r) for r in rows],
             "total": total,
             "page": max(page, 1),
@@ -420,6 +476,8 @@ def get_leaderboard(
             "total_pages": (total + per_page - 1) // per_page,
             "category": category,
         }
+        app_cache.set_json(cache_key, result, ttl_seconds=60)
+        return result
 
 
 @router.get("/leaderboard/rank/{run_hash}", tags=["Runs"])
@@ -563,6 +621,14 @@ def get_shared_run(run_hash: str, request: Request):
     """
     using_mongo = bool(os.environ.get("MONGO_URL", "").strip())
 
+    # Redis layer (15min TTL): runs are immutable so this is safe to serve
+    # straight from cache; the short TTL absorbs share-link bursts without
+    # every viewed run squatting in memory forever. 404s are never cached.
+    redis_key = f"run:{run_hash}"
+    redis_cached = app_cache.get_json(redis_key)
+    if redis_cached is not None:
+        return redis_cached
+
     def _attach_username(blob: dict) -> dict:
         if using_mongo:
             from ..services.runs_db_mongo import get_username_for_hash
@@ -584,7 +650,9 @@ def get_shared_run(run_hash: str, request: Request):
 
     cached = _load_run_blob(run_hash)
     if cached is not None:
-        return _attach_username(json.loads(cached))
+        result = _attach_username(json.loads(cached))
+        app_cache.set_json(redis_key, result, ttl_seconds=15 * 60)
+        return result
 
     # Fallback for multiplayer: find sibling player runs by seed.
     if using_mongo:
@@ -625,7 +693,9 @@ def get_shared_run(run_hash: str, request: Request):
             shutil.copy2(sib_file, run_file)
             _load_run_blob.cache_clear()
             with open(run_file, "r", encoding="utf-8") as f:
-                return _attach_username(json.load(f))
+                result = _attach_username(json.load(f))
+            app_cache.set_json(redis_key, result, ttl_seconds=15 * 60)
+            return result
 
     raise HTTPException(status_code=404, detail="Run data not available")
 
@@ -704,7 +774,16 @@ def get_entity_scores(
         raise HTTPException(
             status_code=400, detail="act filtering is only available for relics"
         )
-    return get_all_entity_scores(entity_type, act=act)
+    # Redis layer (5min TTL): hit constantly by tier-list pages and detail
+    # sort columns. Key carries every response-shaping param; extend it if
+    # the endpoint grows new ones (e.g. per-character scoring).
+    cache_key = app_cache.entity_scores_key(entity_type, act=act)
+    cached = app_cache.get_json(cache_key)
+    if cached is not None:
+        return cached
+    result = get_all_entity_scores(entity_type, act=act)
+    app_cache.set_json(cache_key, result, ttl_seconds=5 * 60)
+    return result
 
 
 @router.get("/community-stats", tags=["Runs"])
@@ -830,6 +909,26 @@ def start_stats_refresher() -> None:
                         refresh_entity_stats_snapshot()
                     except Exception:
                         pass
+                    # Proactive warm of the entity-scores cache (in-memory
+                    # reads, cheap every cycle) so tier pages serve straight
+                    # from Redis cluster-wide instead of recomputing per
+                    # worker. Includes the per-act relic views.
+                    try:
+                        if app_cache.enabled():
+                            for etype in ("cards", "relics", "potions"):
+                                app_cache.set_json(
+                                    app_cache.entity_scores_key(etype),
+                                    get_all_entity_scores(etype),
+                                    ttl_seconds=app_cache.WARM_TTL_SECONDS,
+                                )
+                            for warm_act in (1, 2, 3):
+                                app_cache.set_json(
+                                    app_cache.entity_scores_key("relics", act=warm_act),
+                                    get_all_entity_scores("relics", act=warm_act),
+                                    ttl_seconds=app_cache.WARM_TTL_SECONDS,
+                                )
+                    except Exception:
+                        pass
             except Exception:
                 # SQLite path or transient failure — sleep and retry.
                 pass
@@ -853,11 +952,27 @@ def get_community_stats(
     `username` to narrow to a single uploader.
 
     Read path:
+      0. Redis (60s TTL, cluster-wide).
       1. Try the materialized stats_summary collection (sub-ms).
       2. If the filter combo isn't in the hot list / hasn't been
          materialized yet, fall through to a process-local TTL cache.
       3. On cache miss, run the live aggregation (slow, ~5-10s).
     """
+    # 0. Redis layer: one cluster-wide copy per filter combo, refreshed on
+    # the same cadence as the refresher cycle. Misses fall through to the
+    # existing chain unchanged.
+    redis_key = app_cache.stats_key(
+        character=character,
+        win=win,
+        ascension=ascension,
+        game_mode=game_mode,
+        players=players,
+        username=username,
+    )
+    redis_cached = app_cache.get_json(redis_key)
+    if redis_cached is not None:
+        return redis_cached
+
     # 1. Materialized view path
     try:
         from ..services.runs_db_mongo import read_stats_summary
@@ -871,6 +986,7 @@ def get_community_stats(
             username=username,
         )
         if materialized is not None:
+            app_cache.set_json(redis_key, materialized, ttl_seconds=60)
             return materialized
     except Exception:
         # Not on the Mongo path (SQLite fallback) — keep going.
@@ -899,6 +1015,7 @@ def get_community_stats(
         username=username,
     )
     _stats_fallback_cache[cache_key] = (now, result)
+    app_cache.set_json(redis_key, result, ttl_seconds=60)
 
     # Lazy write-through to stats_summary so subsequent requests for this
     # combo -- on any worker -- serve from the materialized view instead
