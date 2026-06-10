@@ -73,7 +73,7 @@ type Sort = "date" | "time_asc" | "time_desc" | "ascension_desc";
 // Parse `key:value` expressions out of a free-text query.
 // Returns extracted filters and the remaining free-text (after stripping
 // recognized key:value pairs).
-type QueryKey = "user" | "seed" | "char" | "asc" | "version" | "mode" | "result" | "players" | "card" | "relic";
+type QueryKey = "user" | "seed" | "char" | "asc" | "version" | "mode" | "result" | "players" | "card" | "relic" | "winrate";
 
 function parseQuery(q: string): {
   filters: Partial<Record<QueryKey, string>>;
@@ -103,9 +103,42 @@ function parseQuery(q: string): {
     else if (["players", "p"].includes(key)) filters.players = value;
     else if (["card", "cards"].includes(key)) filters.card = appendMulti(filters.card, value);
     else if (["relic", "relics"].includes(key)) filters.relic = appendMulti(filters.relic, value);
+    else if (["winrate", "wr"].includes(key)) filters.winrate = value;
     else restTokens.push(tok);
   }
   return { filters, rest: restTokens.join(" ").trim() };
+}
+
+// "50-70" -> {min:50, max:70}; "100" -> {min:100, max:100}; "60-" / "60+" /
+// ">=60" -> {min:60}; "-40" / "<=40" -> {max:40}; ">50" excludes exactly-50
+// via a small epsilon, "<50" likewise. A trailing % is tolerated everywhere.
+// Anything non-numeric parses to {} and is ignored.
+function parseWinrate(expr: string): { min?: number; max?: number } {
+  const clamp = (n: number) => Math.min(100, Math.max(0, n));
+  const e = expr.trim().replace(/%/g, "");
+  const cmp = /^(>=|<=|>|<)\s*(\d{1,3}(?:\.\d+)?)$/.exec(e);
+  if (cmp) {
+    const v = clamp(parseFloat(cmp[2]));
+    if (cmp[1] === ">=") return { min: v };
+    if (cmp[1] === "<=") return { max: v };
+    if (cmp[1] === ">") return { min: clamp(v + 0.01) };
+    return { max: clamp(v - 0.01) };
+  }
+  const plus = /^(\d{1,3}(?:\.\d+)?)\+$/.exec(e);
+  if (plus) return { min: clamp(parseFloat(plus[1])) };
+  const range = /^(\d{1,3}(?:\.\d+)?)?\s*-\s*(\d{1,3}(?:\.\d+)?)?$/.exec(e);
+  if (range && (range[1] !== undefined || range[2] !== undefined)) {
+    const out: { min?: number; max?: number } = {};
+    if (range[1] !== undefined) out.min = clamp(parseFloat(range[1]));
+    if (range[2] !== undefined) out.max = clamp(parseFloat(range[2]));
+    return out;
+  }
+  const single = /^(\d{1,3}(?:\.\d+)?)$/.exec(e);
+  if (single) {
+    const v = clamp(parseFloat(single[1]));
+    return { min: v, max: v };
+  }
+  return {};
 }
 
 // Expand a version expression to the list of build_ids it covers.
@@ -207,6 +240,7 @@ export default function BrowseRunsClient() {
       : "");
   const effectiveCard = queryFilters.card || "";
   const effectiveRelic = queryFilters.relic || "";
+  const effectiveWinrate = queryFilters.winrate || "";
 
   // Reset page when any filter changes
   useEffect(() => {
@@ -255,6 +289,11 @@ export default function BrowseRunsClient() {
     }
     if (effectiveCard) params.set("card", effectiveCard);
     if (effectiveRelic) params.set("relic", effectiveRelic);
+    if (effectiveWinrate) {
+      const wr = parseWinrate(effectiveWinrate);
+      if (wr.min !== undefined) params.set("winrate_min", String(wr.min));
+      if (wr.max !== undefined) params.set("winrate_max", String(wr.max));
+    }
     if (effectiveGameMode === "daily_today") {
       params.set("game_mode", "daily");
       params.set("today", "true");
@@ -274,7 +313,7 @@ export default function BrowseRunsClient() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [effectiveChar, effectiveWin, effectiveUser, effectiveSeed, effectiveBuildId, effectivePlayers, effectiveGameMode, effectiveAscension, effectiveCard, effectiveRelic, versions, sort, page]);
+  }, [effectiveChar, effectiveWin, effectiveUser, effectiveSeed, effectiveBuildId, effectivePlayers, effectiveGameMode, effectiveAscension, effectiveCard, effectiveRelic, effectiveWinrate, versions, sort, page]);
 
   function clearAll() {
     setQuery("");
@@ -322,7 +361,7 @@ export default function BrowseRunsClient() {
           className="w-full text-sm px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-gold)]"
         />
         <p className="mt-1.5 text-[10px] text-[var(--text-tertiary)]">
-          Expressions: <code>user:name</code>, <code>char:ironclad</code>, <code>asc:10</code> or <code>asc:3-7</code>, <code>card:bash,anger</code>, <code>relic:burning_blood</code> (combine for AND), <code>version:v0.106.0</code> or <code>version:v0.104.0-v0.106.0</code>, <code>seed:abc</code>, <code>mode:daily</code>, <code>result:win</code>, <code>players:single</code>
+          Expressions: <code>user:name</code>, <code>char:ironclad</code>, <code>asc:10</code> or <code>asc:3-7</code>, <code>card:bash,anger</code>, <code>relic:burning_blood</code> (combine for AND), <code>winrate:50-70</code>, <code>winrate:&gt;50</code>, or <code>winrate:100</code> (submitter win rate, min 5 runs), <code>version:v0.106.0</code> or <code>version:v0.104.0-v0.106.0</code>, <code>seed:abc</code>, <code>mode:daily</code>, <code>result:win</code>, <code>players:single</code>
         </p>
       </div>
 

@@ -222,6 +222,8 @@ def list_runs(
     character: str | None = None,
     win: str | None = None,
     username: str | None = None,
+    winrate_min: float | None = Query(None, ge=0, le=100),
+    winrate_max: float | None = Query(None, ge=0, le=100),
     seed: str | None = None,
     sort: str | None = None,
     build_id: str | None = None,
@@ -237,7 +239,12 @@ def list_runs(
     page: int = 1,
     limit: int = 50,
 ):
-    """List submitted runs with optional filters, sorting, and pagination."""
+    """List submitted runs with optional filters, sorting, and pagination.
+
+    `winrate_min` / `winrate_max` filter runs by their submitter's overall
+    win rate percentage; only users with at least 5 submitted runs qualify,
+    and anonymous runs never match.
+    """
     # Browser/edge caching: new runs arrive constantly, but 30s of staleness
     # on a browse page is invisible and lets Cloudflare absorb repeat hits.
     response.headers["Cache-Control"] = "public, max-age=30"
@@ -250,6 +257,8 @@ def list_runs(
             character,
             win,
             username,
+            winrate_min,
+            winrate_max,
             seed,
             sort,
             build_id,
@@ -276,6 +285,8 @@ def list_runs(
             character=character,
             win=win,
             username=username,
+            winrate_min=winrate_min,
+            winrate_max=winrate_max,
             seed=seed,
             sort=sort,
             build_id=build_id,
@@ -322,6 +333,16 @@ def list_runs(
         if game_mode:
             conditions.append("game_mode = ?")
             params.append(game_mode)
+        if winrate_min is not None or winrate_max is not None:
+            # Mirror the Mongo path: submitter winrate within range, with a
+            # 5-run floor so one-run wonders don't flood winrate:100.
+            conditions.append(
+                "username IN (SELECT username FROM runs WHERE username != '' "
+                "GROUP BY username HAVING COUNT(*) >= 5 "
+                "AND 100.0 * SUM(win) / COUNT(*) BETWEEN ? AND ?)"
+            )
+            params.append(winrate_min if winrate_min is not None else 0.0)
+            params.append(winrate_max if winrate_max is not None else 100.0)
         if today:
             # "Today's daily" = today's daily seed (prefixed DD_MM_YYYY), not
             # submitted_at (upload time). Mirrors _today_daily_seed_match in the
