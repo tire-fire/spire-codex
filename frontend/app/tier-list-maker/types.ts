@@ -119,10 +119,23 @@ export const RELIC_GROUPS: { value: string; label: string }[] = [
   { value: "vakuu", label: "Vakuu" },
 ];
 
-/** Tray filter groups per entity type (only cards + relics have them today). */
+/** Monster tray filter groups: the act each monster appears in, taken from
+ * its encounter list (the two constructs that show up in more than one act
+ * group under their first). "Event and Special" catches monsters with no act
+ * of their own (the Architect, battle friends, ...). */
+export const MONSTER_GROUPS: { value: string; label: string }[] = [
+  { value: "act1-overgrowth", label: "Act 1 Overgrowth" },
+  { value: "act1-underdocks", label: "Act 1 Underdocks" },
+  { value: "act2-hive", label: "Act 2 Hive" },
+  { value: "act3-glory", label: "Act 3 Glory" },
+  { value: "other", label: "Event and Special" },
+];
+
+/** Tray filter groups per entity type (cards, relics, and monsters today). */
 export const GROUPS_BY_TYPE: Partial<Record<EntityType, { value: string; label: string }[]>> = {
   cards: CARD_GROUPS,
   relics: RELIC_GROUPS,
+  monsters: MONSTER_GROUPS,
 };
 
 export interface Tier {
