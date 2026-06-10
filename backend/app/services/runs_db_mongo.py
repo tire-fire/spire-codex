@@ -45,6 +45,7 @@ from pymongo import ASCENDING, DESCENDING, MongoClient
 from pymongo.errors import DuplicateKeyError
 
 from ..metrics import db_operations, db_operation_duration
+from . import cache as app_cache
 
 OFFICIAL_CHARACTERS = {"IRONCLAD", "SILENT", "DEFECT", "NECROBINDER", "REGENT"}
 
@@ -1394,6 +1395,14 @@ def refresh_stats_summary() -> int:
             key = _filter_key(**filters)
             doc = {**result, "_id": key, "updated_at": datetime.now(timezone.utc)}
             summary.replace_one({"_id": key}, doc, upsert=True)
+            # Proactive warm: write the fresh result straight into Redis so
+            # readers hit the cache instead of Mongo. Refreshed every cycle;
+            # the long TTL is only a safety net if this loop dies.
+            app_cache.set_json(
+                app_cache.stats_key(**filters),
+                result,
+                ttl_seconds=app_cache.WARM_TTL_SECONDS,
+            )
             written += 1
         except Exception:
             # Best-effort; if one filter combo fails, keep going.
@@ -1425,6 +1434,15 @@ def refresh_leaderboard_summary() -> int:
             )
             doc = {**result, "_id": key, "updated_at": datetime.now(timezone.utc)}
             summary.replace_one({"_id": key}, doc, upsert=True)
+            # Proactive warm, mirroring refresh_stats_summary above.
+            app_cache.set_json(
+                app_cache.leaderboard_key(
+                    category=combo.get("category", "fastest"),
+                    character=combo.get("character"),
+                ),
+                result,
+                ttl_seconds=app_cache.WARM_TTL_SECONDS,
+            )
             written += 1
         except Exception:
             pass

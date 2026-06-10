@@ -360,9 +360,14 @@ def get_leaderboard(
     # Redis layer (60s TTL, matching the refresher cycle): one cluster-wide
     # copy per filter combination instead of per-worker recomputation. Misses
     # fall straight through to the existing data paths.
-    cache_key = (
-        f"leaderboard:{category}:{(character or '').upper()}:{players or ''}:"
-        f"{game_mode or ''}:{int(today)}:{page}:{limit}"
+    cache_key = app_cache.leaderboard_key(
+        category=category,
+        character=character,
+        players=players,
+        game_mode=game_mode,
+        today=today,
+        page=page,
+        limit=limit,
     )
     cached = app_cache.get_json(cache_key)
     if cached is not None:
@@ -734,7 +739,7 @@ def get_entity_scores(
     # Redis layer (5min TTL): hit constantly by tier-list pages and detail
     # sort columns. Key carries every response-shaping param; extend it if
     # the endpoint grows new ones (e.g. per-character scoring).
-    cache_key = f"entity_scores:{entity_type}:{act or 'all'}"
+    cache_key = app_cache.entity_scores_key(entity_type, act=act)
     cached = app_cache.get_json(cache_key)
     if cached is not None:
         return cached
@@ -866,6 +871,26 @@ def start_stats_refresher() -> None:
                         refresh_entity_stats_snapshot()
                     except Exception:
                         pass
+                    # Proactive warm of the entity-scores cache (in-memory
+                    # reads, cheap every cycle) so tier pages serve straight
+                    # from Redis cluster-wide instead of recomputing per
+                    # worker. Includes the per-act relic views.
+                    try:
+                        if app_cache.enabled():
+                            for etype in ("cards", "relics", "potions"):
+                                app_cache.set_json(
+                                    app_cache.entity_scores_key(etype),
+                                    get_all_entity_scores(etype),
+                                    ttl_seconds=app_cache.WARM_TTL_SECONDS,
+                                )
+                            for warm_act in (1, 2, 3):
+                                app_cache.set_json(
+                                    app_cache.entity_scores_key("relics", act=warm_act),
+                                    get_all_entity_scores("relics", act=warm_act),
+                                    ttl_seconds=app_cache.WARM_TTL_SECONDS,
+                                )
+                    except Exception:
+                        pass
             except Exception:
                 # SQLite path or transient failure — sleep and retry.
                 pass
@@ -898,9 +923,13 @@ def get_community_stats(
     # 0. Redis layer: one cluster-wide copy per filter combo, refreshed on
     # the same cadence as the refresher cycle. Misses fall through to the
     # existing chain unchanged.
-    redis_key = (
-        f"stats:{character or ''}:{win or ''}:{ascension or ''}:"
-        f"{game_mode or ''}:{players or ''}:{username or ''}"
+    redis_key = app_cache.stats_key(
+        character=character,
+        win=win,
+        ascension=ascension,
+        game_mode=game_mode,
+        players=players,
+        username=username,
     )
     redis_cached = app_cache.get_json(redis_key)
     if redis_cached is not None:

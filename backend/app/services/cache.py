@@ -39,9 +39,53 @@ _SOCKET_TIMEOUT_SECONDS = 0.25
 _client: Any = None
 _client_init_failed = False
 
+# TTL for keys the leader refresher pre-warms every cycle (60s). Generous on
+# purpose: it's a safety net against a dead refresher, not the freshness
+# mechanism. Each cycle overwrites the key with fresh data, so users
+# normally never see a miss OR data older than one cycle.
+WARM_TTL_SECONDS = 15 * 60
+
 
 def _namespace(key: str) -> str:
     return key.split(":", 1)[0]
+
+
+# ── Key builders ─────────────────────────────────────────────────────────
+# Shared by the read routes (lazy fill on miss) and the leader refresher
+# (proactive warm every cycle) so the two can never drift apart.
+
+
+def stats_key(
+    character: str | None = None,
+    win: str | None = None,
+    ascension: str | None = None,
+    game_mode: str | None = None,
+    players: str | None = None,
+    username: str | None = None,
+) -> str:
+    return (
+        f"stats:{character or ''}:{win or ''}:{ascension or ''}:"
+        f"{game_mode or ''}:{players or ''}:{username or ''}"
+    )
+
+
+def leaderboard_key(
+    category: str = "fastest",
+    character: str | None = None,
+    players: str | None = None,
+    game_mode: str | None = None,
+    today: bool = False,
+    page: int = 1,
+    limit: int = 50,
+) -> str:
+    return (
+        f"leaderboard:{category}:{(character or '').upper()}:{players or ''}:"
+        f"{game_mode or ''}:{int(today)}:{page}:{limit}"
+    )
+
+
+def entity_scores_key(entity_type: str, act: int | None = None) -> str:
+    return f"entity_scores:{entity_type}:{act or 'all'}"
 
 
 def _get_client() -> Any:
