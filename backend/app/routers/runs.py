@@ -218,6 +218,7 @@ async def claim_runs_endpoint(request: Request):
 @limiter.limit("120/minute")
 def list_runs(
     request: Request,
+    response: Response,
     character: str | None = None,
     win: str | None = None,
     username: str | None = None,
@@ -237,10 +238,44 @@ def list_runs(
     limit: int = 50,
 ):
     """List submitted runs with optional filters, sorting, and pagination."""
+    # Browser/edge caching: new runs arrive constantly, but 30s of staleness
+    # on a browse page is invisible and lets Cloudflare absorb repeat hits.
+    response.headers["Cache-Control"] = "public, max-age=30"
+    # Redis layer (60s TTL): the default landing view and any repeated or
+    # shared search serve from cache; the long tail of unique filter combos
+    # falls through to Mongo, which the bounded counts + indexes keep fast.
+    cache_key = (
+        "runs_list:"
+        + ":".join(
+            str(v if v is not None else "")
+            for v in (
+                character,
+                win,
+                username,
+                seed,
+                sort,
+                build_id,
+                build_ids,
+                players,
+                game_mode,
+                ascension,
+                ascension_min,
+                ascension_max,
+                card,
+                relic,
+                int(today),
+                page,
+                limit,
+            )
+        )
+    )
+    cached = app_cache.get_json(cache_key)
+    if cached is not None:
+        return cached
     if os.environ.get("MONGO_URL", "").strip():
         from ..services.runs_db_mongo import list_runs as _list_runs_mongo
 
-        return _list_runs_mongo(
+        result = _list_runs_mongo(
             character=character,
             win=win,
             username=username,
@@ -259,6 +294,8 @@ def list_runs(
             page=page,
             limit=limit,
         )
+        app_cache.set_json(cache_key, result, ttl_seconds=60)
+        return result
 
     from ..services.runs_db import get_conn
 

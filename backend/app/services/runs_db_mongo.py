@@ -156,6 +156,13 @@ def _ensure_indexes(coll) -> None:
     coll.create_index([("deck.id", ASCENDING)])
     coll.create_index([("relics.id", ASCENDING)])
     coll.create_index([("killed_by", ASCENDING)])
+    # /api/runs/list hot shapes: filter+sort compounds so Mongo never
+    # in-memory-sorts a 40k-doc subset, plus seed for anchored prefix search.
+    coll.create_index([("seed", ASCENDING)])
+    coll.create_index([("run_time", ASCENDING)])
+    coll.create_index([("ascension", DESCENDING), ("run_time", ASCENDING)])
+    coll.create_index([("character", ASCENDING), ("submitted_at", DESCENDING)])
+    coll.create_index([("character", ASCENDING), ("run_time", ASCENDING)])
     coll.create_index([("user_id", ASCENDING), ("submitted_at", DESCENDING)])
     # Backfill query on sign-in matches runs by submitter steam_id / discord_id.
     coll.create_index([("steam_id", ASCENDING)])
@@ -1563,7 +1570,12 @@ def list_runs(
     if username:
         q["username"] = {"$regex": username, "$options": "i"}
     if seed:
-        q["seed"] = {"$regex": seed, "$options": "i"}
+        # Anchored prefix, case-sensitive: uses the seed index instead of
+        # scanning every document. Daily seeds are date-prefixed so the
+        # common "find today's daily" search stays a prefix match.
+        import re as _re
+
+        q["seed"] = {"$regex": "^" + _re.escape(seed)}
     if build_ids:
         q["build_id"] = {"$in": [b for b in build_ids.split(",") if b]}
     elif build_id:
@@ -1610,7 +1622,14 @@ def list_runs(
     }
     sort_clause = sort_map.get(sort or "date", [("submitted_at", -1)])
 
-    total = coll.count_documents(q)
+    # Counting was the hidden cost: count_documents({}) walks all 216k+
+    # heavyweight docs (~8s). Unfiltered uses the instant metadata count;
+    # filtered counts stop at 10k, which caps pagination far beyond what
+    # anyone pages through anyway.
+    if q:
+        total = coll.count_documents(q, limit=10_000)
+    else:
+        total = coll.estimated_document_count()
     per_page = min(limit, 100)
     offset = (max(page, 1) - 1) * per_page
     cursor = (
@@ -1717,7 +1736,14 @@ def _leaderboard_live(
     else:
         sort_clause = [("run_time", 1)]
 
-    total = coll.count_documents(q)
+    # Counting was the hidden cost: count_documents({}) walks all 216k+
+    # heavyweight docs (~8s). Unfiltered uses the instant metadata count;
+    # filtered counts stop at 10k, which caps pagination far beyond what
+    # anyone pages through anyway.
+    if q:
+        total = coll.count_documents(q, limit=10_000)
+    else:
+        total = coll.estimated_document_count()
     per_page = min(limit, 100)
     offset = (max(page, 1) - 1) * per_page
     cursor = (
