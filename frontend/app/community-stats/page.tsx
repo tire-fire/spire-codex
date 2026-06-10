@@ -31,6 +31,7 @@ interface CommunityStats {
   rest_sites: { id: string; label: string; count: number; pct: number }[];
   ancient_picks: Ranked[];
   most_removed: Ranked[];
+  hopper_stolen?: Ranked[];
   reward_skip_rate: number;
   records: { fastest_win: Record_ | null; longest_run: Record_ | null; biggest_deck: Record_ | null };
 }
@@ -233,6 +234,12 @@ export default async function CommunityStatsPage() {
           <h2 className="text-lg font-semibold text-[var(--accent-gold)] mb-3">Most-removed cards</h2>
           <RankBars color={GOLD} data={stats.most_removed.map((r) => ({ name: r.name, value: r.count, display: r.count.toLocaleString() }))} />
         </div>
+        {(stats.hopper_stolen?.length ?? 0) > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-[var(--accent-gold)] mb-3">Stolen by the Thieving Hopper</h2>
+            <RankBars color={ROSE} data={(stats.hopper_stolen ?? []).map((r) => ({ name: r.name, value: r.count, display: r.count.toLocaleString() }))} />
+          </div>
+        )}
         <div>
           <h2 className="text-lg font-semibold text-[var(--accent-gold)] mb-3">Favorite ancient relics</h2>
           <RankBars color={GOLD} data={rankPct(stats.ancient_picks)} />
