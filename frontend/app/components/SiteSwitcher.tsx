@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cachedFetch } from "@/lib/fetch-cache";
+import { setBetaRenderVersion } from "@/lib/image-url";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -28,7 +29,12 @@ export default function SiteSwitcher() {
 
   useEffect(() => {
     cachedFetch<{ beta_version: string | null }>(`${API}/api/beta/version`)
-      .then((d) => setBetaVersion(d.beta_version))
+      .then((d) => {
+        setBetaVersion(d.beta_version);
+        // Keep beta card-render URLs (cards-full/beta/<ver>/) on the right
+        // version; the navbar mounts on every page so this runs everywhere.
+        setBetaRenderVersion(d.beta_version);
+      })
       .catch(() => {});
   }, []);
 
