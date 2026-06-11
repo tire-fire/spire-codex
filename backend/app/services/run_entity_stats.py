@@ -724,6 +724,7 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
                 is_win=is_win,
                 character=character,
                 player_count=row.get("player_count") or 1,
+                submitted=submitted,
             )
         except Exception:
             logger.warning(
