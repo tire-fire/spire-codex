@@ -76,17 +76,39 @@ fi
 cp "$DLL" "$REPO/extraction/beta/archives/sts2-$VERSION.dll"
 cp "$PCK" "$REPO/extraction/beta/archives/sts2-$VERSION.pck"
 
-# --- 6. Parse all 14 languages into data-beta/$VERSION/ ---
+# --- 6. Sync new images into backend/static/images/beta/. The /images
+# page is a monetization surface, so dragging stale assets between
+# patches costs traffic + trust. sync-images mirrors every image
+# category and prunes anything Mega Crit cut.
+#
+# This MUST run before parse_all: resolve_image_url checks the
+# per-version beta tree first, so parsing against an empty tree made
+# beta-only entities (Aeonglass) fall through to main-tree image paths
+# that don't exist on the CDN until the beta promotes.
+"$REPO/tools/beta-watch/sync-images.sh"
+
+# --- 6a. Push the per-version image tree to R2 so beta art serves from
+# the CDN (images don't belong in static; the catalogs' /static/images/
+# paths are rewritten to cdn.spire-codex.com by the frontend). Only the
+# .webp files upload - that's the format every served URL points at.
+# Uses the same aws r2 profile as GENERATING_CARD_RENDERS.md; skipped
+# loudly if it isn't configured so a local run still works end to end.
+R2_ENDPOINT="${R2_ENDPOINT:-https://468b7c5ddc132dda4c2ac43391f06dfb.r2.cloudflarestorage.com}"
+if command -v aws >/dev/null 2>&1 && aws configure list --profile r2 >/dev/null 2>&1; then
+  aws --profile r2 s3 sync "$REPO/backend/static/images/beta/$VERSION/" \
+    "s3://spire-codex/beta/$VERSION/" \
+    --endpoint-url "$R2_ENDPOINT" \
+    --exclude "*" --include "*.webp" \
+    --content-type image/webp
+else
+  echo "WARN: aws r2 profile not configured; beta images NOT pushed to the CDN" >&2
+fi
+
+# --- 6b. Parse all 14 languages into data-beta/$VERSION/ ---
 (cd "$REPO/backend/app/parsers" && \
   EXTRACTION_DIR="$REPO/extraction/beta" \
   DATA_DIR="$DATA_OUT" \
   python3 parse_all.py)
-
-# --- 6a. Sync new images into backend/static/images/beta/. The /images
-# page is a monetization surface, so dragging stale assets between
-# patches costs traffic + trust. sync-images mirrors every image
-# category and prunes anything Mega Crit cut.
-"$REPO/tools/beta-watch/sync-images.sh"
 
 # --- 7. Diff against the previous beta to make a changelog ---
 PREV=$(ls -1d "$REPO/data-beta"/v*/ 2>/dev/null | grep -v "/$VERSION/" \
