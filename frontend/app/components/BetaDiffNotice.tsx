@@ -93,13 +93,13 @@ export default function BetaDiffNotice({
     }
   } else {
     if (isAdded) {
-      body = <>New in this beta. There is no stable version of this yet.</>;
+      body = <>New in this beta. There is no main version of this yet.</>;
     } else if (changedFields) {
       body = (
         <>
-          Differs from the live game: {summarize(changedFields)} changed.{" "}
+          Differs from main: {summarize(changedFields)} changed.{" "}
           <Link href={counterpartPath} className="text-emerald-300 hover:underline">
-            View the stable version →
+            View the main version →
           </Link>
         </>
       );

@@ -11,7 +11,7 @@ function stripSuffix(v: string): string {
   return v.replace(/-beta$/, "");
 }
 
-/** The channel pill: exactly two options, the live game ("main") and the
+/** The channel pill: exactly two options, main and the
  * current beta ("beta v0.107.0"), toggling between / and /beta on the SAME
  * site. Replaces the old cross-site switcher that listed every archived beta
  * version on beta.spire-codex.com; per the migration plan only the newest
@@ -63,7 +63,7 @@ export default function SiteSwitcher() {
         ref={buttonRef}
         onClick={() => setOpen(!open)}
         className={`inline-flex items-center gap-1.5 transition-colors ${buttonClasses}`}
-        aria-label="Switch between stable and beta content"
+        aria-label="Switch between main and beta content"
         aria-expanded={open}
       >
         <span>{onBeta ? betaLabel : "main"}</span>
@@ -91,7 +91,6 @@ export default function SiteSwitcher() {
                 className="flex items-center justify-between gap-3 px-4 py-2 text-sm font-medium text-[var(--accent-gold)] transition-colors hover:bg-[var(--bg-card)]"
               >
                 <span>main</span>
-                <span className="text-xs">live game</span>
               </Link>
             ) : (
               <Link

@@ -88,14 +88,14 @@ export default async function BetaLandingPage() {
         <span className="text-[var(--accent-gold)]">{diff?.beta_version ?? ""}</span>
       </h1>
       <p className="text-sm text-[var(--text-muted)] mb-8">
-        Everything the current beta branch adds, changes, or removes compared to the live
-        game, straight from the game data. Presentation-only differences (art, ordering)
+        Everything the current beta branch adds, changes, or removes compared to main,
+        straight from the game data. Presentation-only differences (art, ordering)
         are filtered out.
       </p>
 
       {live.length === 0 && (
         <p className="text-sm text-[var(--text-muted)]">
-          No differences detected between beta and stable right now.
+          No differences detected between beta and main right now.
         </p>
       )}
 

@@ -25,13 +25,13 @@ export default function BetaBanner({ stablePath = "/" }: { stablePath?: string }
       </span>
       <span className="text-[var(--text-secondary)]">
         You are viewing content from the game&apos;s beta branch. Numbers and text
-        here can change before they reach the live game.
+        here can change before they reach main.
       </span>
       <Link
         href={stablePath}
         className="ml-auto shrink-0 text-emerald-300 hover:text-emerald-200 hover:underline"
       >
-        Switch to stable →
+        Switch to main →
       </Link>
     </div>
   );
