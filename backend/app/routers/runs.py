@@ -117,6 +117,17 @@ async def submit_run_endpoint(
         digits = "".join(ch for ch in steam_id if ch.isdigit())
         clean_steam_id = digits or None
 
+    # Authenticated uploads (the in-game mod sends `Authorization: Bearer <jwt>` from the
+    # Steam sign-in flow): the token's verified steamid outranks the spoofable query param.
+    auth_header = request.headers.get("authorization") or ""
+    if auth_header.lower().startswith("bearer "):
+        from ..services.auth_jwt import decode_token
+
+        claims = decode_token(auth_header[7:].strip())
+        token_steamid = str((claims or {}).get("steam_id") or "")
+        if token_steamid.isdigit():
+            clean_steam_id = token_steamid
+
     clean_discord_id = None
     if discord_id:
         digits = "".join(ch for ch in discord_id if ch.isdigit())
@@ -128,17 +139,44 @@ async def submit_run_endpoint(
         steam_id=clean_steam_id,
         discord_id=clean_discord_id,
     )
+
+    site_base = os.environ.get("PUBLIC_SITE_BASE", "https://spire-codex.com").rstrip(
+        "/"
+    )
+
     if result.get("error"):
         if result.get("duplicate"):
             run_submissions.labels(status="duplicate").inc()
+            dup_hash = result.get("run_hash")
             return {
                 "success": True,
                 "duplicate": True,
-                "run_hash": result.get("run_hash"),
+                "run_hash": dup_hash,
+                "url": f"{site_base}/runs/{dup_hash}" if dup_hash else None,
             }
         run_submissions.labels(status="error").inc()
         run_errors.labels(reason="missing_fields").inc()
         raise HTTPException(status_code=400, detail=result["error"])
+
+    # Enrich for the in-game post-run card: the shareable page URL, and (when this
+    # run is itself a completed upload on a known seed) its seed standing.
+    run_hash = result.get("run_hash")
+    if run_hash:
+        result["url"] = f"{site_base}/runs/{run_hash}"
+    seed = (data.get("seed") or "").strip()
+    if (
+        seed
+        and not data.get("was_abandoned")
+        and os.environ.get("MONGO_URL", "").strip()
+    ):
+        try:
+            from ..services.runs_db_mongo import seed_rank_for
+
+            rank = seed_rank_for(clean_steam_id, seed)
+            result["seed_rank"] = rank.get("seed_rank")
+            result["seed_total"] = rank.get("seed_total")
+        except Exception:
+            pass  # enrichment only; the upload itself already succeeded
 
     # Track successful submission metrics
     run_submissions.labels(status="success").inc()
@@ -501,6 +539,40 @@ def get_leaderboard(
         return result
 
 
+@router.get("/leaderboard/seed-rank", tags=["Runs"])
+@limiter.limit("120/minute")
+def get_seed_rank(request: Request, seed: str, steam_id: str | None = None):
+    """Seed + global standing for the in-game mod (F9 panel, post-run card).
+
+    Pool = completed runs sharing the seed; ranking = winning runs by run_time,
+    cross-character. `seed_rank`/`global_rank`/`percentile` are null when the
+    caller has no winning run in that pool (the mod hides those lines).
+    """
+    seed = (seed or "").strip()
+    if not seed or len(seed) > 64:
+        raise HTTPException(status_code=400, detail="seed required")
+    clean_steam = None
+    if steam_id:
+        digits = "".join(ch for ch in steam_id if ch.isdigit())
+        clean_steam = digits or None
+
+    if os.environ.get("MONGO_URL", "").strip():
+        from ..services.runs_db_mongo import seed_rank_for
+
+        return seed_rank_for(clean_steam, seed)
+
+    # SQLite fallback: enough shape for the mod to degrade cleanly.
+    return {
+        "seed": seed,
+        "seed_total": 0,
+        "seed_wins": 0,
+        "seed_rank": None,
+        "global_rank": None,
+        "global_total": 0,
+        "percentile": None,
+    }
+
+
 @router.get("/leaderboard/rank/{run_hash}", tags=["Runs"])
 @limiter.limit("120/minute")
 def get_run_rank(request: Request, run_hash: str, category: str = "fastest"):
@@ -764,6 +836,7 @@ def get_entity_run_stats(request: Request, entity_type: str, entity_id: str):
 def get_entity_scores(
     request: Request,
     entity_type: str,
+    character: str | None = None,
     act: int | None = Query(
         None,
         ge=1,
@@ -785,6 +858,11 @@ def get_entity_scores(
     to render the score column / sort by tier without N round-trips to
     /stats/{type}/{id}. Cached at the same TTL as the per-entity stats since
     both derive from the same walk.
+
+    `character` (e.g. NECROBINDER) switches each entry to that character's
+    slice when its sample is big enough, falling back to global otherwise;
+    entries then carry `scope: "character" | "global"`. Used by the in-game
+    mod for deck-context scoring. Without it the shape is unchanged.
     """
     if entity_type not in _ENTITY_STATS_TYPES:
         raise HTTPException(
@@ -795,14 +873,14 @@ def get_entity_scores(
         raise HTTPException(
             status_code=400, detail="act filtering is only available for relics"
         )
+    char = character.strip().upper() if character else None
     # Redis layer (5min TTL): hit constantly by tier-list pages and detail
-    # sort columns. Key carries every response-shaping param; extend it if
-    # the endpoint grows new ones (e.g. per-character scoring).
-    cache_key = app_cache.entity_scores_key(entity_type, act=act)
+    # sort columns. Key carries every response-shaping param.
+    cache_key = app_cache.entity_scores_key(entity_type, act=act, character=char)
     cached = app_cache.get_json(cache_key)
     if cached is not None:
         return cached
-    result = get_all_entity_scores(entity_type, act=act)
+    result = get_all_entity_scores(entity_type, character=char, act=act)
     app_cache.set_json(cache_key, result, ttl_seconds=5 * 60)
     return result
 

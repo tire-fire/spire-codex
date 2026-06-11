@@ -84,8 +84,10 @@ def leaderboard_key(
     )
 
 
-def entity_scores_key(entity_type: str, act: int | None = None) -> str:
-    return f"entity_scores:{entity_type}:{act or 'all'}"
+def entity_scores_key(
+    entity_type: str, act: int | None = None, character: str | None = None
+) -> str:
+    return f"entity_scores:{entity_type}:{act or 'all'}:{character or 'all'}"
 
 
 def _get_client() -> Any:

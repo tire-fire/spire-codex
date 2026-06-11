@@ -137,7 +137,9 @@ SNAPSHOT_COLLECTION_NAME = "entity_stats_snapshot"
 # keep serving what they have, and the leader rebuilds right over it instead
 # of trusting its freshness. Version 2 = elo + base/upg + cohorts + community.
 # Version 3 adds per-act relic pickup splits (act_picks / act_wins).
-SNAPSHOT_VERSION = 3
+# Version 4 = community map_danger (per act/node-type damage + death rates),
+# rest-site win/HP-band stats, and ancient offer take rates for the mod.
+SNAPSHOT_VERSION = 4
 # Leader rebuilds the heavy walk at most this often.
 _SNAPSHOT_REBUILD_SECONDS = 10 * 60
 # Workers reload the snapshot from Mongo this often (cheap read).
@@ -1253,13 +1255,23 @@ def get_charts_blob_stats() -> dict[str, Any]:
 
 
 def get_all_entity_scores(
-    entity_type: str, act: int | None = None
+    entity_type: str,
+    character: str | None = None,
+    act: int | None = None,
+    min_character_picks: int = 30,
 ) -> dict[str, dict[str, Any]]:
     """All entities of one type, keyed by ID, with score + counts + elo.
 
     Drives list-page tier sorting and the (planned) tooltip-widget
     score badge — fetched once by the client and cached locally instead
     of N round-trips to /stats/{type}/{id}.
+
+    With `character` set (e.g. "NECROBINDER", used by the in-game mod for
+    deck-context scoring), each entry's score/picks/wins/win_rate come from
+    that character's slice of the same snapshot when it has at least
+    `min_character_picks` picks, else the global numbers. The entry then
+    carries `scope: "character" | "global"` saying which was used. Without
+    `character` the response shape is unchanged (no `scope` key).
 
     `elo` is the Codex Elo (revealed-preference rating) where it exists, else
     null. It only exists for reward-offered cards, so starters and upgraded
@@ -1294,13 +1306,27 @@ def get_all_entity_scores(
             continue
         picks = agg["picks"]
         wins = agg["wins"]
-        out[eid] = {
+        entry = {
             "score": _compute_score(wins, picks, baseline),
             "elo": agg.get("elo"),
             "picks": picks,
             "wins": wins,
             "win_rate": round(wins / picks * 100, 1) if picks else 0.0,
         }
+        if character:
+            ch = agg.get("by_character", {}).get(character)
+            if ch and ch["picks"] >= min_character_picks:
+                cp, cw = ch["picks"], ch["wins"]
+                entry.update(
+                    score=_compute_score(cw, cp, baseline),
+                    picks=cp,
+                    wins=cw,
+                    win_rate=round(cw / cp * 100, 1) if cp else 0.0,
+                    scope="character",
+                )
+            else:
+                entry["scope"] = "global"
+        out[eid] = entry
     return out
 
 
