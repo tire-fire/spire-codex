@@ -264,12 +264,12 @@ def filter_rows(
 
 SPLITS = ("character", "players", "outcome", "ascension")
 
+# A10 is the ascension cap; nothing above it exists.
 _ASC_BANDS = [
     (0, 0, "A0"),
     (1, 4, "A1-A4"),
     (5, 9, "A5-A9"),
     (10, 10, "A10"),
-    (11, 99, "A11+"),
 ]
 _PLAYER_LABELS = {1: "Solo", 2: "2 Players", 3: "3 Players", 4: "4 Players"}
 
@@ -333,7 +333,7 @@ STATS: dict[str, dict[str, Any]] = {
         "max": 240,
         "scale": 1 / 60,
     },
-    "ascension": {"label": "Ascension", "idx": ASC, "bucket": 1, "max": 20},
+    "ascension": {"label": "Ascension", "idx": ASC, "bucket": 1, "max": 10},
 }
 
 

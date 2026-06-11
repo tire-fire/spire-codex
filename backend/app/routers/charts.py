@@ -360,7 +360,9 @@ def get_chart(
     request: Request,
     chart_key: str,
     players: int | None = Query(None, ge=1, le=4, description="Player count filter"),
-    ascension: int | None = Query(None, ge=0, le=20, description="Exact ascension"),
+    ascension: int | None = Query(
+        None, ge=0, le=10, description="Exact ascension (A10 is the cap)"
+    ),
     game_mode: str | None = Query(
         None, description="standard | daily | custom (omit for all)"
     ),

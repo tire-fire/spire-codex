@@ -500,7 +500,8 @@ export default function ChartsClient() {
           <div className={filtersLocked ? "opacity-40 pointer-events-none" : ""}>
             <select className={selectCls} value={ascension} onChange={(e) => setAscension(e.target.value)} aria-label="Ascension">
               <option value="">All ascensions</option>
-              {Array.from({ length: 21 }, (_, i) => (
+              {/* A10 is the cap; the game has nothing above it. */}
+              {Array.from({ length: 11 }, (_, i) => (
                 <option key={i} value={String(i)}>
                   A{i}
                 </option>
