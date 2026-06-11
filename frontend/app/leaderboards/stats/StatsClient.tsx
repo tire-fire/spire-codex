@@ -218,7 +218,7 @@ function EntityRowPill({
 
 type TopTab = "overview" | "cards" | "relics" | "potions" | "encounters";
 
-type CardSort = "pick_rate" | "win_pct" | "count" | "name";
+type CardSort = "pick_rate" | "win_pct" | "elo" | "count" | "name";
 type RelicSort = "pick_rate" | "win_pct" | "count" | "name";
 type PotionSort = "pick_rate" | "use_rate" | "win_pct" | "count" | "name";
 type SortDir = "asc" | "desc";
@@ -261,6 +261,9 @@ export default function StatsClient() {
   const [relicData, setRelicData] = useState<Record<string, RelicInfo>>({});
   const [potionData, setPotionData] = useState<Record<string, PotionInfo>>({});
   const [betaIds, setBetaIds] = useState<Set<string>>(new Set());
+  // Codex Elo per card id, from the scores endpoint (reward-pick cards only;
+  // curses, statuses, events, tokens, and starters have none).
+  const [eloMap, setEloMap] = useState<Record<string, number | null>>({});
   const [loading, setLoading] = useState(true);
 
   // Top-level filters
@@ -325,6 +328,17 @@ export default function StatsClient() {
       const pm: Record<string, PotionInfo> = {};
       for (const p of potions) pm[p.id] = p;
       setPotionData(pm);
+
+      // Codex Elo rides along; best-effort, the column just stays empty.
+      cachedFetch<Record<string, { elo: number | null }>>(
+        `${API}/api/runs/scores/cards`
+      )
+        .then((scores) => {
+          const em: Record<string, number | null> = {};
+          for (const [id, s] of Object.entries(scores)) em[id] = s.elo;
+          setEloMap(em);
+        })
+        .catch(() => {});
 
       // Merge beta-only entities
       try {
@@ -416,10 +430,11 @@ export default function StatsClient() {
         win_runs: winRuns,
         total_runs_with: totalRunsWith,
         win_pct: winPct,
+        elo: eloMap[id] ?? null,
       };
     });
     return rows;
-  }, [stats, cardData]);
+  }, [stats, cardData, eloMap]);
 
   const cardTypes = useMemo(() => {
     const s = new Set<string>();
@@ -449,6 +464,8 @@ export default function StatsClient() {
       if (cardSort === "name") v = a.name.localeCompare(b.name);
       else if (cardSort === "pick_rate") v = a.pick_rate - b.pick_rate || a.offered - b.offered;
       else if (cardSort === "win_pct") v = a.win_pct - b.win_pct || a.win_runs - b.win_runs;
+      // Cards without an Elo (not reward picks) sink to the bottom either way.
+      else if (cardSort === "elo") v = (a.elo ?? -1e9) - (b.elo ?? -1e9);
       else if (cardSort === "count") v = a.count - b.count;
       return mul * v;
     });
@@ -577,7 +594,7 @@ export default function StatsClient() {
       <h1 className="text-3xl font-bold mb-2">
         <span className="text-[var(--accent-gold)]">{t("Stats", lang)}</span>
       </h1>
-      <p className="text-[var(--text-secondary)] mb-5">
+      <p className="text-[var(--text-secondary)] mb-3">
         {stats?.total_runs || 0} runs analyzed.{" "}
         <Link
           href={`${lp}/leaderboards/submit`}
@@ -587,6 +604,26 @@ export default function StatsClient() {
         </Link>{" "}
         to contribute.
       </p>
+
+      {/* Jumping-off points to the deeper views built on the same run data. */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-6 text-xs">
+        <span className="text-[var(--text-muted)] mr-1">Dig deeper:</span>
+        {[
+          { href: "/charts", label: "Run Charts" },
+          { href: "/community-stats", label: "Community Stats" },
+          { href: "/leaderboards/metrics", label: "Card Metrics" },
+          { href: "/tier-list", label: "Tier List" },
+          { href: "/leaderboards/scoring", label: "How scoring works" },
+        ].map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="px-3 py-1.5 rounded-md border bg-[var(--bg-card)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-accent)] hover:text-[var(--text-primary)] transition-colors"
+          >
+            {l.label}
+          </Link>
+        ))}
+      </div>
 
       {/* Player-mode toggle, visually identical to LeaderboardBrowseClient's
           mode pills (same wrapper, padding, colors) so the two pages
@@ -900,6 +937,7 @@ interface CardRow {
   win_runs: number;
   total_runs_with: number;
   win_pct: number;
+  elo: number | null;
 }
 
 function CardsTab({
@@ -1057,6 +1095,9 @@ function CardTable({
             <SortHeader column="win_pct" current={cardSort} dir={cardDir} onClick={onCardHeader}>
               Win Rate
             </SortHeader>
+            <SortHeader column="elo" current={cardSort} dir={cardDir} onClick={onCardHeader}>
+              Codex Elo
+            </SortHeader>
             <SortHeader column="count" current={cardSort} dir={cardDir} onClick={onCardHeader}>
               Count
             </SortHeader>
@@ -1098,6 +1139,13 @@ function CardTable({
                     <span className="text-[var(--text-muted)]">—</span>
                   )}
                 </div>
+              </td>
+              <td className="py-2 text-right tabular-nums">
+                {r.elo != null ? (
+                  <span className="text-[var(--accent-gold)]">{Math.round(r.elo)}</span>
+                ) : (
+                  <span className="text-[var(--text-muted)]">—</span>
+                )}
               </td>
               <td className="py-2 text-right text-[var(--text-secondary)] tabular-nums">
                 {r.total_runs_with || r.count || "—"}

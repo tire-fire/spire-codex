@@ -407,6 +407,7 @@ def get_chart(
     if cached is not None:
         return cached
 
+    building = False
     if spec["kind"] == "frame":
         mode = "daily" if spec.get("daily") else game_mode
         rows = cs.filter_rows(cs.get_frame(), players, ascension, mode, username)
@@ -426,6 +427,11 @@ def get_chart(
             chart_key, stats, spec, players, encounter, event, etype, entity
         )
         total = sum(n for _wk, n, _w in stats.get("week_totals") or [])
+        # Blob stats land with the first snapshot rebuild after a deploy;
+        # until then the cells are missing entirely, which is different from
+        # a filter matching nothing. Surface that so the page can say so.
+        if not username and not stats.get("week_totals"):
+            building = True
 
     payload = {
         "chart": chart_key,
@@ -448,6 +454,9 @@ def get_chart(
         },
         "series": series,
         "total_runs": total,
+        "building": building,
     }
-    app_cache.set_json(cache_key, payload, _CACHE_TTL)
+    # A still-building snapshot resolves within minutes; don't pin the empty
+    # answer for the full TTL.
+    app_cache.set_json(cache_key, payload, 30 if building else _CACHE_TTL)
     return payload

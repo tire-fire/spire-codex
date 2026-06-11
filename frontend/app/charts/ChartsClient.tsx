@@ -137,6 +137,7 @@ interface ChartResponse {
   desc: string;
   series: Series[];
   total_runs: number;
+  building?: boolean;
 }
 interface Meta {
   charts: ChartSpec[];
@@ -529,7 +530,9 @@ export default function ChartsClient() {
           </div>
         ) : data.series.length === 0 ? (
           <div className="h-[420px] flex items-center justify-center text-sm text-[var(--text-muted)]">
-            Not enough runs match these filters.
+            {data.building
+              ? "These stats are still building after a fresh deploy. They cover every run and land within a few minutes."
+              : "Not enough runs match these filters."}
           </div>
         ) : (
           <ExplorerChart spec={spec!} data={data} />
