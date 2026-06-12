@@ -271,10 +271,34 @@ def _name_maps() -> dict[str, dict[str, str]]:
             logger.warning("community-stats name load failed", exc_info=True)
             return {}
 
-    out["events"] = _index(data_service.load_events)
-    out["encounters"] = _index(data_service.load_encounters)
-    out["relics"] = _index(data_service.load_relics)
-    out["cards"] = _index(data_service.load_cards)
+    def _index_with_beta(loader, key="id", name="name") -> dict[str, str]:
+        """Main catalog names, plus names for entities that only exist in
+        the current beta. Beta-only entities are official content (they
+        ship in the Steam beta build) and players on that branch submit
+        runs containing them, so they must pass the modded-ID filter in
+        `_ranked` - otherwise deaths to a beta boss silently vanish from
+        every list until the beta promotes. Genuinely modded ids stay
+        filtered: they're in neither catalog. Main names win for entities
+        in both."""
+        names = _index(loader, key, name)
+        if not names or not data_service.get_beta_version():
+            return names
+        token = data_service.current_channel.set("beta")
+        try:
+            for r in loader():
+                rid = r.get(key)
+                if rid and rid not in names:
+                    names[rid] = r.get(name) or _prettify(rid)
+        except Exception:
+            logger.warning("community-stats beta name overlay failed", exc_info=True)
+        finally:
+            data_service.current_channel.reset(token)
+        return names
+
+    out["events"] = _index_with_beta(data_service.load_events)
+    out["encounters"] = _index_with_beta(data_service.load_encounters)
+    out["relics"] = _index_with_beta(data_service.load_relics)
+    out["cards"] = _index_with_beta(data_service.load_cards)
     # The merged starter ids most-removed uses aren't real catalog cards, so
     # name them here (and only when the catalog loaded, to keep the modded
     # filter's empty-map fallback intact).
