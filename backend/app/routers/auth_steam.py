@@ -474,3 +474,99 @@ class PollResponse(BaseModel):
     steamid: Optional[str] = None
     persona_name: Optional[str] = None
     message: Optional[str] = None
+
+
+# ── Silent ticket auth (the in-game mod) ─────────────────────────────────────
+
+
+STS2_APP_ID = 2868840
+TICKET_IDENTITY = "spire-codex"
+
+
+class TicketBody(BaseModel):
+    ticket: str
+
+
+@router.post("/ticket")
+@limiter.limit("30/minute")
+async def ticket_auth(request: Request, body: TicketBody) -> JSONResponse:
+    """Silent sign-in for the in-game mod: exchanges a Steamworks Web API auth
+    ticket (`SteamUser.GetAuthTicketForWebApi("spire-codex")`) for the same JWT
+    the browser flow issues — no browser round-trip. The ticket is verified
+    server-side with Valve's ISteamUserAuth/AuthenticateUserTicket, so the
+    identity is cryptographic, unlike the spoofable `?steam_id=` attribution.
+    Requires STEAM_WEB_API_KEY in the environment (503 until configured)."""
+    key = os.environ.get("STEAM_WEB_API_KEY", "").strip()
+    if not key:
+        raise HTTPException(
+            status_code=503,
+            detail="Steam ticket auth not configured (STEAM_WEB_API_KEY missing)",
+        )
+    ticket = re.sub(r"[^0-9a-fA-F]", "", body.ticket or "")
+    if not ticket or len(ticket) > 4096:
+        raise HTTPException(status_code=400, detail="Invalid ticket")
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                "https://api.steampowered.com/ISteamUserAuth/AuthenticateUserTicket/v1/",
+                params={
+                    "key": key,
+                    "appid": STS2_APP_ID,
+                    "ticket": ticket,
+                    "identity": TICKET_IDENTITY,
+                },
+            )
+        data = (resp.json() or {}).get("response", {}).get("params", {})
+    except Exception as exc:
+        logger.warning("steam ticket verify failed: %s", exc)
+        raise HTTPException(status_code=502, detail="Steam verification unavailable")
+
+    if data.get("result") != "OK" or not str(data.get("steamid") or "").isdigit():
+        logger.info("steam ticket rejected: %s", data)
+        raise HTTPException(status_code=401, detail="Ticket rejected by Steam")
+    steamid = str(data["steamid"])
+
+    # Same post-auth recipe as the OpenID callback: user doc, JWT, run linking.
+    persona = await _fetch_persona_name(steamid)
+    user_id = None
+    token = None
+    needs_email = False
+    try:
+        from ..services.auth_jwt import create_token
+        from ..services.users_db import find_or_create_by_steam
+
+        user = find_or_create_by_steam(steamid, persona)
+        user_id = user["_id"]
+        token = create_token(user_id=user["_id"], steam_id=steamid)
+        needs_email = not user.get("email")
+
+        if os.environ.get("MONGO_URL", "").strip():
+            try:
+                from ..services.runs_db_mongo import backfill_user_runs
+
+                linked = backfill_user_runs(
+                    user_id,
+                    steam_id=steamid,
+                    discord_id=user.get("discord_id"),
+                    username=user.get("username"),
+                )
+                if linked:
+                    logger.info(
+                        "steam-ticket linked %d run(s) to user=%s", linked, user_id
+                    )
+            except Exception as exc:
+                logger.warning("steam-ticket run backfill failed: %s", exc)
+    except Exception as exc:
+        logger.warning("steam-ticket user creation failed: %s", exc)
+
+    return JSONResponse(
+        {
+            "status": "ok",
+            "steamid": steamid,
+            "persona_name": persona,
+            "user_id": user_id,
+            "token": token,
+            "needs_email": needs_email,
+        }
+    )

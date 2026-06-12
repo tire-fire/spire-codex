@@ -69,9 +69,15 @@ def new_accumulator() -> dict[str, Any]:
         "by_ascension": {},  # asc(int) -> [runs, wins]
         "by_character": {},  # char_id -> [runs, wins]
         "events": {},  # event_id -> {option_id -> count}
+        # (act_index, map_point_type) -> [player_visits, dmg_pct_sum, deaths]. Feeds the
+        # in-game map danger tinting (avg HP% lost + death rate per node type per act).
+        "map_danger": {},
         "deaths_encounter": {},  # encounter_id -> count
         "deaths_event": {},  # event_id -> count
-        "rest": {},  # rest-site choice -> count
+        # rest-site choice -> [count, wins, low_hp_count]; low = the player was
+        # below 50% max HP walking INTO the campfire (previous floor's HP, so a
+        # Heal doesn't reclassify itself as a high-HP choice).
+        "rest": {},
         "ancient": {},  # relic_id -> count (chosen from the 3-relic offer)
         "removed": {},  # card_id -> count (purged at a shop/event)
         "stolen": {},  # card_id -> count (taken by the Thieving Hopper)
@@ -134,7 +140,33 @@ def accumulate(
         if size and (acc["biggest_deck"] is None or size > acc["biggest_deck"][0]):
             acc["biggest_deck"] = (size, run_hash)
 
-    # Per-floor choices.
+    # Map danger: per (act, node type), tally visits, HP% lost, and deaths. The death is
+    # attributed to the run's final visited node, but only when the blob says the player
+    # actually died (abandons carry no killed_by_*).
+    died = bool(blob.get("killed_by_encounter") or blob.get("killed_by_event"))
+    last_key: tuple[int, str] | None = None
+    for act_idx, act_floors in enumerate(blob.get("map_point_history") or []):
+        for floor in act_floors or []:
+            ptype = (floor.get("map_point_type") or "").lower()
+            if not ptype:
+                continue
+            key = (act_idx, ptype)
+            last_key = key
+            rec = acc["map_danger"].setdefault(key, [0, 0.0, 0])
+            for ps in floor.get("player_stats") or []:
+                max_hp = ps.get("max_hp") or 0
+                if max_hp <= 0:
+                    continue
+                dmg = max(0, ps.get("damage_taken") or 0)
+                rec[0] += 1
+                rec[1] += min(100.0, dmg * 100.0 / max_hp)
+    if died and last_key is not None:
+        acc["map_danger"][last_key][2] += 1
+
+    # Per-floor choices. rest_last_hp carries each player's HP across floors so a
+    # campfire choice is banded by the HP they ARRIVED with (a Heal would otherwise
+    # reclassify itself as a high-HP choice).
+    rest_last_hp: dict[Any, tuple[int, int]] = {}
     for act_floors in blob.get("map_point_history") or []:
         for floor in act_floors or []:
             # The Thieving Hopper steals cards mid-fight; those show up in
@@ -162,19 +194,40 @@ def accumulate(
                     opts = acc["events"].setdefault(event_id, {})
                     _bump(opts, option_id)
 
-                # Rest-site actions (SMITH / HEAL / HATCH / CLONE / ...).
-                for choice in ps.get("rest_site_choices") or []:
-                    if choice:
-                        _bump(acc["rest"], choice)
+                # Rest-site actions (SMITH / HEAL / HATCH / CLONE / ...), banded by
+                # the HP the player walked in with and tied to the run outcome.
+                rest_choices = ps.get("rest_site_choices") or []
+                if rest_choices:
+                    pid = ps.get("player_id")
+                    prev = rest_last_hp.get(pid)
+                    hp_ref = prev or (ps.get("current_hp"), ps.get("max_hp") or 0)
+                    low = bool(
+                        hp_ref[1]
+                        and hp_ref[0] is not None
+                        and hp_ref[0] * 2 < hp_ref[1]
+                    )
+                    for choice in rest_choices:
+                        if not choice:
+                            continue
+                        rec = acc["rest"].setdefault(choice, [0, 0, 0])
+                        rec[0] += 1
+                        if is_win:
+                            rec[1] += 1
+                        if low:
+                            rec[2] += 1
 
-                # 3-relic "ancient" offers: count the one chosen.
+                # 3-relic "ancient" offers: count chosen AND offered per relic, so
+                # the in-game tip can say "taken X% of the time it's offered".
                 for offer in ps.get("ancient_choice") or []:
+                    rid = offer.get("TextKey") or _bare(
+                        (offer.get("title") or {}).get("key")
+                    )
+                    if not rid:
+                        continue
+                    arec = acc["ancient"].setdefault(rid, [0, 0])
+                    arec[1] += 1
                     if offer.get("was_chosen"):
-                        rid = offer.get("TextKey") or _bare(
-                            (offer.get("title") or {}).get("key")
-                        )
-                        if rid:
-                            _bump(acc["ancient"], rid)
+                        arec[0] += 1
 
                 # Cards purged at a shop / event, or stolen by the Hopper.
                 for rem in ps.get("cards_removed") or []:
@@ -191,6 +244,12 @@ def accumulate(
                     acc["reward_screens"] += 1
                     if not any(c.get("was_picked") for c in choices):
                         acc["reward_skips"] += 1
+
+                # Carry HP forward for the next floor's campfire banding.
+                hp_now = ps.get("current_hp")
+                max_now = ps.get("max_hp") or 0
+                if hp_now is not None and max_now:
+                    rest_last_hp[ps.get("player_id")] = (hp_now, max_now)
 
 
 # ── Finalize: resolve names + compute percentages ────────────────────────────
@@ -351,6 +410,21 @@ def finalize(acc: dict[str, Any]) -> dict[str, Any]:
     quest_ids = _quest_card_ids()
     removed = {k: v for k, v in acc["removed"].items() if k not in quest_ids}
 
+    # Map danger: [{act, types: {monster: {visits, avg_dmg_pct, death_rate}, ...}}, ...].
+    # Sample-gated so a barely-visited node type doesn't show a junk number.
+    danger_acts: dict[int, dict[str, Any]] = {}
+    for (act_idx, ptype), (visits, dmg_sum, deaths) in acc["map_danger"].items():
+        if visits < 50:
+            continue
+        danger_acts.setdefault(act_idx, {})[ptype] = {
+            "visits": visits,
+            "avg_dmg_pct": round(dmg_sum / visits, 1),
+            "death_rate": round(deaths * 100.0 / visits, 2),
+        }
+    map_danger = [
+        {"act": a, "types": types} for a, types in sorted(danger_acts.items())
+    ]
+
     return {
         "total_runs": total_runs,
         "total_wins": total_wins,
@@ -359,20 +433,25 @@ def finalize(acc: dict[str, Any]) -> dict[str, Any]:
         "by_ascension": by_ascension,
         "by_character": by_character,
         "events": events,
+        "map_danger": map_danger,
         "deaths": {
             "encounters": _ranked(acc["deaths_encounter"], names["encounters"], _TOP_N),
             "events": _ranked(acc["deaths_event"], names["events"], _TOP_N),
         },
-        "rest_sites": [
-            {
-                "id": c,
-                "label": _prettify(c),
-                "count": n,
-                "pct": _pct(n, sum(acc["rest"].values())),
+        "rest_sites": _rest_sites(acc),
+        "ancient_picks": _ancient_picks(acc, names),
+        # Complete per-relic ancient-offer stats for the in-game tip (the top-N
+        # ancient_picks list above stays as the site page renders it). Gated at
+        # 20 offers so thin samples don't produce junk take rates.
+        "ancient_offers": {
+            rid: {
+                "picks": rec[0],
+                "offered": rec[1],
+                "take_rate": _pct(rec[0], rec[1]),
             }
-            for c, n in sorted(acc["rest"].items(), key=lambda kv: kv[1], reverse=True)
-        ],
-        "ancient_picks": _ranked(acc["ancient"], names["relics"], _TOP_N),
+            for rid, rec in acc["ancient"].items()
+            if rec[1] >= 20
+        },
         "most_removed": _ranked(removed, names["cards"], _TOP_N),
         "hopper_stolen": _ranked(acc.get("stolen") or {}, names["cards"], 10),
         "reward_skip_rate": _pct(acc["reward_skips"], acc["reward_screens"]),
@@ -382,6 +461,49 @@ def finalize(acc: dict[str, Any]) -> dict[str, Any]:
             "biggest_deck": _rec(acc["biggest_deck"], "size"),
         },
     }
+
+
+def _rest_sites(acc: dict[str, Any]) -> list[dict]:
+    """Campfire choices with win correlation and HP-band shares.
+
+    pct = share of all campfire decisions; pct_low_hp / pct_high_hp = share of
+    decisions made while below / at-or-above 50% max HP (walking in); win_rate
+    = how often runs that made this choice won. Keeps the original
+    id/label/count/pct keys so the site page is unaffected.
+    """
+    total = sum(rec[0] for rec in acc["rest"].values())
+    low_total = sum(rec[2] for rec in acc["rest"].values())
+    high_total = total - low_total
+    out = []
+    for c, (count, wins, low) in sorted(
+        acc["rest"].items(), key=lambda kv: kv[1][0], reverse=True
+    ):
+        out.append(
+            {
+                "id": c,
+                "label": _prettify(c),
+                "count": count,
+                "pct": _pct(count, total),
+                "win_rate": _pct(wins, count),
+                "pct_low_hp": _pct(low, low_total),
+                "pct_high_hp": _pct(count - low, high_total),
+            }
+        )
+    return out
+
+
+def _ancient_picks(acc: dict[str, Any], names: dict) -> list[dict]:
+    """Ancient 3-relic offers, ranked by picks, with per-relic take rate
+    (chosen / offered) so the in-game tip can say "taken X% when offered".
+    Same id/name/count/pct keys as the old _ranked output."""
+    chosen_counts = {rid: rec[0] for rid, rec in acc["ancient"].items() if rec[0] > 0}
+    ranked = _ranked(chosen_counts, names["relics"], _TOP_N)
+    for entry in ranked:
+        rec = acc["ancient"].get(entry["id"])
+        if rec and rec[1] > 0:
+            entry["take_rate"] = _pct(rec[0], rec[1])
+            entry["offered"] = rec[1]
+    return ranked
 
 
 def empty() -> dict[str, Any]:

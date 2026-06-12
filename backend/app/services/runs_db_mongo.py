@@ -206,6 +206,10 @@ def _ensure_indexes(coll) -> None:
     # Backfill query on sign-in matches runs by submitter steam_id / discord_id.
     coll.create_index([("steam_id", ASCENDING)])
     coll.create_index([("discord_id", ASCENDING)])
+    # Seed leaderboards (the mod's in-game seed rank + post-run card).
+    coll.create_index(
+        [("seed", ASCENDING), ("win", ASCENDING), ("run_time", ASCENDING)]
+    )
     coll.create_index(
         [
             ("game_mode", ASCENDING),
@@ -1929,6 +1933,73 @@ def get_run_rank(run_hash: str, category: str = "fastest") -> dict:
             }
         )
     return {"rank": ahead + 1, "category": category}
+
+
+@_instrument("seed_rank_for")
+def seed_rank_for(steam_id: str | None, seed: str) -> dict:
+    """The mod's seed + global standing (F9 panel and post-run card).
+
+    Seed pool = completed (non-abandoned) runs sharing the seed; ranking is
+    winning runs by run_time ASC, cross-character (a seed ladder is "who did
+    best on this exact seed"). Global = the caller's best winning run on the
+    all-runs fastest ladder. Rank fields are null when the caller has no
+    winning run in that pool.
+    """
+    coll = _get_collection()
+    base = {"seed": seed, "was_abandoned": {"$ne": True}}
+    seed_total = coll.count_documents(base)
+    seed_wins = coll.count_documents({**base, "win": {"$in": [True, 1]}})
+
+    seed_rank = None
+    global_rank = None
+    percentile = None
+    if steam_id:
+        mine = coll.find_one(
+            {"seed": seed, "win": {"$in": [True, 1]}, "steam_id": steam_id},
+            {"run_time": 1},
+            sort=[("run_time", 1)],
+        )
+        if mine:
+            seed_rank = (
+                coll.count_documents(
+                    {
+                        "seed": seed,
+                        "win": {"$in": [True, 1]},
+                        "run_time": {"$lt": mine.get("run_time", 0)},
+                    }
+                )
+                + 1
+            )
+
+        best = coll.find_one(
+            {"win": {"$in": [True, 1]}, "steam_id": steam_id},
+            {"run_time": 1},
+            sort=[("run_time", 1)],
+        )
+        global_total = coll.count_documents({"win": {"$in": [True, 1]}})
+        if best and global_total:
+            global_rank = (
+                coll.count_documents(
+                    {
+                        "win": {"$in": [True, 1]},
+                        "run_time": {"$lt": best.get("run_time", 0)},
+                    }
+                )
+                + 1
+            )
+            percentile = round(global_rank * 100.0 / global_total, 1)
+    else:
+        global_total = coll.count_documents({"win": {"$in": [True, 1]}})
+
+    return {
+        "seed": seed,
+        "seed_total": seed_total,
+        "seed_wins": seed_wins,
+        "seed_rank": seed_rank,
+        "global_rank": global_rank,
+        "global_total": global_total,
+        "percentile": percentile,
+    }
 
 
 def distinct_build_ids() -> list[str]:
