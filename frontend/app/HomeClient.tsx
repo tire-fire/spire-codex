@@ -8,6 +8,7 @@ import { cachedFetch, getBetaVersion } from "@/lib/fetch-cache";
 import { useLanguage } from "./contexts/LanguageContext";
 import { useAuth } from "./contexts/AuthContext";
 import { t } from "@/lib/ui-translations";
+import LiveNowRail from "./components/LiveNowRail";
 
 const LANG_CODES = new Set(["deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs"]);
 
@@ -230,6 +231,10 @@ export default function HomeClient({ initialStats, initialTranslations }: HomeCl
           })}
         </div>
       </section>
+
+      {/* Who is in a run with the mod right now; renders nothing when the
+          roster is empty, so the section only exists while someone climbs. */}
+      <LiveNowRail />
 
       {/* Get started: one card, a gold CTA header, then a single row of
           the sign-in cell (signed out only) plus the 4 action tiles. */}

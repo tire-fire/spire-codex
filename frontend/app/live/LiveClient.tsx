@@ -23,97 +23,57 @@ import {
   type CardInfo,
   type RelicInfo,
 } from "../runs/[hash]/RunPills";
+import {
+  API,
+  CharacterIcon,
+  FightingChip,
+  LiveDot,
+  elapsed,
+  parseDeckId,
+  useMonsterMap,
+  usePoll,
+  type LivePlayer,
+  type MonsterMap,
+} from "./live-shared";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const POLL_MS = 20_000;
 const RECENT_CARDS = 5;
-
-interface LivePlayer {
-  steam_id: string;
-  username?: string | null;
-  character?: string | null;
-  ascension?: number | null;
-  act?: number | null;
-  act_floor?: number | null;
-  total_floor?: number | null;
-  hp?: number | null;
-  max_hp?: number | null;
-  gold?: number | null;
-  screen?: string | null;
-  player_count?: number | null;
-  sts2_version?: string | null;
-  started_at?: string | null;
-  deck?: string[];
-  relics?: string[];
-}
-
-function elapsed(startedAt?: string | null): string {
-  if (!startedAt) return "";
-  const ms = Date.now() - new Date(startedAt).getTime();
-  if (ms <= 0) return "";
-  const mins = Math.floor(ms / 60000);
-  if (mins < 1) return "under a minute";
-  if (mins < 60) return `${mins}m`;
-  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
-}
-
-// Deck entries use the run-doc convention: bare card id, `+` = upgraded.
-function parseDeckId(raw: string): { id: string; upgraded: boolean } {
-  const upgraded = raw.endsWith("+");
-  return { id: cleanId(upgraded ? raw.slice(0, -1) : raw), upgraded };
-}
-
-function LiveDot() {
-  return (
-    <span className="relative flex h-2 w-2">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-    </span>
-  );
-}
 
 function PlayerCard({
   p,
   cardData,
   relicData,
+  monsters,
   lp,
   lang,
 }: {
   p: LivePlayer;
   cardData: Record<string, CardInfo>;
   relicData: Record<string, RelicInfo>;
+  monsters: MonsterMap;
   lp: string;
   lang: string;
 }) {
-  const charSlug = cleanId(p.character || "").toLowerCase();
-  const charIcon = imageUrl(`/static/images/characters/character_icon_${charSlug}.webp`);
   const hpPct =
     p.hp != null && p.max_hp ? Math.max(0, Math.min(100, (p.hp / p.max_hp) * 100)) : null;
   // Newest acquisitions last in the deck array; show them newest-first.
   const recent = (p.deck ?? []).slice(-RECENT_CARDS).reverse();
 
   return (
-    <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
+    <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 hover:border-[var(--border-accent)] transition-colors">
       <div className="flex items-center gap-3">
-        {charSlug && (
-          <Link href={`${lp}/characters/${charSlug}`} className="shrink-0">
-            <img
-              src={charIcon}
-              alt={displayName(`CHARACTER.${p.character ?? ""}`)}
-              className="w-12 h-12 object-contain"
-              crossOrigin="anonymous"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.visibility = "hidden";
-              }}
-            />
-          </Link>
-        )}
+        <Link href={`/live/${p.steam_id}`} className="shrink-0">
+          <CharacterIcon character={p.character} />
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <LiveDot />
-            <span className="font-semibold text-[var(--text-primary)] truncate">
+            <Link
+              href={`/live/${p.steam_id}`}
+              className="font-semibold text-[var(--text-primary)] truncate hover:text-[var(--accent-gold)] transition-colors"
+            >
               {p.username || "Anonymous climber"}
-            </span>
+            </Link>
             {p.ascension != null && p.ascension > 0 && (
               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[var(--accent-gold)]/15 text-[var(--accent-gold)] border border-[var(--accent-gold)]/30">
                 A{p.ascension}
@@ -138,6 +98,16 @@ function PlayerCard({
             {p.gold != null ? `${p.gold} gold` : ""}
           </div>
         </div>
+      </div>
+
+      <div className="mt-2 flex items-center gap-2">
+        <FightingChip p={p} monsters={monsters} />
+        <Link
+          href={`/live/${p.steam_id}`}
+          className="ml-auto text-xs text-[var(--accent-gold)] hover:underline whitespace-nowrap"
+        >
+          Watch live →
+        </Link>
       </div>
 
       {hpPct != null && (
@@ -244,62 +214,54 @@ export default function LiveClient() {
   const [stale, setStale] = useState(false);
   const [cardData, setCardData] = useState<Record<string, CardInfo>>({});
   const [relicData, setRelicData] = useState<Record<string, RelicInfo>>({});
+  const monsters = useMonsterMap(
+    (players ?? []).some((p) => p.screen === "combat" && (p.fighting?.length ?? 0) > 0),
+  );
 
   useEffect(() => {
-    cachedFetch<CardInfo[]>(`${API}/api/cards?lang=${lang}`).then((cards) => {
-      const m: Record<string, CardInfo> = {};
-      for (const c of cards) m[c.id] = c;
-      setCardData(m);
-    });
-    cachedFetch<RelicInfo[]>(`${API}/api/relics?lang=${lang}`).then((relics) => {
-      const m: Record<string, RelicInfo> = {};
-      for (const r of relics) m[r.id] = r;
-      setRelicData(m);
-    });
+    cachedFetch<CardInfo[]>(`${API}/api/cards?lang=${lang}`)
+      .then((cards) => {
+        const m: Record<string, CardInfo> = {};
+        for (const c of cards) m[c.id] = c;
+        setCardData(m);
+      })
+      .catch(() => {});
+    cachedFetch<RelicInfo[]>(`${API}/api/relics?lang=${lang}`)
+      .then((relics) => {
+        const m: Record<string, RelicInfo> = {};
+        for (const r of relics) m[r.id] = r;
+        setRelicData(m);
+      })
+      .catch(() => {});
   }, [lang]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function poll() {
-      try {
-        const r = await fetch(`${API}/api/presence/active`);
-        if (!r.ok) throw new Error(`active ${r.status}`);
-        const data: { players?: LivePlayer[] } = await r.json();
-        const roster = data.players ?? [];
-        // The roster is identity + progress only; deck/relics live on the
-        // per-player doc. The list is small, so fetch them all in parallel
-        // and fall back to the roster entry if one fetch fails.
-        const detailed = await Promise.all(
-          roster.map(async (p) => {
-            try {
-              const dr = await fetch(`${API}/api/presence/${p.steam_id}`);
-              if (!dr.ok) return p;
-              return { ...p, ...(await dr.json()) } as LivePlayer;
-            } catch {
-              return p;
-            }
-          }),
-        );
-        if (!cancelled) {
-          setPlayers(detailed);
-          setStale(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setStale(true);
-          setPlayers((prev) => prev ?? []);
-        }
-      }
+  usePoll(async () => {
+    try {
+      const r = await fetch(`${API}/api/presence/active`);
+      if (!r.ok) throw new Error(`active ${r.status}`);
+      const data: { players?: LivePlayer[] } = await r.json();
+      const roster = data.players ?? [];
+      // The roster is identity + progress only; deck/relics live on the
+      // per-player doc. The list is small, so fetch them all in parallel
+      // and fall back to the roster entry if one fetch fails.
+      const detailed = await Promise.all(
+        roster.map(async (p) => {
+          try {
+            const dr = await fetch(`${API}/api/presence/${p.steam_id}`);
+            if (!dr.ok) return p;
+            return { ...p, ...(await dr.json()) } as LivePlayer;
+          } catch {
+            return p;
+          }
+        }),
+      );
+      setPlayers(detailed);
+      setStale(false);
+    } catch {
+      setStale(true);
+      setPlayers((prev) => prev ?? []);
     }
-
-    poll();
-    const t = setInterval(poll, POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-    };
-  }, []);
+  }, POLL_MS);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -330,6 +292,7 @@ export default function LiveClient() {
               p={p}
               cardData={cardData}
               relicData={relicData}
+              monsters={monsters}
               lp={lp}
               lang={lang}
             />
