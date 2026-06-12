@@ -43,7 +43,31 @@ for "climbing for 41 min".
 Public. The full live doc for one player: everything above plus `deck` (card ids, `+`
 suffix = upgraded, e.g. `"STRIKE+"`), `relics`, and `potions` (bare ids). 404 when the
 player is not live. This is the data for a per-player live run view (spectator-lite,
-refresh every 15-30s).
+refresh every 10-15s).
+
+Combat context (v2, absent between fights):
+
+- `turn`: the combat round number
+- `fighting`: bare ids of the living enemies, e.g. `["GREMLIN_NOB"]`
+
+Play-by-play ticker (v2): `events` is a rolling window (last 50) of moments, oldest
+first, appended by each heartbeat:
+
+```json
+"events": [
+  {"k": "combat", "turn": 1, "t": 1781650000},
+  {"k": "card", "v": "WHIRLWIND", "turn": 2, "t": 1781650031},
+  {"k": "potion", "v": "FIRE_POTION", "turn": 3, "t": 1781650055},
+  {"k": "victory", "t": 1781650070},
+  {"k": "buy", "v": "FROZEN_EYE", "t": 1781650120}
+]
+```
+
+Kinds: `card` (played), `potion` (used), `combat` (fight started), `victory`,
+`buy` (shop purchase; `v` may be absent), `death` (the player died), `act` (entered a
+new act). `v` is a bare entity id for the usual name/image lookups. Render as a feed:
+"Turn 2 - played Whirlwind". The mod beats every ~12s during combat and ~30s outside
+it, so poll this endpoint at 10-15s for a live-feeling ticker.
 
 ### POST /api/presence
 

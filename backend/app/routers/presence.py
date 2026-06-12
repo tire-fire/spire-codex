@@ -24,9 +24,38 @@ _INT_FIELDS = (
     "gold",
     "ascension",
     "player_count",
+    "turn",
 )
 _STR_FIELDS = ("character", "seed", "screen", "sts2_version", "username")
-_LIST_CAPS = {"deck": 200, "relics": 100, "potions": 10}
+_LIST_CAPS = {"deck": 200, "relics": 100, "potions": 10, "fighting": 8}
+
+# Play-by-play ticker events riding the heartbeat: {"k": kind, "v": entity id,
+# "turn": combat turn, "t": unix seconds}. Kinds today: card, potion, combat,
+# victory, buy, death, act. Appended server-side to a rolling window per player.
+_EVENTS_PER_BEAT = 40
+
+
+def _clean_events(raw) -> list[dict]:
+    events: list[dict] = []
+    if not isinstance(raw, list):
+        return events
+    for e in raw[:_EVENTS_PER_BEAT]:
+        if not isinstance(e, dict):
+            continue
+        kind = e.get("k")
+        if not isinstance(kind, str) or not kind:
+            continue
+        ev: dict = {"k": kind[:24]}
+        if isinstance(e.get("v"), str) and e["v"]:
+            ev["v"] = e["v"][:_MAX_STR]
+        if isinstance(e.get("turn"), (int, float)) and not isinstance(
+            e.get("turn"), bool
+        ):
+            ev["turn"] = int(e["turn"])
+        if isinstance(e.get("t"), (int, float)) and not isinstance(e.get("t"), bool):
+            ev["t"] = int(e["t"])
+        events.append(ev)
+    return events
 
 
 def _require_mongo():
@@ -88,7 +117,7 @@ async def post_presence(request: Request):
     except Exception:
         pass
 
-    presence_db.heartbeat(steam_id, fields)
+    presence_db.heartbeat(steam_id, fields, _clean_events(data.get("events")))
     return {"ok": True}
 
 

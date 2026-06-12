@@ -41,13 +41,22 @@ def _presence_coll():
     return _coll
 
 
-def heartbeat(steam_id: str, fields: dict[str, Any]) -> None:
+# Rolling per-player window of ticker events ("played X", "fighting Y"); old entries
+# fall off as new beats arrive, and the whole doc still dies with the 90s TTL.
+EVENT_WINDOW = 50
+
+
+def heartbeat(
+    steam_id: str, fields: dict[str, Any], events: list[dict] | None = None
+) -> None:
     now = datetime.now(timezone.utc)
-    _presence_coll().update_one(
-        {"_id": steam_id},
-        {"$set": {**fields, "updated_at": now}, "$setOnInsert": {"started_at": now}},
-        upsert=True,
-    )
+    update: dict[str, Any] = {
+        "$set": {**fields, "updated_at": now},
+        "$setOnInsert": {"started_at": now},
+    }
+    if events:
+        update["$push"] = {"events": {"$each": events, "$slice": -EVENT_WINDOW}}
+    _presence_coll().update_one({"_id": steam_id}, update, upsert=True)
 
 
 def end(steam_id: str) -> None:
@@ -60,7 +69,10 @@ def active(limit: int = 50) -> list[dict]:
     cutoff = datetime.now(timezone.utc) - timedelta(seconds=PRESENCE_TTL_SECONDS)
     docs = (
         _presence_coll()
-        .find({"updated_at": {"$gte": cutoff}}, {"deck": 0, "relics": 0, "potions": 0})
+        .find(
+            {"updated_at": {"$gte": cutoff}},
+            {"deck": 0, "relics": 0, "potions": 0, "events": 0},
+        )
         .sort([("total_floor", -1), ("updated_at", -1)])
         .limit(limit)
     )
