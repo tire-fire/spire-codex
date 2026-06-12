@@ -271,7 +271,13 @@ def _name_maps() -> dict[str, dict[str, str]]:
             logger.warning("community-stats name load failed", exc_info=True)
             return {}
 
-    def _index_with_beta(loader, key="id", name="name") -> dict[str, str]:
+    # Ids that exist ONLY in the current beta, per type. Feeds the beta
+    # spotlight in `finalize`: beta entities can't outrank main content in
+    # the global top-N lists (the beta branch is a few percent of all
+    # runs), so their numbers get their own uncapped section.
+    beta_only: dict[str, set[str]] = {}
+
+    def _index_with_beta(tkey: str, loader, key="id", name="name") -> dict[str, str]:
         """Main catalog names, plus names for entities that only exist in
         the current beta. Beta-only entities are official content (they
         ship in the Steam beta build) and players on that branch submit
@@ -281,6 +287,7 @@ def _name_maps() -> dict[str, dict[str, str]]:
         filtered: they're in neither catalog. Main names win for entities
         in both."""
         names = _index(loader, key, name)
+        beta_only[tkey] = set()
         if not names or not data_service.get_beta_version():
             return names
         token = data_service.current_channel.set("beta")
@@ -289,16 +296,18 @@ def _name_maps() -> dict[str, dict[str, str]]:
                 rid = r.get(key)
                 if rid and rid not in names:
                     names[rid] = r.get(name) or _prettify(rid)
+                    beta_only[tkey].add(rid)
         except Exception:
             logger.warning("community-stats beta name overlay failed", exc_info=True)
         finally:
             data_service.current_channel.reset(token)
         return names
 
-    out["events"] = _index_with_beta(data_service.load_events)
-    out["encounters"] = _index_with_beta(data_service.load_encounters)
-    out["relics"] = _index_with_beta(data_service.load_relics)
-    out["cards"] = _index_with_beta(data_service.load_cards)
+    out["events"] = _index_with_beta("events", data_service.load_events)
+    out["encounters"] = _index_with_beta("encounters", data_service.load_encounters)
+    out["relics"] = _index_with_beta("relics", data_service.load_relics)
+    out["cards"] = _index_with_beta("cards", data_service.load_cards)
+    out["_beta_only"] = beta_only  # type: ignore[assignment]
     # The merged starter ids most-removed uses aren't real catalog cards, so
     # name them here (and only when the catalog loaded, to keep the modded
     # filter's empty-map fallback intact).
@@ -364,6 +373,30 @@ def _ranked(counts: dict[str, int], names: dict[str, str], limit: int) -> list[d
         }
         for cid, n in rows
     ]
+
+
+def _beta_spotlight(acc: dict[str, Any], names: dict) -> dict[str, Any]:
+    """Death counts for beta-only encounters/events, unranked against main
+    content. Empty dict when no beta is staged or nothing recorded yet."""
+    beta_only = names.get("_beta_only") or {}
+    out: dict[str, Any] = {}
+    for section, counts_key, names_key in (
+        ("encounters", "deaths_encounter", "encounters"),
+        ("events", "deaths_event", "events"),
+    ):
+        ids = beta_only.get(names_key) or set()
+        if not ids:
+            continue
+        rows = [
+            {"id": i, "name": names[names_key].get(i) or _prettify(i), "count": n}
+            for i, n in sorted(
+                acc[counts_key].items(), key=lambda kv: kv[1], reverse=True
+            )
+            if i in ids
+        ]
+        if rows:
+            out.setdefault("deaths", {})[section] = rows
+    return out
 
 
 def finalize(acc: dict[str, Any]) -> dict[str, Any]:
@@ -462,6 +495,11 @@ def finalize(acc: dict[str, Any]) -> dict[str, Any]:
             "encounters": _ranked(acc["deaths_encounter"], names["encounters"], _TOP_N),
             "events": _ranked(acc["deaths_event"], names["events"], _TOP_N),
         },
+        # Beta spotlight: numbers for entities that only exist in the
+        # current beta. They can't crack the global top-N (the beta branch
+        # is a few percent of all runs), so they get their own uncapped
+        # list; empties out on its own when the beta promotes to main.
+        "beta": _beta_spotlight(acc, names),
         "rest_sites": _rest_sites(acc),
         "ancient_picks": _ancient_picks(acc, names),
         # Complete per-relic ancient-offer stats for the in-game tip (the top-N
