@@ -32,6 +32,10 @@ services:
       - DATA_DIR=/data
       - BETA_DATA_DIR=/data-beta
       - FEEDBACK_WEBHOOK_URL=${FEEDBACK_WEBHOOK_URL:-}
+      # Cloudflare purge from the admin cache tab. Same token/zone the
+      # autodeploy script uses; set them in the box's .env.
+      - CF_TOKEN=${CF_TOKEN:-}
+      - CF_ZONE=${CF_ZONE:-}
       - GUIDE_WEBHOOK_URL=${GUIDE_WEBHOOK_URL:-}
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - UNINSTALL_FORWARD_FROM=${UNINSTALL_FORWARD_FROM:-}
