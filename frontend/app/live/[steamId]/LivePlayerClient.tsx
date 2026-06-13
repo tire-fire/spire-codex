@@ -14,6 +14,7 @@ import { useLangPrefix } from "@/lib/use-lang-prefix";
 import { useLanguage } from "@/app/contexts/LanguageContext";
 import { cachedFetch } from "@/lib/fetch-cache";
 import { imageUrl, fullCardUrl } from "@/lib/image-url";
+import LiveMap from "../LiveMap";
 import {
   CardPill,
   PotionPill,
@@ -93,6 +94,36 @@ function TickerRow({
       body = (
         <>
           Played{" "}
+          <CardPill cardId={id} upgraded={upgraded} cardData={cat.cards} lp={lp} className={TICKER_LINK}>
+            {info?.name || displayName(`CARD.${id}`)}
+            {upgraded ? "+" : ""}
+          </CardPill>
+        </>
+      );
+      break;
+    }
+    case "remove": {
+      // A card left the deck (purge at a shop, event, etc.).
+      if (!e.v) {
+        body = <span className="text-rose-300">Removed a card</span>;
+        break;
+      }
+      const { id, upgraded } = parseDeckId(e.v);
+      const info = cat.cards[id];
+      if (info?.image_url) {
+        icon = (
+          <img
+            src={imageUrl(info.image_url)}
+            alt=""
+            className="w-6 h-6 object-contain opacity-60"
+            crossOrigin="anonymous"
+            loading="lazy"
+          />
+        );
+      }
+      body = (
+        <>
+          <span className="text-rose-300">Removed</span>{" "}
           <CardPill cardId={id} upgraded={upgraded} cardData={cat.cards} lp={lp} className={TICKER_LINK}>
             {info?.name || displayName(`CARD.${id}`)}
             {upgraded ? "+" : ""}
@@ -445,6 +476,15 @@ export default function LivePlayerClient() {
         </div>
 
         <div className="space-y-4">
+          {(p.map?.nodes?.length ?? 0) > 0 && (
+            <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
+              <h2 className="text-sm font-semibold text-[var(--accent-gold)] mb-2">
+                Map{p.map?.act != null ? ` · Act ${p.map.act}` : ""}
+              </h2>
+              <LiveMap map={p.map} path={p.path} pos={p.pos} />
+            </div>
+          )}
+
           <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
             <h2 className="text-sm font-semibold text-[var(--accent-gold)] mb-2">
               Deck{p.deck ? ` (${p.deck.length})` : ""}
