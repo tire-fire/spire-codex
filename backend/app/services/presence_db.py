@@ -94,6 +94,7 @@ def active(limit: int = 50) -> list[dict]:
                 "map": 0,
                 "event": 0,
                 "shop": 0,
+                "enemies": 0,
             },
         )
         .sort([("total_floor", -1), ("updated_at", -1)])

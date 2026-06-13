@@ -48,7 +48,25 @@ refresh every 10-15s).
 Combat context (v2, absent between fights):
 
 - `turn`: the combat round number
-- `fighting`: bare ids of the living enemies, e.g. `["GREMLIN_NOB"]`
+- `fighting`: bare ids of the living enemies, e.g. `["GREMLIN_NOB"]` (kept for the
+  lightweight roster chip)
+
+Rich combat enemies (v5, absent between fights): `enemies` is the per-player combat
+panel data, each enemy carrying HP and intent:
+
+```json
+"enemies": [
+  {"id": "GREMLIN_NOB", "hp": 52, "max_hp": 85, "intent": "attack", "intent_value": 14, "intent_hits": 1},
+  {"id": "SPIKER", "hp": 42, "max_hp": 42, "block": 5, "intent": "defend"}
+]
+```
+
+`intent` is a kind keyword (`attack`, `defend`, `buff`, `debuff`, `stun`, `sleep`,
+`escape`, `unknown`); `intent_value` is damage per hit and `intent_hits` the hit count
+for an attack (so `14 x1` or `6 x3`). `block` is the enemy's current block. All numeric
+fields optional; the frontend renders an HP bar plus an intent icon + value when present.
+Excluded from `/active` (per-player only) and cleared when combat ends (same null-to-clear
+rule as `turn`/`fighting`).
 
 Play-by-play ticker (v2): `events` is a rolling window (last 50) of moments, oldest
 first, appended by each heartbeat:

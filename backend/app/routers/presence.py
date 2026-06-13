@@ -191,6 +191,38 @@ def _clean_shop(raw) -> dict | None:
     return out or None
 
 
+# Live combat enemies for the spectator combat panel: each enemy's id, current
+# HP, and intent. `intent` is a kind string (attack, defend, buff, debuff, stun,
+# sleep, escape, unknown); intent_value/intent_hits describe an attack.
+_ENEMIES_CAP = 8
+_INTENT_CAP = 24
+_ENEMY_INT_FIELDS = ("hp", "max_hp", "block", "intent_value", "intent_hits")
+
+
+def _clean_enemies(raw) -> list[dict] | None:
+    """The living enemies in the current fight, with HP and intent. Richer than
+    the bare `fighting` id list (which stays for the roster chip)."""
+    if not isinstance(raw, list):
+        return None
+    out: list[dict] = []
+    for o in raw[:_ENEMIES_CAP]:
+        if not isinstance(o, dict):
+            continue
+        oid = o.get("id")
+        if not isinstance(oid, str) or not _safe_id(oid[:_MAX_STR]):
+            continue
+        item: dict = {"id": oid[:_MAX_STR]}
+        for k in _ENEMY_INT_FIELDS:
+            v = o.get(k)
+            if isinstance(v, (int, float)) and not isinstance(v, bool):
+                item[k] = int(v)
+        intent = o.get("intent")
+        if isinstance(intent, str) and intent:
+            item["intent"] = intent[:_INTENT_CAP]
+        out.append(item)
+    return out or None
+
+
 def _clean_events(raw) -> list[dict]:
     events: list[dict] = []
     if not isinstance(raw, list):
@@ -280,18 +312,21 @@ async def post_presence(request: Request):
     if (m := _clean_map(data.get("map"))) is not None:
         fields["map"] = m
 
-    # Current-screen detail: the live event and the shop. Present only on those screens.
+    # Current-screen detail: the live event, the shop, and combat enemies. Present
+    # only on those screens.
     if (ev := _clean_event_ctx(data.get("event"))) is not None:
         fields["event"] = ev
     if (shp := _clean_shop(data.get("shop"))) is not None:
         fields["shop"] = shp
+    if (en := _clean_enemies(data.get("enemies"))) is not None:
+        fields["enemies"] = en
 
     # Transient fields: when the mod sends these as explicit null (combat ended / left the
     # screen), clear them rather than leaving stale values. pos is NOT in this set on
     # purpose: keeping the last node avoids a blinking map marker between nodes.
     unset = [
         k
-        for k in ("turn", "fighting", "event", "shop")
+        for k in ("turn", "fighting", "event", "shop", "enemies")
         if k in data and data[k] is None
     ]
 
