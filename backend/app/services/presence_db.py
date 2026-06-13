@@ -14,6 +14,9 @@ Document shape (one doc per live player):
         "hp": ..., "max_hp": ..., "gold": ..., "screen": ..., "seed": ...,
         "player_count": ..., "sts2_version": ...,
         "deck": ["STRIKE+", ...], "relics": [...], "potions": [...],
+        "turn": ..., "fighting": [...],        # combat context (absent between fights)
+        "events": [{k, v, turn, t}, ...],      # rolling play-by-play window
+        "map": {act, nodes, edges}, "path": [[col,row], ...], "pos": [col,row],
         "started_at": ISODate(...),   # first heartbeat of this session
         "updated_at": ISODate(...),   # last heartbeat (TTL anchor)
     }
@@ -64,14 +67,16 @@ def end(steam_id: str) -> None:
 
 
 def active(limit: int = 50) -> list[dict]:
-    """Fresh live players, deepest run first. Excludes deck/relic/potion detail —
-    the per-player endpoint serves those for the live run view."""
+    """Fresh live players, deepest run first. Excludes the heavy per-run detail
+    (deck/relics/potions, the event window, and the map node/edge graph): the
+    per-player endpoint serves those for the live run view. Keeps path/pos so the
+    roster can show a player's position on a mini progress indicator."""
     cutoff = datetime.now(timezone.utc) - timedelta(seconds=PRESENCE_TTL_SECONDS)
     docs = (
         _presence_coll()
         .find(
             {"updated_at": {"$gte": cutoff}},
-            {"deck": 0, "relics": 0, "potions": 0, "events": 0},
+            {"deck": 0, "relics": 0, "potions": 0, "events": 0, "map": 0},
         )
         .sort([("total_floor", -1), ("updated_at", -1)])
         .limit(limit)
