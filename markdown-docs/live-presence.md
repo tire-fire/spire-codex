@@ -48,7 +48,31 @@ refresh every 10-15s).
 Combat context (v2, absent between fights):
 
 - `turn`: the combat round number
-- `fighting`: bare ids of the living enemies, e.g. `["GREMLIN_NOB"]`
+- `fighting`: bare ids of the living enemies, e.g. `["GREMLIN_NOB"]` (kept for the
+  lightweight roster chip)
+
+Rich combat enemies (v5, absent between fights): `enemies` is the per-player combat
+panel data, each enemy carrying hp/block and its upcoming intent(s):
+
+```json
+"enemies": [
+  {"id": "GREMLIN_NOB", "name": "Gremlin Nob", "hp": 52, "max_hp": 85,
+   "intents": [{"type": "attack", "dmg": 16, "hits": 2}]},
+  {"id": "SPIKER", "name": "Spiker", "hp": 42, "max_hp": 42, "block": 5,
+   "intents": [{"type": "defend"}, {"type": "buff"}]}
+]
+```
+
+`intents` is a list because one move can do several things (attack + buff). Each intent's
+`type` is the codex intent category (`attack`, `defend`, `buff`, `debuff`, `heal`,
+`escape`, `summon`, `carddebuff`, `deathblow`, `hidden`, `unknown`); render the game's
+intent icon from it. For attacks, `dmg` is the base per-hit damage and `hits` the strike
+count, so `dmg:16, hits:2` is "16 x2" = 32 incoming (`dmg` is the base value; in-combat
+modifiers like strength/vulnerable aren't folded in). Non-attacks omit `dmg`/`hits`.
+`name` is the resolved enemy name (fall back to the id lookup if absent), `block` the
+enemy's current block. All fields except the intent `type` are optional. Excluded from
+`/active` (per-player only) and cleared when combat ends (same null-to-clear rule as
+`turn`/`fighting`).
 
 Play-by-play ticker (v2): `events` is a rolling window (last 50) of moments, oldest
 first, appended by each heartbeat:
@@ -100,6 +124,56 @@ The per-player doc carries the current act's map graph and the route taken so fa
   toward the boss), `col` is the horizontal lane.
 - The bulky `map` graph is sent once per act (it's static) and omitted from `/active`;
   `path`/`pos` ride every beat and DO appear on `/active` for a roster progress hint.
+
+### Live event (v4, present only in an event room)
+
+When `screen == "event"`, the per-player doc carries the event the player is reading and
+the options on offer. The mod ships the ALREADY-LOCALIZED text the player sees, so render
+it directly (no need to resolve from the codex event data; the `id` is there if you want
+to link to the event page).
+
+```json
+"event": {
+  "id": "ABYSSAL_BATHS",
+  "title": "Abyssal Baths",
+  "prompt": "You come upon a hot spring rumored to wash away the past...",
+  "options": [
+    {"key": "BATHE", "text": "[Bathe] Lose all but 1 Max HP. Become Cleansed.", "locked": false, "proceed": false, "chosen": false},
+    {"key": "LEAVE", "text": "Leave", "locked": false, "proceed": true, "chosen": false}
+  ]
+}
+```
+
+- `title`/`prompt` are resolved localized strings (may be absent on a sparse beat).
+- each option: `key` (stable loc key), `text` (the localized button label), `locked` (greyed
+  out / requirement unmet), `proceed` (the leave/continue option), `chosen` (already picked).
+- Cleared when the player leaves the event (the mod sends `event: null` -> server `$unset`).
+  Omitted from `/active`.
+
+### Live shop (v4, present only in a merchant room)
+
+When `screen == "merchant"`, the doc carries the full inventory. Item ids are bare
+(`"FROZEN_EYE"`) -> resolve name/image via the usual card/relic/potion lookups, same as
+the deck. Costs are the live gold price.
+
+```json
+"shop": {
+  "cards":   [{"id": "WHIRLWIND", "cost": 75, "stocked": true, "on_sale": false, "slot": "character"}],
+  "relics":  [{"id": "FROZEN_EYE", "cost": 143, "stocked": true}],
+  "potions": [{"id": "FIRE_POTION", "cost": 50, "stocked": true}],
+  "removal": {"cost": 75, "stocked": true}
+}
+```
+
+- `stocked: false` means the slot was already bought (its `id` is then absent). Show it as
+  sold/empty so viewers see purchases happen live.
+- `on_sale` (cards only) is the 50%-off discount; relics/potions never have it.
+- `slot` tags a card `"character"` (one of the 5 typed slots) or `"colorless"`.
+- `removal` is the card-removal service (null if this shop has none). Cleared on leaving
+  the shop; omitted from `/active`.
+
+Note the singular `event`/`shop` objects are distinct from the plural `events` ticker
+array above.
 
 ### POST /api/presence
 
