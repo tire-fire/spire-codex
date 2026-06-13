@@ -21,6 +21,19 @@ export interface LiveEvent {
   t?: number;
 }
 
+// Spectator act map (v3). nodes: [col, row, type]; edges: [col, row, childCol,
+// childRow] linking a node to one a row deeper. (col, row) is the game's grid,
+// row = act depth (0 = act start). All optional: absent before the mod ships a
+// map, or on an old mod.
+export type MapNode = [number, number, string];
+export type MapEdge = [number, number, number, number];
+export interface LiveMapData {
+  act?: number;
+  nodes: MapNode[];
+  edges: MapEdge[];
+}
+export type Coord = [number, number];
+
 export interface LivePlayer {
   steam_id: string;
   username?: string | null;
@@ -44,6 +57,9 @@ export interface LivePlayer {
   relics?: string[];
   potions?: string[];
   events?: LiveEvent[];
+  map?: LiveMapData | null;
+  path?: Coord[];
+  pos?: Coord | null;
 }
 
 export interface MonsterInfo {
