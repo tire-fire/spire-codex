@@ -35,6 +35,7 @@ import {
   parseDeckId,
   useMonsterMap,
   usePoll,
+  withOrdinalKeys,
   type LiveEvent,
   type LivePlayer,
   type MonsterMap,
@@ -42,47 +43,19 @@ import {
 
 const POLL_MS = 4_000;
 
+interface EventInfo {
+  id: string;
+  name: string;
+}
+
 interface Catalogs {
   cards: Record<string, CardInfo>;
   relics: Record<string, RelicInfo>;
   potions: Record<string, PotionInfo>;
+  events: Record<string, EventInfo>;
 }
 
-/** Best-effort lookup for an event's entity id: shops sell relics, cards,
- * and potions, so try all three catalogs before falling back to the
- * prettified raw id. */
-function resolveEntity(
-  rawId: string,
-  cat: Catalogs,
-  lp: string,
-): { name: string; href: string | null; image: string | null } {
-  const id = cleanId(rawId.endsWith("+") ? rawId.slice(0, -1) : rawId);
-  const relic = cat.relics[id];
-  if (relic) {
-    return {
-      name: relic.name,
-      href: `${lp}/relics/${id.toLowerCase()}`,
-      image: relic.image_url ? imageUrl(relic.image_url) : null,
-    };
-  }
-  const card = cat.cards[id];
-  if (card) {
-    return {
-      name: card.name,
-      href: `${lp}/cards/${id.toLowerCase()}`,
-      image: card.image_url ? imageUrl(card.image_url) : null,
-    };
-  }
-  const potion = cat.potions[id];
-  if (potion) {
-    return {
-      name: potion.name,
-      href: `${lp}/potions/${id.toLowerCase()}`,
-      image: potion.image_url ? imageUrl(potion.image_url) : null,
-    };
-  }
-  return { name: displayName(`CARD.${id}`), href: null, image: null };
-}
+const TICKER_LINK = "inline text-[var(--accent-gold)] hover:underline";
 
 function TickerRow({
   e,
@@ -100,7 +73,11 @@ function TickerRow({
 
   switch (e.k) {
     case "card": {
-      const { id, upgraded } = parseDeckId(e.v ?? "");
+      if (!e.v) {
+        body = <span className="text-[var(--text-secondary)]">Played a card</span>;
+        break;
+      }
+      const { id, upgraded } = parseDeckId(e.v);
       const info = cat.cards[id];
       if (info?.image_url) {
         icon = (
@@ -116,10 +93,10 @@ function TickerRow({
       body = (
         <>
           Played{" "}
-          <Link href={`${lp}/cards/${id.toLowerCase()}`} className="text-[var(--accent-gold)] hover:underline">
+          <CardPill cardId={id} upgraded={upgraded} cardData={cat.cards} lp={lp} className={TICKER_LINK}>
             {info?.name || displayName(`CARD.${id}`)}
             {upgraded ? "+" : ""}
-          </Link>
+          </CardPill>
         </>
       );
       break;
@@ -141,34 +118,69 @@ function TickerRow({
       body = (
         <>
           Used{" "}
-          <Link href={`${lp}/potions/${id.toLowerCase()}`} className="text-[var(--accent-gold)] hover:underline">
+          <PotionPill potionId={id} potionData={cat.potions} lp={lp} className={TICKER_LINK}>
             {info?.name || displayName(`POTION.${id}`)}
-          </Link>
+          </PotionPill>
         </>
       );
       break;
     }
     case "buy": {
       if (!e.v) {
+        // The mod did not resolve the purchased item on this beat; there is
+        // nothing to drill into until it ships the entity id.
         body = <span className="text-[var(--text-secondary)]">Bought something at the shop</span>;
         break;
       }
-      const ent = resolveEntity(e.v, cat, lp);
-      if (ent.image) {
+      // Shops sell relics, cards, and potions; resolve across all three
+      // catalogs and render the matching pill so hover shows the details.
+      const { id, upgraded } = parseDeckId(e.v);
+      const relic = cat.relics[id];
+      const card = relic ? undefined : cat.cards[id];
+      const potion = relic || card ? undefined : cat.potions[id];
+      const img = relic?.image_url || card?.image_url || potion?.image_url;
+      if (img) {
         icon = (
-          <img src={ent.image} alt="" className="w-6 h-6 object-contain" crossOrigin="anonymous" loading="lazy" />
+          <img src={imageUrl(img)} alt="" className="w-6 h-6 object-contain" crossOrigin="anonymous" loading="lazy" />
         );
       }
       body = (
         <>
           Bought{" "}
-          {ent.href ? (
-            <Link href={ent.href} className="text-[var(--accent-gold)] hover:underline">
-              {ent.name}
-            </Link>
+          {relic ? (
+            <RelicPill relicId={id} relicData={cat.relics} lp={lp} className={TICKER_LINK}>
+              {relic.name}
+            </RelicPill>
+          ) : card ? (
+            <CardPill cardId={id} upgraded={upgraded} cardData={cat.cards} lp={lp} className={TICKER_LINK}>
+              {card.name}
+              {upgraded ? "+" : ""}
+            </CardPill>
+          ) : potion ? (
+            <PotionPill potionId={id} potionData={cat.potions} lp={lp} className={TICKER_LINK}>
+              {potion.name}
+            </PotionPill>
           ) : (
-            <span className="text-[var(--text-primary)]">{ent.name}</span>
+            <span className="text-[var(--text-primary)]">{displayName(`CARD.${id}`)}</span>
           )}
+        </>
+      );
+      break;
+    }
+    case "event": {
+      // Event-room visit. The backend passes any kind through, so this
+      // lights up as soon as the mod ships {"k": "event", "v": EVENT_ID}.
+      const id = cleanId(e.v ?? "");
+      if (!id) {
+        body = <span className="text-purple-300">Visited an event</span>;
+        break;
+      }
+      body = (
+        <>
+          <span className="text-purple-300">Event:</span>{" "}
+          <Link href={`${lp}/events/${id.toLowerCase()}`} className={TICKER_LINK}>
+            {cat.events[id]?.name || displayName(`EVENT.${id}`)}
+          </Link>
         </>
       );
       break;
@@ -203,14 +215,22 @@ function TickerRow({
       );
   }
 
+  // Join only the parts that exist, so a missing timestamp or turn never
+  // leaves a dangling "T2 · " with nothing after it.
+  const meta = [e.turn != null ? `T${e.turn}` : "", ago(e.t)].filter(Boolean).join(" · ");
+
   return (
     <li className="flex items-center gap-2.5 py-1.5 border-b border-[var(--border-subtle)] last:border-0">
+      {/* No truncate/overflow-hidden here: the pill hover popups (full
+          card render, relic tooltip) position outside the row and would
+          get clipped by an overflow-hidden ancestor. */}
       <span className="w-6 h-6 flex items-center justify-center shrink-0">{icon}</span>
-      <span className="text-sm text-[var(--text-secondary)] min-w-0 flex-1 truncate">{body}</span>
-      <span className="text-[10px] text-[var(--text-muted)] tabular-nums whitespace-nowrap shrink-0">
-        {e.turn != null ? `T${e.turn} · ` : ""}
-        {ago(e.t)}
-      </span>
+      <span className="text-sm text-[var(--text-secondary)] min-w-0 flex-1 break-words">{body}</span>
+      {meta && (
+        <span className="text-[10px] text-[var(--text-muted)] tabular-nums whitespace-nowrap shrink-0">
+          {meta}
+        </span>
+      )}
     </li>
   );
 }
@@ -225,7 +245,7 @@ export default function LivePlayerClient() {
   // null = still loading; afterwards: live, ended (was live, dropped off),
   // or missing (never seen this session).
   const [status, setStatus] = useState<"loading" | "live" | "ended" | "missing">("loading");
-  const [cat, setCat] = useState<Catalogs>({ cards: {}, relics: {}, potions: {} });
+  const [cat, setCat] = useState<Catalogs>({ cards: {}, relics: {}, potions: {}, events: {} });
   const monsters = useMonsterMap(true);
 
   useEffect(() => {
@@ -248,6 +268,13 @@ export default function LivePlayerClient() {
         const m: Record<string, PotionInfo> = {};
         for (const p of potions) m[p.id] = p;
         setCat((prev) => ({ ...prev, potions: m }));
+      })
+      .catch(() => {});
+    cachedFetch<EventInfo[]>(`${API}/api/events?lang=${lang}`)
+      .then((events) => {
+        const m: Record<string, EventInfo> = {};
+        for (const ev of events) m[ev.id] = ev;
+        setCat((prev) => ({ ...prev, events: m }));
       })
       .catch(() => {});
   }, [lang]);
@@ -298,7 +325,18 @@ export default function LivePlayerClient() {
   const p = player;
   const hpPct =
     p.hp != null && p.max_hp ? Math.max(0, Math.min(100, (p.hp / p.max_hp) * 100)) : null;
-  const events = [...(p.events ?? [])].reverse();
+  // Stable per-event keys: ordinals computed over the original (append-order)
+  // array, so a new beat appending at the end and the 50-window rolling off the
+  // front both leave surviving rows' keys unchanged. Index keys would shift
+  // every key on each new event, remounting every row and dropping open hover
+  // popups. Display is newest-first.
+  const rawEvents = p.events ?? [];
+  const eventKeys = withOrdinalKeys(
+    rawEvents.map((e) => `${e.k}|${e.v ?? ""}|${e.turn ?? ""}|${e.t ?? 0}`),
+  );
+  const events = rawEvents
+    .map((e, i) => ({ e, key: eventKeys[i].key }))
+    .reverse();
   // Group identical deck entries (STRIKE vs STRIKE+ stay distinct) in
   // acquisition order of first appearance.
   const deckGroups: { raw: string; count: number }[] = [];
@@ -375,8 +413,8 @@ export default function LivePlayerClient() {
               <span className="text-xs font-bold uppercase tracking-wider text-rose-300">
                 Fighting
               </span>
-              {(p.fighting ?? []).map((id, i) => (
-                <span key={`${id}-${i}`} className="inline-flex items-center gap-1.5">
+              {withOrdinalKeys(p.fighting ?? []).map(({ item: id, key }) => (
+                <span key={key} className="inline-flex items-center gap-1.5">
                   <EnemyCircle id={id} monsters={monsters} className="w-9 h-9" />
                   <span className="text-sm text-rose-100">{monsterName(id, monsters)}</span>
                 </span>
@@ -399,8 +437,8 @@ export default function LivePlayerClient() {
             </p>
           ) : (
             <ul>
-              {events.map((e, i) => (
-                <TickerRow key={`${e.t ?? 0}-${e.k}-${i}`} e={e} cat={cat} monsters={monsters} lp={lp} />
+              {events.map(({ e, key }) => (
+                <TickerRow key={key} e={e} cat={cat} monsters={monsters} lp={lp} />
               ))}
             </ul>
           )}
@@ -459,7 +497,7 @@ export default function LivePlayerClient() {
               <p className="text-sm text-[var(--text-muted)]">No relic data on this beat.</p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
-                {(p.relics ?? []).map((raw, i) => {
+                {(p.relics ?? []).map((raw) => {
                   const rid = cleanId(raw);
                   const info = cat.relics[rid];
                   const src = info?.image_url
@@ -467,7 +505,7 @@ export default function LivePlayerClient() {
                     : imageUrl(`/static/images/relics/${rid.toLowerCase()}.png`);
                   return (
                     <RelicPill
-                      key={`${raw}-${i}`}
+                      key={raw}
                       relicId={rid}
                       relicData={cat.relics}
                       lp={lp}
@@ -494,12 +532,12 @@ export default function LivePlayerClient() {
             <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
               <h2 className="text-sm font-semibold text-[var(--accent-gold)] mb-2">Potions</h2>
               <div className="flex flex-wrap gap-1.5">
-                {(p.potions ?? []).map((raw, i) => {
+                {withOrdinalKeys(p.potions ?? []).map(({ item: raw, key }) => {
                   const pid = cleanId(raw);
                   const info = cat.potions[pid];
                   return (
                     <PotionPill
-                      key={`${raw}-${i}`}
+                      key={key}
                       potionId={pid}
                       potionData={cat.potions}
                       lp={lp}
