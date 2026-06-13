@@ -64,6 +64,18 @@ export interface LiveShop {
   removal?: { cost?: number; stocked?: boolean };
 }
 
+// Rich combat enemy (v5): id + HP + intent for the spectator combat panel.
+// `intent` is a kind keyword; intent_value/intent_hits describe an attack.
+export interface Enemy {
+  id: string;
+  hp?: number;
+  max_hp?: number;
+  block?: number;
+  intent?: string;
+  intent_value?: number;
+  intent_hits?: number;
+}
+
 export interface LivePlayer {
   steam_id: string;
   username?: string | null;
@@ -92,6 +104,7 @@ export interface LivePlayer {
   pos?: Coord | null;
   event?: LiveEventCtx | null;
   shop?: LiveShop | null;
+  enemies?: Enemy[] | null;
 }
 
 export interface MonsterInfo {
@@ -265,6 +278,101 @@ export function FightingChip({
         <span className="text-rose-400/80 whitespace-nowrap">· Turn {p.turn}</span>
       )}
     </span>
+  );
+}
+
+// Enemy intent as a short colored label. Returns null when there's nothing to
+// show (so we don't render an empty pill on a sparse beat).
+function intentLabel(e: Enemy): { text: string; cls: string } | null {
+  const kind = (e.intent || "").toLowerCase();
+  const hits = e.intent_hits && e.intent_hits > 1 ? `×${e.intent_hits}` : "";
+  const dmg = e.intent_value != null ? `${e.intent_value}${hits}` : "";
+  switch (kind) {
+    case "attack":
+      return { text: dmg ? `ATK ${dmg}` : "ATK", cls: "text-rose-200 bg-rose-950/50 border-rose-900/50" };
+    case "defend":
+      return { text: "BLOCK", cls: "text-sky-200 bg-sky-950/50 border-sky-900/50" };
+    case "buff":
+      return { text: "BUFF", cls: "text-emerald-200 bg-emerald-950/50 border-emerald-900/50" };
+    case "debuff":
+      return { text: "DEBUFF", cls: "text-fuchsia-200 bg-fuchsia-950/50 border-fuchsia-900/50" };
+    case "stun":
+      return { text: "STUN", cls: "text-amber-200 bg-amber-950/50 border-amber-900/50" };
+    case "sleep":
+      return { text: "ASLEEP", cls: "text-[var(--text-muted)] bg-[var(--bg-primary)] border-[var(--border-subtle)]" };
+    case "escape":
+      return { text: "FLEE", cls: "text-amber-200 bg-amber-950/50 border-amber-900/50" };
+    case "":
+      return null;
+    default:
+      return { text: kind.toUpperCase(), cls: "text-[var(--text-secondary)] bg-[var(--bg-primary)] border-[var(--border-subtle)]" };
+  }
+}
+
+/** The spectator combat panel: every living enemy with portrait, HP bar, block,
+ * and intent. Uses the rich `enemies` field when the mod sends it, falling back
+ * to the bare `fighting` id list (portrait + name only) so it still shows
+ * something on an older mod. Renders nothing off the combat screen. */
+export function LiveEnemiesPanel({ p, monsters }: { p: LivePlayer; monsters: MonsterMap }) {
+  if (p.screen !== "combat") return null;
+  const rich = (p.enemies ?? []).filter((e) => e && e.id);
+  const enemies: Enemy[] = rich.length
+    ? rich
+    : (p.fighting ?? []).filter(Boolean).map((id) => ({ id }));
+  if (!enemies.length) return null;
+
+  return (
+    <div className="rounded-lg border border-rose-900/50 bg-rose-950/20 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300">Fighting</span>
+        {p.turn != null && p.turn > 0 && (
+          <span className="ml-auto text-xs text-rose-300 tabular-nums">Turn {p.turn}</span>
+        )}
+      </div>
+      <ul className="space-y-2.5">
+        {withOrdinalKeys(enemies.map((e) => e.id)).map(({ key }, i) => {
+          const e = enemies[i];
+          const hpPct =
+            e.hp != null && e.max_hp ? Math.max(0, Math.min(100, (e.hp / e.max_hp) * 100)) : null;
+          const intent = intentLabel(e);
+          return (
+            <li key={key} className="flex items-center gap-2.5">
+              <EnemyCircle id={e.id} monsters={monsters} className="w-10 h-10" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-rose-100 truncate">{monsterName(e.id, monsters)}</span>
+                  {(e.block ?? 0) > 0 && (
+                    <span className="text-[10px] text-sky-300 tabular-nums shrink-0" title="block">
+                      [{e.block}]
+                    </span>
+                  )}
+                  {intent && (
+                    <span
+                      className={`ml-auto text-[10px] font-bold rounded border px-1.5 py-0.5 shrink-0 ${intent.cls}`}
+                    >
+                      {intent.text}
+                    </span>
+                  )}
+                </div>
+                {hpPct != null ? (
+                  <div className="mt-1">
+                    <div className="flex justify-between text-[9px] text-rose-300/70 tabular-nums">
+                      <span>HP</span>
+                      <span>
+                        {e.hp}/{e.max_hp}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded bg-[var(--bg-primary)]">
+                      <div className="h-1.5 rounded bg-rose-500" style={{ width: `${hpPct}%` }} />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
