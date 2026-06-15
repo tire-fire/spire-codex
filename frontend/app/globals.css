@@ -43,7 +43,10 @@
 @theme inline {
   --color-background: var(--bg-primary);
   --color-foreground: var(--text-primary);
-  --font-sans: var(--font-geist-sans);
+  /* Kreon (the Slay the Spire 2 typeface) is the site font; Geist stays as the
+     sans fallback if Kreon fails to load. Mono keeps Geist Mono for tabular
+     alignment of ids and numbers. */
+  --font-sans: var(--font-kreon), var(--font-geist-sans), Arial, Helvetica, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 

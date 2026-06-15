@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Kreon } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import BetaChrome from "./components/BetaChrome";
@@ -48,6 +48,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// The site typeface: Kreon, the serif Slay the Spire 2 uses, self-hosted via
+// next/font (woff2, weights 300-700). Geist stays loaded as the fallback. The
+// 1:1 card renderer keeps its own exact local Kreon @font-face for pixel match.
+const kreon = Kreon({
+  variable: "--font-kreon",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
 // Belt-and-suspenders alongside the beta branch in robots.ts. Some bots
 // honor robots.txt only partially; an explicit noindex meta on every
 // beta page makes it impossible for a beta URL to enter the index.
@@ -88,7 +97,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        className={`${kreon.variable} ${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
         <LanguageProvider>
           <Suspense>

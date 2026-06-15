@@ -215,7 +215,7 @@ export default function Navbar() {
             <span className="hidden sm:inline text-xl font-bold text-[var(--accent-gold)]">
               SPIRE
             </span>
-            <span className="hidden sm:inline text-xl font-light text-[var(--text-primary)]">
+            <span className="hidden sm:inline text-xl font-normal text-[var(--text-primary)]">
               CODEX
             </span>
           </Link>
