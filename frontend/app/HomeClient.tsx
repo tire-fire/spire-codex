@@ -305,6 +305,17 @@ export default function HomeClient({ initialStats, initialTranslations }: HomeCl
               ),
             },
             {
+              title: "Download the mod",
+              desc: "Get the Spire Codex mod on Nexus Mods for in-game stats contribution, auto run uploads, and a route planner.",
+              href: "https://www.nexusmods.com/slaythespire2/mods/1272",
+              ext: true,
+              icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-9 w-9">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 15v4a2 2 0 002 2h12a2 2 0 002-2v-4" />
+                </svg>
+              ),
+            },
+            {
               title: "Support on Patreon",
               desc: "Like the project? Support us directly to unlock more features and keep the data free and as up to date as possible.",
               href: "https://www.patreon.com/cw/SpireCodex",

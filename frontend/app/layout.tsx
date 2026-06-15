@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import BetaChrome from "./components/BetaChrome";
 import DonationBanner from "./components/DonationBanner";
 import OverwolfBanner from "./components/OverwolfBanner";
+import ModBanner from "./components/ModBanner";
 import Footer from "./components/Footer";
 import GlobalSearch from "./components/GlobalSearch";
 import { Suspense } from "react";
@@ -107,6 +108,7 @@ export default function RootLayout({
               <Navbar />
               <div className="pt-16">
                 <OverwolfBanner />
+                <ModBanner />
                 <DonationBanner />
                 {/* tabIndex=-1 lets Navbar's main.focus() (PR #142) clear
                     focus-within from the dropdown after route changes. The
