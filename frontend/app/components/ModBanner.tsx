@@ -23,7 +23,7 @@ export default function ModBanner() {
     <div className="bg-orange-400 border-b border-orange-500">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center gap-3">
         <img
-          src="/nexus-logo.png"
+          src="/nexus-logo.svg"
           alt="Nexus Mods"
           className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0"
         />
