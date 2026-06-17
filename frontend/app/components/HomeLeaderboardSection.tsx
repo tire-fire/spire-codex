@@ -100,30 +100,19 @@ function killedByLabel(killedBy: string | null): string | null {
 }
 
 async function loadFastestWins(): Promise<{ runs: RunRow[]; ascension: number | null }> {
-  // No server-side ascension filter, pull a page of fastest wins, then
-  // pick the highest ascension tier that has at least one entry. Falls
-  // back to "any ascension" so the section never renders empty when wins
-  // exist at all.
+  // Ask the server for the fastest A10+ wins directly. Filtering client-side
+  // off a global fastest page didn't work: low-ascension speedruns dominate the
+  // global fastest list, so only a few A10 wins survived the filter (the card
+  // showed 3, not 5). ascension_min keeps it to the A10 board the badge claims.
   try {
-    const res = await fetch(`${RUNS_API}/api/runs/leaderboard?category=fastest&limit=50`, {
-      next: { revalidate: REVALIDATE },
-    });
+    const res = await fetch(
+      `${RUNS_API}/api/runs/leaderboard?category=fastest&ascension_min=${TARGET_ASCENSION}&limit=5`,
+      { next: { revalidate: REVALIDATE } },
+    );
     if (!res.ok) return { runs: [], ascension: null };
     const data = (await res.json()) as { runs: RunRow[] };
-    const wins = (data.runs || []).filter((r) => r.win === 1);
-    if (wins.length === 0) return { runs: [], ascension: null };
-    // Lead with A10+ wins (the showcase tier), then top up with the next
-    // fastest wins (any ascension) so the card always shows a full 5 instead
-    // of just however many A10 wins happen to exist. `wins` is already sorted
-    // fastest-first, so the filters preserve that order.
-    const a10 = wins.filter((r) => r.ascension >= TARGET_ASCENSION);
-    const rest = wins.filter((r) => r.ascension < TARGET_ASCENSION);
-    const runs = [...a10, ...rest].slice(0, 5);
-    const ascension =
-      a10.length > 0
-        ? TARGET_ASCENSION
-        : runs.reduce((m, r) => Math.max(m, r.ascension), 0);
-    return { runs, ascension };
+    const runs = (data.runs || []).filter((r) => r.win === 1).slice(0, 5);
+    return { runs, ascension: runs.length ? TARGET_ASCENSION : null };
   } catch {
     return { runs: [], ascension: null };
   }
