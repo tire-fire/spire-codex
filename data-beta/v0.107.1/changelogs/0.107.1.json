@@ -1,0 +1,175 @@
+{
+  "app_id": 2868840,
+  "game_version": "0.107.1",
+  "build_id": "23811903",
+  "tag": "0.107.1",
+  "date": "2026-06-18",
+  "title": "v0.107.1: Aeonglass replaces Doormaker, new Neow relics, the RNG rework, and a full balance pass",
+  "from_ref": "data-beta/v0.107.0/eng",
+  "to_ref": "data-beta/v0.107.1/eng",
+  "summary": {
+    "added": 0,
+    "removed": 0,
+    "changed": 9
+  },
+  "categories": [
+    {
+      "id": "characters",
+      "name": "Characters",
+      "old_count": 5,
+      "new_count": 5,
+      "changed": [
+        {
+          "id": "DEFECT",
+          "name": "The Defect",
+          "changes": [
+            {
+              "field": "animation_url",
+              "old": "/static/images/beta/v0.107.0/characters/defect_power_up.webp",
+              "new": "none"
+            }
+          ]
+        },
+        {
+          "id": "IRONCLAD",
+          "name": "The Ironclad",
+          "changes": [
+            {
+              "field": "animation_url",
+              "old": "/static/images/beta/v0.107.0/characters/ironclad_idle.webp",
+              "new": "none"
+            }
+          ]
+        },
+        {
+          "id": "NECROBINDER",
+          "name": "The Necrobinder",
+          "changes": [
+            {
+              "field": "animation_url",
+              "old": "/static/images/beta/v0.107.0/characters/necrobinder_idle.webp",
+              "new": "none"
+            }
+          ]
+        },
+        {
+          "id": "REGENT",
+          "name": "The Regent",
+          "changes": [
+            {
+              "field": "animation_url",
+              "old": "/static/images/beta/v0.107.0/characters/regent_idle.webp",
+              "new": "none"
+            }
+          ]
+        },
+        {
+          "id": "SILENT",
+          "name": "The Silent",
+          "changes": [
+            {
+              "field": "animation_url",
+              "old": "/static/images/beta/v0.107.0/characters/silent_idle.webp",
+              "new": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "monsters",
+      "name": "Monsters",
+      "old_count": 115,
+      "new_count": 115,
+      "changed": [
+        {
+          "id": "BYRDONIS",
+          "name": "Byrdonis",
+          "changes": [
+            {
+              "field": "attack_pattern.description",
+              "old": "Swoop → Peck → repeat",
+              "new": ""
+            },
+            {
+              "field": "attack_pattern.initial_move",
+              "old": "SWOOP",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[PECK_MOVE].next",
+              "old": "SWOOP_MOVE",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[SWOOP_MOVE].next",
+              "old": "PECK_MOVE",
+              "new": "none"
+            }
+          ]
+        },
+        {
+          "id": "HAUNTED_SHIP",
+          "name": "Haunted Ship",
+          "changes": [
+            {
+              "field": "attack_pattern.description",
+              "old": "Haunt → Swipe → Stomp → repeat",
+              "new": "Always uses Haunt"
+            },
+            {
+              "field": "attack_pattern.states[HAUNT_MOVE].next",
+              "old": "SWIPE_MOVE",
+              "new": "none"
+            }
+          ]
+        },
+        {
+          "id": "LEAF_SLIME_M",
+          "name": "Leaf Slime (M)",
+          "changes": [
+            {
+              "field": "attack_pattern.description",
+              "old": "Sticky Shot → Clump Shot → repeat",
+              "new": ""
+            },
+            {
+              "field": "attack_pattern.initial_move",
+              "old": "STICKY_SHOT",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[CLUMP_SHOT].next",
+              "old": "STICKY_SHOT",
+              "new": "none"
+            },
+            {
+              "field": "attack_pattern.states[STICKY_SHOT].next",
+              "old": "CLUMP_SHOT",
+              "new": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "enchantments",
+      "name": "Enchantments",
+      "old_count": 22,
+      "new_count": 22,
+      "changed": [
+        {
+          "id": "INKY",
+          "name": "Inky",
+          "changes": [
+            {
+              "field": "extra_card_text",
+              "old": "Apply [blue]1[/blue] [gold]Weak[/gold] to ALL enemies.",
+              "new": "Apply [blue]1[/blue] [gold]Weak[/gold]."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
