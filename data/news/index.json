@@ -23,7 +23,8 @@
     "feed_type": 1,
     "tags": [
       "mod_reviewed",
-      "ModAct_1598046824_1781829642_0"
+      "ModAct_1598046824_1781829642_0",
+      "mod_require_rereview"
     ],
     "date": 1781829571,
     "appid": 2868840
