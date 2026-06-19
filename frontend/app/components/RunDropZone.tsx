@@ -100,7 +100,7 @@ export default function RunDropZone({ onFiles, uploading, uploadProgress }: RunD
             Download Overwolf Companion App
           </a>
           <a
-            href="https://www.nexusmods.com/slaythespire2/mods/1272"
+            href="https://steamcommunity.com/sharedfiles/filedetails/?id=3747536911"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-lg text-sm font-medium bg-[var(--accent-gold)] text-white hover:opacity-90 transition-opacity"
