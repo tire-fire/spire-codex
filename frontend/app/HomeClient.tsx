@@ -306,12 +306,12 @@ export default function HomeClient({ initialStats, initialTranslations }: HomeCl
             },
             {
               title: "Download the mod",
-              desc: "Get the Spire Codex mod on Nexus Mods for in-game stats contribution, auto run uploads, and a route planner.",
-              href: "https://www.nexusmods.com/slaythespire2/mods/1272",
+              desc: "Get the Spire Codex mod on the Steam Workshop for in-game stats contribution, auto run uploads, and a route planner.",
+              href: "https://steamcommunity.com/sharedfiles/filedetails/?id=3747536911",
               ext: true,
               icon: (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-9 w-9">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 15v4a2 2 0 002 2h12a2 2 0 002-2v-4" />
+                <svg viewBox="0 0 24 24" fill="currentColor" className="h-9 w-9">
+                  <path d="M11.98 0C5.66 0 .48 4.88.02 11.06L6.45 13.72a3.4 3.4 0 011.92-.59l.14.01 2.86-4.14v-.06a4.54 4.54 0 119.08 0 4.54 4.54 0 01-4.54 4.54h-.1l-4.08 2.91.01.11a3.41 3.41 0 11-6.81.16L.4 14.78A12 12 0 1011.98 0zM7.54 18.21l-1.47-.61a2.56 2.56 0 004.71-.4 2.55 2.55 0 00-3.34-3.35l1.52.63a1.88 1.88 0 11-1.44 3.47v.26zm10.85-9.66a3.02 3.02 0 00-3.02-3.02 3.02 3.02 0 100 6.04 3.02 3.02 0 003.02-3.02zm-5.28-.01a2.27 2.27 0 114.54.01 2.27 2.27 0 01-4.54-.01z" />
                 </svg>
               ),
             },
