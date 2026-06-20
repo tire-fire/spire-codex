@@ -624,6 +624,11 @@ def _build_match(
         m["was_abandoned"] = {"$in": [True, 1]}
     if ascension is not None and ascension != "":
         m["ascension"] = int(ascension)
+    else:
+        # Official runs only: the game caps at Ascension 10, so A11-A99 come
+        # from mods. Exclude them from every stats breakdown (and the
+        # by-ascension grouping) so the stats reflect the real game.
+        m["ascension"] = {"$lte": 10}
     if game_mode:
         m["game_mode"] = game_mode
     if players == "single":

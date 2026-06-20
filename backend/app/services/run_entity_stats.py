@@ -681,6 +681,11 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
             rows = [dict(r) for r in rows]
 
     for row in rows:
+        # Official runs only: A11-A99 are modded (the game caps at Ascension
+        # 10), so skip them from entity scores and the community stats
+        # accumulated in this same walk.
+        if (row.get("ascension") or 0) > 10:
+            continue
         new_totals["total_runs"] += 1
         if row["win"]:
             new_totals["total_wins"] += 1
