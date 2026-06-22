@@ -13,7 +13,7 @@ order: 2
 | Uncommon | 33% |
 | Rare | 17% |
 
-> Used for elite rewards and treasure rooms. If a rarity pool is exhausted, it falls back to the next tier.
+> Used for elite rewards and treasure rooms. If a rarity pool is exhausted, it falls back to the next-higher rarity (Common -> Uncommon -> Rare).
 
 ## Sources
 
@@ -22,4 +22,6 @@ order: 2
 | Elite fight | 1 (random rarity) |
 | Treasure room | 1 (random rarity) |
 | Shop | 3 (2 random + 1 shop) |
-| Boss fight | 1 boss relic |
+| Boss fight | none (gold, a potion roll, and a card reward only) |
+
+Boss combats do not drop a relic. The boss-relic analogue in this game is the Ancient relic, which comes from Ancient map nodes, not from beating a boss.

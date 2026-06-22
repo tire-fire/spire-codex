@@ -5,4 +5,4 @@ category: secrets
 order: 25
 ---
 
-AutoSlay is a full automated player used for CI testing. It picks a random character, plays through up to floor 49 with a 25-minute timeout, handles every room type, always rests at campfires, and reports results to Sentry. It runs in "Fast Mode" with tutorials disabled.
+AutoSlay is a full automated player used for CI testing. It picks a random character, plays through up to floor 49 with a 25-minute timeout, handles every room type, picks a random option at campfires, and reports results to Sentry. It runs in "Fast Mode" with tutorials disabled.

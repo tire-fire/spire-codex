@@ -13,4 +13,4 @@ order: 11
 | Plasma | 1 energy (start of turn) | 2 energy |
 | Glass | 4 damage to all enemies (-1/turn) | Passive value x2 to all enemies |
 
-> Starting slots: 3. Max capacity: 10. When full, channeling evokes the leftmost orb. Focus modifies passive and evoke values.
+> Starting slots: 3. Max capacity: 10. When full, channeling evokes the leftmost orb. Focus modifies most orb passive and evoke values; Plasma energy is unaffected.

@@ -250,7 +250,7 @@ def _resolve_table_monster_scaling() -> str:
             )
     rows.sort(key=lambda r: (-r["hp_delta"], -r["dmg_delta"]))
     lines = [
-        "| Monster | Type | HP | HP @ A7+ | Top attack | @ A2+ |",
+        "| Monster | Type | HP | HP @ A8+ | Top attack | @ A9+ |",
         "|---------|------|----|----------|-----------|-------|",
     ]
     for r in rows:

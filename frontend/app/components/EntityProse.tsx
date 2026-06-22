@@ -61,7 +61,7 @@ export default function EntityProse(props: Props) {
       );
     }
     sentences.push(
-      `Like every relic in Slay the Spire 2, ${name} can also appear as a card-reward replacement under specific conditions and is preserved across combats unless removed by an event.`
+      `Like every relic in Slay the Spire 2, ${name} is preserved across combats unless removed by an event.`
     );
     return <Prose sentences={sentences} />;
   }
@@ -79,7 +79,7 @@ export default function EntityProse(props: Props) {
     const sentences: string[] = [];
     sentences.push(`${name} is a ${rarity} potion${pool ? ` in the ${pool} pool` : ""}.`);
     sentences.push(
-      `Common potions cost roughly 48–53 gold at the merchant, Uncommon 71–79 gold, and Rare 95–105 gold (per-rarity variance ±5%). Potions can also drop from combat rewards based on the per-fight potion drop chance and Foul Potion modifier.`
+      `Common potions cost roughly 48–53 gold at the merchant, Uncommon 71–79 gold, and Rare 95–105 gold (per-rarity variance ±5%). Potions can also drop from combat rewards based on the per-fight potion drop chance (about 40% base, trending toward 50%, with a +25% bonus in elite fights and a ±10% pity adjustment after each fight).`
     );
     sentences.push(
       `${name} can be saved between combats and used at any point during your turn. Effects trigger immediately and the potion is consumed.`

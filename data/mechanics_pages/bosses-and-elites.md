@@ -25,8 +25,8 @@ order: 8
 
 ## Act 3: Glory
 
-**Bosses (1 randomly selected):** Queen, Test Subject, Doormaker
+**Bosses (1 randomly selected):** Queen, Test Subject, Aeonglass
 
 **Elites:** Knights, Mecha Knight, Soul Nexus
 
-> Underdocks replaces Overgrowth 50% of the time (once unlocked). On A10, two bosses are fought at the end of the final act.
+> The first run after you unlock Underdocks is guaranteed to be Underdocks; after that it replaces Overgrowth 50% of the time. On A10, two bosses are fought at the end of the final act.

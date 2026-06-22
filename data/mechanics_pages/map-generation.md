@@ -22,8 +22,8 @@ order: 6
 |------|------:|----:|
 | Elites | 5 | 8 |
 | Shops | 3 | 3 |
-| Unknown (?) | 10-14 | 10-14 |
+| Unknown (?) | 9-14 (varies by act) | (no change) |
 | Rest sites | 5-7 (varies by act) | (no change) |
 | Fights | Remaining slots | (no change) |
 
-> Unknown rooms average ~12 (Gaussian, 10-14). Rest sites: 6-7 in Acts 1-2 (Overgrowth, Underdocks, Hive), 5-6 in Act 3 (Glory). Rest site count is rolled at map generation from a per-act distribution and is independent of ascension level. No elites or rest sites in the first 5 rows.
+> Unknown room count is per act: Act 1 (Overgrowth and Underdocks) rolls 10-14 (Gaussian, averages ~12), while Act 2 (Hive) and Act 3 (Glory) roll one fewer, 9-13 (averages ~11). Rest sites: 6-7 in Acts 1-2 (Overgrowth, Underdocks, Hive), 5-6 in Act 3 (Glory). Both the unknown and rest counts are rolled at map generation from per-act distributions and are independent of ascension level. No elites or rest sites in the first 5 rows.

@@ -14,7 +14,7 @@ Awarded for every completed run, win or lose. Shown on the run-history screen an
 | Rooms visited | 10 pts per room × act number (×1 / ×2 / ×3) |
 | Gold gained | +1 pt per 100 gold (divided by player count) |
 | Elites killed | +50 each (the elite you died to doesn't count) |
-| Bosses slain | +100 each (3 on a win, fewer if you die earlier; A10 wins count 4) |
+| Bosses slain | +100 per boss room you cleared (the boss you died to doesn't count) |
 | Ascension multiplier | ×(1 + ascension × 0.1) |
 
 > Final = (rooms + gold + elites + bosses) × (1 + ascension × 0.1). At A10 your score is doubled. Source: `ScoreUtility.CalculateScore`.
@@ -37,16 +37,16 @@ Hypothetical A0 win — 15 rooms in act 1, 14 in act 2, 14 in act 3, 4 elites ki
 
 ## Daily-Run Leaderboard Score
 
-Daily runs use a completely separate scoring system that's a single packed integer. The digits ARE the sort order — a numeric DESC sort gives the right ranking, no separate columns needed. Major Update #1 introduced this so "the score sent to the leaderboards is based on whether you won, how many badges you accrued, and how quickly you finished the run (in that order)".
+Daily runs use a completely separate scoring system that's a single packed integer. The digits ARE the sort order — a numeric DESC sort gives the right ranking, no separate columns needed. Major Update #1 introduced this so "the score sent to the leaderboards is based on whether you won, how many badges you accrued, and how quickly you finished the run (in that order)". That quote skips a step: the real sort order is victory, then floors visited, then badges, then time. The packed integer is `victory × 1e8 + floors × 1e6 + badges × 1e4 + (9999 − time)`, so floors outrank badges.
 
 | Bucket | Multiplier | Range |
 |--------|-----------|-------|
 | Victory flag | × 100,000,000 | 1 = loss, 2 = win |
 | Floors visited | × 1,000,000 | 0–99 |
 | Badges earned | × 10,000 | 0–99 |
-| Run time | 9999 − seconds | faster = higher |
+| Run time | 9999 − seconds (clamped 0–9999) | faster = higher |
 
-> Source: `ScoreUtility.CalculateDailyScore`. The matching `DecodeDailyScore` peels the integer back into `{ victory, floors, badges, runTime }` for display.
+> Source: `ScoreUtility.CalculateDailyScore`. The matching `DecodeDailyScore` peels the integer back into `{ victory, floors, badges, runTime }` for display. The time term uses your time-to-win on a victory and your total run time on a loss, clamped to 0–9999 seconds before the `9999 − time` flip.
 
 ## Daily-Score Worked Example
 

@@ -9,13 +9,13 @@ Neow offers **3 relic choices**: 2 random positive relics and 1 random curse rel
 
 ## Positive Pool (2 picked)
 
-Arcane Scroll, Booming Conch, Golden Pearl, Lead Paperweight, Lost Coffer, Massive Scroll, Neow's Torment, New Leaf, Phial Holster, Precise Scissors, Winged Boots
+Arcane Scroll, Booming Conch, Golden Pearl, Lead Paperweight, Lost Coffer, Massive Scroll, Neow's Torment, New Leaf, Phial Holster, Precise Scissors, Scroll Boxes (conditional), Winged Boots
 
 Plus one of each pair (50/50 each): Lava Rock / Small Capsule · Nutritious Oyster / Stone Humidifier · Neow's Talisman / Pomander
 
 ## Curse Pool (1 picked)
 
-Cursed Pearl, Hefty Tablet, Large Capsule, Leafy Poultice, Neow's Bones, Precarious Shears, Scroll Boxes (conditional), Silver Crucible (singleplayer only)
+Cursed Pearl, Hefty Tablet, Large Capsule, Leafy Poultice, Neow's Bones, Precarious Shears, Silken Tress, Silver Crucible (singleplayer only)
 
 Conflicting pairs are removed (e.g. Cursed Pearl excludes Golden Pearl, Hefty Tablet excludes Arcane Scroll, Leafy Poultice excludes New Leaf, Precarious Shears excludes Precise Scissors). If Large Capsule rolls as the curse, both the Lava Rock / Small Capsule pair are skipped.
 
