@@ -61,9 +61,11 @@ def parse_applicable_to(content: str) -> str | None:
     restrictions = []
 
     # Tag checks: card.Tags.Contains(CardTag.Strike)
+    # The C# treats multiple tags as alternatives (e.g. Spiral.cs requires
+    # Strike OR Defend), so join with "or" rather than a comma.
     tags = re.findall(r"Tags\.Contains\(CardTag\.(\w+)\)", body)
     if tags:
-        restrictions.append(", ".join(tags) + " cards")
+        restrictions.append(" or ".join(tags) + " cards")
 
     # Rarity checks: card.Rarity == CardRarity.Basic
     rarity_m = re.search(r"Rarity\s*==\s*CardRarity\.(\w+)", body)

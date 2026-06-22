@@ -1068,9 +1068,9 @@ def _fix_fake_merchant(event: dict) -> dict:
     if event["id"] != "FAKE_MERCHANT":
         return event
     event["description"] = (
-        "A suspicious merchant offers 9 fake relics at 42–58 gold each. "
+        "A suspicious merchant offers 6 fake relics (drawn from a pool of 9) at 42–58 gold each. "
         "Throwing a [gold]Foul Potion[/gold] starts a fight against The Merchant??? (165 HP). "
-        "Winning rewards [gold]Fake Merchant's Rug[/gold] plus all unsold relics."
+        "Winning rewards [gold]The Merchant's Rug???[/gold] plus all unsold relics."
     )
     return event
 

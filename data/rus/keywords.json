@@ -20,11 +20,6 @@
     "description": "Эта карта добавляется в [gold]руку[/gold] в начале каждого боя."
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "Оставляется",
     "description": "Эта карта не сбрасывается в конце хода."

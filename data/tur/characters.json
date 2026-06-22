@@ -25,7 +25,7 @@
     "unlocks_after": "Necrobinder",
     "gender": "Neutral",
     "color": "blue",
-    "dialogue_color": "new",
+    "dialogue_color": "13446B",
     "quotes": {
       "event_death_prevention": "Arkadaşlarım için yaşamaya devam etmeliyim!",
       "gold_monologue": "[sine]Bu altın, parçalar için takas edilebilir...[/sine]",
@@ -469,7 +469,7 @@
     "unlocks_after": null,
     "gender": "Masculine",
     "color": "red",
-    "dialogue_color": "new",
+    "dialogue_color": "590700",
     "quotes": {
       "event_death_prevention": "Takımımın hâlâ bana ihtiyacı var.",
       "gold_monologue": "[sine]Bu zenginlikler kabilemin silahlarını güçlendirebilir...[/sine]",
@@ -882,7 +882,7 @@
     "unlocks_after": "Regent",
     "gender": "Feminine",
     "color": "purple",
-    "dialogue_color": "new",
+    "dialogue_color": "6B4658",
     "quotes": {
       "event_death_prevention": "Arkadaşlarım ben olmadan başaramayacak.",
       "gold_monologue": "[sine]Belki sonunda ayakkabı alabilirim...[/sine]",
@@ -1397,7 +1397,7 @@
     "unlocks_after": "Silent",
     "gender": "Masculine",
     "color": "orange",
-    "dialogue_color": "new",
+    "dialogue_color": "52371D",
     "quotes": {
       "event_death_prevention": "Takımıma yardım etmek için yaşamaya devam etmeliyim!!",
       "gold_monologue": "[sine]Aptal olmayan bir orduyu komuta edebilirim...[/sine]",
@@ -1908,7 +1908,7 @@
     "unlocks_after": null,
     "gender": "Feminine",
     "color": "green",
-    "dialogue_color": "new",
+    "dialogue_color": "284719",
     "quotes": {
       "event_death_prevention": "Bir gün daha avlanabilmek için yaşamaya devam etmeliyim...",
       "gold_monologue": "[sine]Kız kardeşlerim bu zenginliklerden gurur duyarlardı...[/sine]",

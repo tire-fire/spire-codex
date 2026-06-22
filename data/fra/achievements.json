@@ -9,15 +9,6 @@
     "condition": "Win with a fully-upgraded deck"
   },
   {
-    "id": "ALL_OTHER_ACHIEVEMENTS",
-    "name": "L'Éternel",
-    "description": "Obtenir tous les autres Succès.",
-    "category": "meta",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete all other achievements"
-  },
-  {
     "id": "CHARACTER_SKILL_IRONCLAD1",
     "name": "Pacte honoré",
     "description": "Épuiser 20 cartes au cours d'un combat.",
@@ -90,24 +81,6 @@
     "condition": "Apply 99+ Poison to a single enemy"
   },
   {
-    "id": "COMPLETE_ACT4",
-    "name": "Véritable fin",
-    "description": "Finir l'Acte 4.",
-    "category": "run",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete Act 4"
-  },
-  {
-    "id": "COMPLETE_TIMELINE",
-    "name": "Historien",
-    "description": "Compléter la Frise temporelle.",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete the Timeline"
-  },
-  {
     "id": "DEFEAT_GLORY_ENEMIES",
     "name": "La Gloire",
     "description": "Vaincre chaque ennemi de la Gloire.",
@@ -153,15 +126,6 @@
     "condition": "Defeat every enemy in the Underdocks"
   },
   {
-    "id": "DEFECT_ASCENSION10",
-    "name": "Résonance",
-    "description": "Gagner avec le Défectueux en Ascension 10.",
-    "category": "character_ascension",
-    "character": "Defect",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "DEFECT_WIN",
     "name": "Le Défectueux",
     "description": "Gagner avec le Défectueux.",
@@ -169,33 +133,6 @@
     "character": "Defect",
     "threshold": null,
     "condition": null
-  },
-  {
-    "id": "DISCOVER_ALL_CARDS",
-    "name": "Collectionneur",
-    "description": "Découvrir toutes les Cartes.",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Discover all cards"
-  },
-  {
-    "id": "DISCOVER_ALL_EVENTS",
-    "name": "Explorateur",
-    "description": "Rencontrer chaque Événement.",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Encounter all events"
-  },
-  {
-    "id": "DISCOVER_ALL_RELICS",
-    "name": "Archéologue",
-    "description": "Découvrir toutes les Reliques.",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Discover all relics"
   },
   {
     "id": "FLOOR_TEN_THOUSAND",
@@ -207,29 +144,11 @@
     "condition": "Climb 10,000 floors total"
   },
   {
-    "id": "IRONCLAD_ASCENSION10",
-    "name": "Démon",
-    "description": "Gagner avec le Soldat de Fer en Ascension 10.",
-    "category": "character_ascension",
-    "character": "Ironclad",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "IRONCLAD_WIN",
     "name": "Le Soldat de Fer",
     "description": "Gagner avec le Soldat de Fer.",
     "category": "character_win",
     "character": "Ironclad",
-    "threshold": null,
-    "condition": null
-  },
-  {
-    "id": "NECROBINDER_ASCENSION10",
-    "name": "Liche",
-    "description": "Gagner avec la Tisse-Mort en Ascension 10.",
-    "category": "character_ascension",
-    "character": "Necrobinder",
     "threshold": null,
     "condition": null
   },
@@ -261,29 +180,11 @@
     "condition": "Play 20 cards in a single turn"
   },
   {
-    "id": "REGENT_ASCENSION10",
-    "name": "Monarque",
-    "description": "Gagner avec le Régent en Ascension 10.",
-    "category": "character_ascension",
-    "character": "Regent",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "REGENT_WIN",
     "name": "Le Régent",
     "description": "Gagner avec le Régent.",
     "category": "character_win",
     "character": "Regent",
-    "threshold": null,
-    "condition": null
-  },
-  {
-    "id": "SILENT_ASCENSION10",
-    "name": "Spectre",
-    "description": "Gagner avec la Silencieuse en Ascension 10.",
-    "category": "character_ascension",
-    "character": "Silent",
     "threshold": null,
     "condition": null
   },

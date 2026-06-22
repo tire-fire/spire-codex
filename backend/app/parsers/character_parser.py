@@ -138,10 +138,20 @@ def parse_character(
     unlocks_after = unlock_match.group(1) if unlock_match else None
 
     # Dialogue color
-    dialogue_color_match = re.search(
-        r"DialogueColor\s*=>\s*(?:StsColors\.)?(\w+)", content
+    # C# forms: `DialogueColor => new Color("HEX")` (the 5 playable chars) or a
+    # named constant like `Colors.Magenta` / `StsColors.Foo`. Capture the hex
+    # from the `new Color("...")` form first, otherwise fall back to the named
+    # constant. The old regex matched the bare `new` keyword from `new Color(...)`.
+    dialogue_color = None
+    hex_match = re.search(
+        r'DialogueColor\s*=>\s*new\s+Color\(\s*"([0-9A-Fa-f]+)"', content
     )
-    dialogue_color = dialogue_color_match.group(1) if dialogue_color_match else None
+    if hex_match:
+        dialogue_color = hex_match.group(1)
+    else:
+        named_match = re.search(r"DialogueColor\s*=>\s*(?:Sts)?Colors\.(\w+)", content)
+        if named_match:
+            dialogue_color = named_match.group(1)
 
     # Localization
     title = localization.get(f"{char_id}.title", class_name)

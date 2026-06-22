@@ -9,15 +9,6 @@
     "condition": "Win with a fully-upgraded deck"
   },
   {
-    "id": "ALL_OTHER_ACHIEVEMENTS",
-    "name": "永存者",
-    "description": "完成其他所有成就。",
-    "category": "meta",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete all other achievements"
-  },
-  {
     "id": "CHARACTER_SKILL_IRONCLAD1",
     "name": "契约完成",
     "description": "在一场战斗中消耗20张牌。",
@@ -90,24 +81,6 @@
     "condition": "Apply 99+ Poison to a single enemy"
   },
   {
-    "id": "COMPLETE_ACT4",
-    "name": "真结局",
-    "description": "完成第四阶段。",
-    "category": "run",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete Act 4"
-  },
-  {
-    "id": "COMPLETE_TIMELINE",
-    "name": "历史学家",
-    "description": "完成时间线。",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete the Timeline"
-  },
-  {
     "id": "DEFEAT_GLORY_ENEMIES",
     "name": "荣耀",
     "description": "打败荣耀的所有敌人。",
@@ -153,15 +126,6 @@
     "condition": "Defeat every enemy in the Underdocks"
   },
   {
-    "id": "DEFECT_ASCENSION10",
-    "name": "回响",
-    "description": "用故障机器人赢得一局进阶10的游戏。",
-    "category": "character_ascension",
-    "character": "Defect",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "DEFECT_WIN",
     "name": "故障机器人",
     "description": "用故障机器人打通游戏。",
@@ -169,33 +133,6 @@
     "character": "Defect",
     "threshold": null,
     "condition": null
-  },
-  {
-    "id": "DISCOVER_ALL_CARDS",
-    "name": "收藏家",
-    "description": "发现所有卡牌。",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Discover all cards"
-  },
-  {
-    "id": "DISCOVER_ALL_EVENTS",
-    "name": "探险家",
-    "description": "遇到所有事件。",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Encounter all events"
-  },
-  {
-    "id": "DISCOVER_ALL_RELICS",
-    "name": "考古学家",
-    "description": "发现所有遗物。",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Discover all relics"
   },
   {
     "id": "FLOOR_TEN_THOUSAND",
@@ -207,29 +144,11 @@
     "condition": "Climb 10,000 floors total"
   },
   {
-    "id": "IRONCLAD_ASCENSION10",
-    "name": "恶魔",
-    "description": "用铁甲战士赢得一局进阶10的游戏。",
-    "category": "character_ascension",
-    "character": "Ironclad",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "IRONCLAD_WIN",
     "name": "铁甲战士",
     "description": "用铁甲战士打通游戏。",
     "category": "character_win",
     "character": "Ironclad",
-    "threshold": null,
-    "condition": null
-  },
-  {
-    "id": "NECROBINDER_ASCENSION10",
-    "name": "巫妖",
-    "description": "用亡灵契约师赢得一局进阶10的游戏。",
-    "category": "character_ascension",
-    "character": "Necrobinder",
     "threshold": null,
     "condition": null
   },
@@ -261,29 +180,11 @@
     "condition": "Play 20 cards in a single turn"
   },
   {
-    "id": "REGENT_ASCENSION10",
-    "name": "帝王",
-    "description": "用储君赢得一局进阶10的游戏。",
-    "category": "character_ascension",
-    "character": "Regent",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "REGENT_WIN",
     "name": "储君",
     "description": "用储君打通游戏。",
     "category": "character_win",
     "character": "Regent",
-    "threshold": null,
-    "condition": null
-  },
-  {
-    "id": "SILENT_ASCENSION10",
-    "name": "幽魂",
-    "description": "用静默猎手赢得一局进阶10的游戏。",
-    "category": "character_ascension",
-    "character": "Silent",
     "threshold": null,
     "condition": null
   },

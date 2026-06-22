@@ -9,15 +9,6 @@
     "condition": "Win with a fully-upgraded deck"
   },
   {
-    "id": "ALL_OTHER_ACHIEVEMENTS",
-    "name": "永遠なる者",
-    "description": "これを除くすべての実績を獲得する。",
-    "category": "meta",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete all other achievements"
-  },
-  {
     "id": "CHARACTER_SKILL_IRONCLAD1",
     "name": "果たされた契約",
     "description": "1回の戦闘でカードを20枚廃棄する。",
@@ -90,24 +81,6 @@
     "condition": "Apply 99+ Poison to a single enemy"
   },
   {
-    "id": "COMPLETE_ACT4",
-    "name": "真エンド",
-    "description": "第4層をクリアする。",
-    "category": "run",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete Act 4"
-  },
-  {
-    "id": "COMPLETE_TIMELINE",
-    "name": "歴史家",
-    "description": "年代記を完成させる。",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete the Timeline"
-  },
-  {
     "id": "DEFEAT_GLORY_ENEMIES",
     "name": "栄光の路",
     "description": "栄光の路に出現するすべての敵を倒す。",
@@ -153,15 +126,6 @@
     "condition": "Defeat every enemy in the Underdocks"
   },
   {
-    "id": "DEFECT_ASCENSION10",
-    "name": "反響",
-    "description": "ディフェクトでアセンション10をクリアする。",
-    "category": "character_ascension",
-    "character": "Defect",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "DEFECT_WIN",
     "name": "ディフェクト",
     "description": "ディフェクトでゲームをクリアする。",
@@ -169,33 +133,6 @@
     "character": "Defect",
     "threshold": null,
     "condition": null
-  },
-  {
-    "id": "DISCOVER_ALL_CARDS",
-    "name": "コレクター",
-    "description": "すべてのカードを発見する。",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Discover all cards"
-  },
-  {
-    "id": "DISCOVER_ALL_EVENTS",
-    "name": "探検家",
-    "description": "すべてのイベントに遭遇する。",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Encounter all events"
-  },
-  {
-    "id": "DISCOVER_ALL_RELICS",
-    "name": "考古学者",
-    "description": "すべてのレリックを発見する。",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Discover all relics"
   },
   {
     "id": "FLOOR_TEN_THOUSAND",
@@ -207,29 +144,11 @@
     "condition": "Climb 10,000 floors total"
   },
   {
-    "id": "IRONCLAD_ASCENSION10",
-    "name": "悪魔",
-    "description": "アイアンクラッドでアセンション10をクリアする。",
-    "category": "character_ascension",
-    "character": "Ironclad",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "IRONCLAD_WIN",
     "name": "アイアンクラッド",
     "description": "アイアンクラッドでゲームをクリアする。",
     "category": "character_win",
     "character": "Ironclad",
-    "threshold": null,
-    "condition": null
-  },
-  {
-    "id": "NECROBINDER_ASCENSION10",
-    "name": "リッチ",
-    "description": "ネクロバインダーでアセンション10をクリアする。",
-    "category": "character_ascension",
-    "character": "Necrobinder",
     "threshold": null,
     "condition": null
   },
@@ -261,29 +180,11 @@
     "condition": "Play 20 cards in a single turn"
   },
   {
-    "id": "REGENT_ASCENSION10",
-    "name": "君主",
-    "description": "リージェントでアセンション10をクリアする。",
-    "category": "character_ascension",
-    "character": "Regent",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "REGENT_WIN",
     "name": "リージェント",
     "description": "リージェントでゲームをクリアする。",
     "category": "character_win",
     "character": "Regent",
-    "threshold": null,
-    "condition": null
-  },
-  {
-    "id": "SILENT_ASCENSION10",
-    "name": "死霊",
-    "description": "サイレントでアセンション10をクリアする。",
-    "category": "character_ascension",
-    "character": "Silent",
     "threshold": null,
     "condition": null
   },

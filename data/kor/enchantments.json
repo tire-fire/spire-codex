@@ -193,7 +193,7 @@
     "description_raw": null,
     "extra_card_text": null,
     "card_type": null,
-    "applicable_to": "Basic Strike, Defend cards",
+    "applicable_to": "Basic Strike or Defend cards",
     "is_stackable": false,
     "image_url": "/static/images/enchantments/spiral.png"
   },

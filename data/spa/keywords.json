@@ -20,11 +20,6 @@
     "description": "Comienza cada combate con esta carta en tu [gold]Mano[/gold]."
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "Retención",
     "description": "Las cartas retenidas no se descartan al final del turno."

@@ -20,11 +20,6 @@
     "description": "Beginne jeden Kampf mit dieser Karte auf deiner [gold]Hand[/gold]."
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "Behalten",
     "description": "Behaltene Karten werden am Ende des Zuges nicht abgeworfen."

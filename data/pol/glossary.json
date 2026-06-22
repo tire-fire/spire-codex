@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "Talia {Hotkey:choose(None):| ({})}",
+    "name": "Talia",
     "description": "Wyświetl wszystkie karty\nw swojej talii.",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "Stos kart odrzuconych {Hotkey:choose(None):| ({})}",
+    "name": "Stos kart odrzuconych",
     "description": "Jeżeli stos rozgrywający jest pusty, stos kart odrzuconych zostanie do niego wtasowany.\n\nKliknij, aby wyświetlić karty\nna stosie kart odrzuconych.",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "Stos rozgrywający {Hotkey:choose(None):| ({})}",
+    "name": "Stos rozgrywający",
     "description": "Na początku każdej tury\ndobierasz stąd [blue]5[/blue] kart.\n\nKliknij, aby wyświetlić (potasowane) karty na stosie rozgrywającym.",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "Wyczerpane karty {Hotkey:choose(None):| ({})}",
+    "name": "Wyczerpane karty",
     "description": "Kliknij, aby wyświetlić karty Wyczerpane w tej walce.",
     "category": "zones"
   },

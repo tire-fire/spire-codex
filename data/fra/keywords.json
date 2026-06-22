@@ -20,11 +20,6 @@
     "description": "Cette carte commence dans votre [gold]Main[/gold] au début de chaque combat."
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "Retenue",
     "description": "Les cartes Retenues ne sont pas défaussées à la fin de votre tour."

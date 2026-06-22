@@ -9,15 +9,6 @@
     "condition": "Win with a fully-upgraded deck"
   },
   {
-    "id": "ALL_OTHER_ACHIEVEMENTS",
-    "name": "Вечность",
-    "description": "Получите все достижения.",
-    "category": "meta",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete all other achievements"
-  },
-  {
     "id": "CHARACTER_SKILL_IRONCLAD1",
     "name": "Пакт выполнен",
     "description": "Сожгите 20 карт за один бой.",
@@ -90,24 +81,6 @@
     "condition": "Apply 99+ Poison to a single enemy"
   },
   {
-    "id": "COMPLETE_ACT4",
-    "name": "Настоящая концовка",
-    "description": "Пройдите 4-й акт.",
-    "category": "run",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete Act 4"
-  },
-  {
-    "id": "COMPLETE_TIMELINE",
-    "name": "Историк",
-    "description": "Закончите Летопись.",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Complete the Timeline"
-  },
-  {
     "id": "DEFEAT_GLORY_ENEMIES",
     "name": "Чертог",
     "description": "Победите всех врагов в Чертоге.",
@@ -153,15 +126,6 @@
     "condition": "Defeat every enemy in the Underdocks"
   },
   {
-    "id": "DEFECT_ASCENSION10",
-    "name": "Эхо",
-    "description": "Пройдите Возвышение 10 за Дефекта.",
-    "category": "character_ascension",
-    "character": "Defect",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "DEFECT_WIN",
     "name": "Дефект",
     "description": "Победите в вылазке за Дефекта.",
@@ -169,33 +133,6 @@
     "character": "Defect",
     "threshold": null,
     "condition": null
-  },
-  {
-    "id": "DISCOVER_ALL_CARDS",
-    "name": "Коллекционер",
-    "description": "Найдите все карты.",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Discover all cards"
-  },
-  {
-    "id": "DISCOVER_ALL_EVENTS",
-    "name": "Исследователь",
-    "description": "Поучаствуйте во всех событиях.",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Encounter all events"
-  },
-  {
-    "id": "DISCOVER_ALL_RELICS",
-    "name": "Археолог",
-    "description": "Найдите все реликвии.",
-    "category": "collection",
-    "character": null,
-    "threshold": null,
-    "condition": "Discover all relics"
   },
   {
     "id": "FLOOR_TEN_THOUSAND",
@@ -207,29 +144,11 @@
     "condition": "Climb 10,000 floors total"
   },
   {
-    "id": "IRONCLAD_ASCENSION10",
-    "name": "Демон",
-    "description": "Пройдите Возвышение 10 за Латоносца.",
-    "category": "character_ascension",
-    "character": "Ironclad",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "IRONCLAD_WIN",
     "name": "Латоносец",
     "description": "Пройдите вылазку за Латоносца.",
     "category": "character_win",
     "character": "Ironclad",
-    "threshold": null,
-    "condition": null
-  },
-  {
-    "id": "NECROBINDER_ASCENSION10",
-    "name": "Лич",
-    "description": "Пройдите Возвышение 10 за Призывающую.",
-    "category": "character_ascension",
-    "character": "Necrobinder",
     "threshold": null,
     "condition": null
   },
@@ -261,29 +180,11 @@
     "condition": "Play 20 cards in a single turn"
   },
   {
-    "id": "REGENT_ASCENSION10",
-    "name": "Монарх",
-    "description": "Пройдите Возвышение 10 за Наследника.",
-    "category": "character_ascension",
-    "character": "Regent",
-    "threshold": null,
-    "condition": null
-  },
-  {
     "id": "REGENT_WIN",
     "name": "Наследник",
     "description": "Пройдите вылазку за Наследника.",
     "category": "character_win",
     "character": "Regent",
-    "threshold": null,
-    "condition": null
-  },
-  {
-    "id": "SILENT_ASCENSION10",
-    "name": "Призрак",
-    "description": "Пройдите Возвышение 10 за Безмолвную.",
-    "category": "character_ascension",
-    "character": "Silent",
     "threshold": null,
     "condition": null
   },

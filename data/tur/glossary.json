@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "Deste {Hotkey:choose(None):| ({})}",
+    "name": "Deste",
     "description": "Destendeki tüm kartları göster.",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "Atık Destesi {Hotkey:choose(None):| ({})}",
+    "name": "Atık Destesi",
     "description": "Eğer çekme desten boşsa, atık desten çekme destene karıştırılır.\n\nAtık destendeki kartları göstermek için tıkla.",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "Çekme Destesi {Hotkey:choose(None):| ({})}",
+    "name": "Çekme Destesi",
     "description": "Her turun başında\nburadan [blue]5[/blue] kart çekilir.\n\nKarışık sırayla dizilmiş çekme desteni göstermek için tıkla.",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "Tüketilen Kartlar {Hotkey:choose(None):| ({})}",
+    "name": "Tüketilen Kartlar",
     "description": "Bu savaşta Tüketilen kartları göstermek için tıkla.",
     "category": "zones"
   },

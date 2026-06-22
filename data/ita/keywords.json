@@ -20,11 +20,6 @@
     "description": "Inizi ogni combattimento con questa carta nella tua [gold]mano[/gold]."
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "Conservazione",
     "description": "Le carte con Conservazione non vengono scartate al termine del turno."

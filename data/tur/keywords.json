@@ -20,11 +20,6 @@
     "description": "Her savaşa [gold]El[/gold]'inde bu kartla başla."
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "Sakla",
     "description": "Saklanan kartlar tur sonunda elden çıkarılmaz."

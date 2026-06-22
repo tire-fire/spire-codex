@@ -20,11 +20,6 @@
     "description": "Inicie cada combate com esta carta na sua [gold]Mão[/gold]."
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "Manter",
     "description": "Cartas mantidas não são descartadas no final do seu turno."

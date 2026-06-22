@@ -9,8 +9,12 @@ Source of truth:
   - Localization: `extraction/raw/localization/<lang>/badges.json` —
     keys are either `ID.title`/`ID.description` (single-tier) or
     `ID.{bronze,silver,gold}Title`/`ID.{bronze,silver,gold}Description`.
-  - C# classes under `MegaCrit.Sts2.Core.Models.Badges/`, one per badge,
-    expose `Id`, `RequiresWin`, and `MultiplayerOnly`.
+  - C# classes under `MegaCrit.Sts2.Core.Models.Badges/`, one per badge.
+    The id and the requiresWin / multiplayerOnly flags are passed into the
+    Badge base(...) constructor, e.g.
+    `base(run, won, playerId, "BIG_DECK", requiresWin: true, multiplayerOnly: false)`.
+    Badges with no class (loc-only, e.g. FAVORITE_CARD) and disabled cut
+    content (e.g. Whomper, IsObtained() => false) are not emitted.
 
 Icons live at `static/images/badges/badge_<id_lower>.png` — the game derives
 this from `Id.ToLowerInvariant()` (see Badge.cs `IconPath`).
@@ -31,26 +35,62 @@ STATIC_IMAGES = BASE / "backend" / "static" / "images"
 _TIER_ORDER = ("bronze", "silver", "gold")
 
 
+def _is_disabled(text: str) -> bool:
+    """True if the badge can never be obtained (cut content).
+
+    A disabled badge overrides IsObtained() to always return false, e.g.
+    Whomper.cs ("THIS BADGE IS CURRENTLY NOT IN USE"), which is also left out
+    of BadgePool.cs CreateAll. Matches both the expression-bodied form
+    (`IsObtained() => false;`) and the block form (`{ return false; }`).
+    """
+    if re.search(r"IsObtained\s*\(\s*\)\s*=>\s*false\s*;", text):
+        return True
+    block = re.search(
+        r"IsObtained\s*\(\s*\)\s*\{(?P<body>.*?)\}",
+        text,
+        re.DOTALL,
+    )
+    if block and re.fullmatch(r"\s*return\s+false\s*;\s*", block.group("body")):
+        return True
+    return False
+
+
 def _parse_cs_flags() -> dict[str, dict]:
-    """Read each Badge subclass to pull Id / RequiresWin / MultiplayerOnly."""
+    """Read each Badge subclass to pull Id / requiresWin / multiplayerOnly.
+
+    Concrete badges set these in the Badge base(...) constructor call:
+        base(run, won, playerId, "BIG_DECK", requiresWin: true, multiplayerOnly: false)
+    The Id property is just `Id = id;` in Badge.cs, so there is no per-class
+    `Id =>` to scrape; the quoted ctor argument is the source of truth. Only
+    badges with a backing subclass land in this map, so callers can use it to
+    gate out loc-only ids (e.g. FAVORITE_CARD has no class). Disabled badges
+    (Whomper) are skipped entirely.
+    """
     flags: dict[str, dict] = {}
     if not BADGES_CS_DIR.exists():
         return flags
+
+    ctor_re = re.compile(
+        r"base\s*\(\s*run\s*,\s*won\s*,\s*playerId\s*,\s*"
+        r'"(?P<id>[A-Z_]+)"\s*,\s*'
+        r"requiresWin:\s*(?P<win>true|false)\s*,\s*"
+        r"multiplayerOnly:\s*(?P<mp>true|false)\s*\)"
+    )
 
     for cs_file in sorted(BADGES_CS_DIR.glob("*.cs")):
         if cs_file.stem in {"Badge", "BadgePool", "BadgeRarity"}:
             continue
         text = cs_file.read_text(encoding="utf-8", errors="ignore")
-        id_match = re.search(r'Id\s*=>\s*"([A-Z_]+)"', text)
-        if not id_match:
+        ctor = ctor_re.search(text)
+        if not ctor:
             continue
-        bid = id_match.group(1)
-        win = bool(re.search(r"RequiresWin\s*=>\s*true", text))
-        mp = bool(re.search(r"MultiplayerOnly\s*=>\s*true", text))
+        if _is_disabled(text):
+            continue
+        bid = ctor.group("id")
         flags[bid] = {
             "class_name": cs_file.stem,
-            "requires_win": win,
-            "multiplayer_only": mp,
+            "requires_win": ctor.group("win") == "true",
+            "multiplayer_only": ctor.group("mp") == "true",
         }
     return flags
 
@@ -84,6 +124,11 @@ def parse_badges(loc_dir: Path) -> list[dict]:
 
     badges: list[dict] = []
     for bid in sorted(groups.keys()):
+        # Only emit badges that have a real, enabled Badge subclass. This drops
+        # loc-only ids with no backing C# class (e.g. FAVORITE_CARD) and cut
+        # content disabled via IsObtained() => false (e.g. WHOMPER).
+        if bid not in cs_flags:
+            continue
         fields = groups[bid]
         tiered = any(
             f"{tier}Title" in fields or f"{tier}Description" in fields

@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "デッキ {Hotkey:choose(None):| ({})}",
+    "name": "デッキ",
     "description": "デッキ内のすべてのカードを確認する。",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "捨て札 {Hotkey:choose(None):| ({})}",
+    "name": "捨て札",
     "description": "山札が空になると、捨て札がシャッフルされて新たな山札になる。\n\nクリックすると捨て札のカードを確認できる。",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "山札 {Hotkey:choose(None):| ({})}",
+    "name": "山札",
     "description": "毎ターンの開始時に、\nここから[blue]5[/blue]枚のカードを引く。\n\nクリックすると山札のカードを確認できる（表示は順不同）。",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "廃棄札 {Hotkey:choose(None):| ({})}",
+    "name": "廃棄札",
     "description": "クリックするとこの戦闘で廃棄されたカードを確認できる。",
     "category": "zones"
   },

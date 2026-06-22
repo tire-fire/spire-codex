@@ -25,7 +25,7 @@
     "unlocks_after": "Necrobinder",
     "gender": "Neutral",
     "color": "blue",
-    "dialogue_color": "new",
+    "dialogue_color": "13446B",
     "quotes": {
       "event_death_prevention": "Я должен выжить ради друзей!",
       "gold_monologue": "[sine]Это золото можно обменять на детали...[/sine]",
@@ -469,7 +469,7 @@
     "unlocks_after": null,
     "gender": "Masculine",
     "color": "red",
-    "dialogue_color": "new",
+    "dialogue_color": "590700",
     "quotes": {
       "event_death_prevention": "Я еще нужен команде.",
       "gold_monologue": "[sine]Эти богатства могли бы изрядно пополнить оружейную моего племени...[/sine]",
@@ -882,7 +882,7 @@
     "unlocks_after": "Regent",
     "gender": "Feminine",
     "color": "purple",
-    "dialogue_color": "new",
+    "dialogue_color": "6B4658",
     "quotes": {
       "event_death_prevention": "Друзья без меня не справятся.",
       "gold_monologue": "[sine]Может, мне наконец удастся прикупить обувки...[/sine]",
@@ -1397,7 +1397,7 @@
     "unlocks_after": "Silent",
     "gender": "Masculine",
     "color": "orange",
-    "dialogue_color": "new",
+    "dialogue_color": "52371D",
     "quotes": {
       "event_death_prevention": "Я должен выжить ради команды!!",
       "gold_monologue": "[sine]Я мог бы разжиться армией поумнее...[/sine]",
@@ -1908,7 +1908,7 @@
     "unlocks_after": null,
     "gender": "Feminine",
     "color": "green",
-    "dialogue_color": "new",
+    "dialogue_color": "284719",
     "quotes": {
       "event_death_prevention": "Я не могу погибнуть, меня ждет еще не одна охота...",
       "gold_monologue": "[sine]Сестры гордились бы таким богатством...[/sine]",

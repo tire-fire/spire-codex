@@ -1042,8 +1042,19 @@ def parse_single_monster(
                 depth -= 1
             i += 1
         init_block = content[start : i - 1]
+    # v0.104+ added an optional context arg before the target, same as the
+    # move-effects regex above:
+    #   OLD:  PowerCmd.Apply<ArtifactPower>(base.Creature, 3m, ...)
+    #   NEW:  PowerCmd.Apply<ArtifactPower>(new ThrowingPlayerChoiceContext(),
+    #                                       base.Creature, 3m, ...)
+    # The `(?:new ...,)?` non-capturing group swallows it so both signatures
+    # match (e.g. Aeonglass's innate ArtifactPower(3)). Note: this only
+    # recovers the generic `Apply<Power>(...)` form; the non-generic
+    # `Apply(context, powerObj, ...)` call (Aeonglass WitheringPresence) has
+    # no `<Power>` token and is still not captured here.
     for pm in re.finditer(
-        r"PowerCmd\.Apply<(\w+)>\([\w.]+\s*,\s*(\w+)m?\b", init_block
+        r"PowerCmd\.Apply<(\w+)>\(\s*(?:new\s+\w+\([^)]*\)\s*,\s*)?[\w.]+\s*,\s*(\w+?)m?\b",
+        init_block,
     ):
         power_name = pm.group(1).replace("Power", "")
         amount_ref = pm.group(2)

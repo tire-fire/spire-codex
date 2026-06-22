@@ -44,8 +44,18 @@ def parse_act(filepath: Path, localization: dict) -> dict:
     if gen_match:
         encounters = re.findall(r"ModelDb\.Encounter<(\w+)>\(\)", gen_match.group(1))
 
-    # Ancients
-    ancients = re.findall(r"ModelDb\.AncientEvent<(\w+)>\(\)", content)
+    # Ancients: scope to the AllAncients property body only. The whole-file
+    # search also matched the list.Remove(ModelDb.AncientEvent<...>()) calls in
+    # GetUnlockedAncients, which duplicated/inflated the list (HIVE picked up a
+    # 4th Orobas, Overgrowth/Underdocks doubled Neow).
+    ancients = []
+    anc_match = re.search(
+        r"AllAncients\s*=>(.*?)(?:\n\t(?:public|protected|private|internal)\b)",
+        content,
+        re.DOTALL,
+    )
+    if anc_match:
+        ancients = re.findall(r"ModelDb\.AncientEvent<(\w+)>\(\)", anc_match.group(1))
 
     # Events
     events = re.findall(r"ModelDb\.Event<(\w+)>\(\)", content)
@@ -54,9 +64,15 @@ def parse_act(filepath: Path, localization: dict) -> dict:
     rooms_match = re.search(r"BaseNumberOfRooms\s*=>\s*(\d+)", content)
     num_rooms = int(rooms_match.group(1)) if rooms_match else None
 
+    # Index drives play order (Overgrowth=0, Hive=1, Glory=2; Underdocks=0 as
+    # the alternate Act 1). Used to sort acts into play order downstream.
+    index_match = re.search(r"\bIndex\s*=>\s*(\d+)", content)
+    index = int(index_match.group(1)) if index_match else None
+
     return {
         "id": act_id,
         "name": title,
+        "index": index,
         "num_rooms": num_rooms,
         "bosses": [class_name_to_id(b) for b in boss_list],
         "ancients": [class_name_to_id(a) for a in ancients],
@@ -72,6 +88,15 @@ def parse_all_acts(loc_dir: Path) -> list[dict]:
         if filepath.stem == "DeprecatedAct":
             continue
         acts.append(parse_act(filepath, localization))
+    # Sort by play order (Index from the C#), not alphabetically. Index alone
+    # collides (Underdocks and Overgrowth are both Index 0, the two Act 1
+    # variants), so fall back to id for a deterministic order.
+    acts.sort(
+        key=lambda a: (
+            a["index"] if a.get("index") is not None else 99,
+            a["id"],
+        )
+    )
     return acts
 
 

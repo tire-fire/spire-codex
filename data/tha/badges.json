@@ -21,7 +21,7 @@
         "description": "ชนะด้วยกองการ์ด [blue]100[/blue] ใบขึ้นไป"
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_big_deck.png"
   },
@@ -53,7 +53,7 @@
         "description": "ชนะด้วย[red]คำสาป[/red] [blue]5[/blue] ใบขึ้นไป"
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_curses.png"
   },
@@ -111,7 +111,7 @@
         "description": "ชนะด้วยกองการ์ดที่ไม่มีการ์ดซ้ำเลย (ยกเว้นการ์ดเริ่มต้น)"
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_highlander.png"
   },
@@ -127,7 +127,7 @@
         "description": "ชนะด้วยกองการ์ดที่มีการ์ดเดียวกันซ้ำกัน [blue]5[/blue] ใบขึ้นไป (ยกเว้นการ์ดเริ่มต้น)"
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_honed.png"
   },
@@ -185,7 +185,7 @@
         "description": "ชนะการเดินทางโดยพักผ่อนที่จุดพักทุกจุด"
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restful.png"
   },
@@ -201,7 +201,7 @@
         "description": "ชนะการเดินทางโดยไม่พักผ่อนเลย"
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restless.png"
   },
@@ -217,7 +217,7 @@
         "description": "ชนะด้วย HP เพียงแค่ [blue]1[/blue]"
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tablet.png"
   }
