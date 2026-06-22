@@ -13,6 +13,23 @@
     "appid": 2868840
   },
   {
+    "gid": "1835871199312310",
+    "title": "The Neowsletter - June 2026",
+    "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1835871199312310",
+    "is_external_url": true,
+    "author": "demileaf",
+    "feedlabel": "Community Announcements",
+    "feedname": "steam_community_announcements",
+    "feed_type": 1,
+    "tags": [
+      "mod_reviewed",
+      "ModAct_1866137740_1781918191_0",
+      "mod_require_rereview"
+    ],
+    "date": 1781917909,
+    "appid": 2868840
+  },
+  {
     "gid": "1835871199307692",
     "title": "Slay the Spire 2 gets a patch for broken RNG after player turns in gruelling eight hour video exposé",
     "url": "https://steamstore-a.akamaihd.net/news/externalpost/Rock, Paper, Shotgun/1835871199307692",
