@@ -21,7 +21,7 @@
         "description": "Has ganado con un mazo de [blue]100[/blue] cartas o más."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_big_deck.png"
   },
@@ -53,7 +53,7 @@
         "description": "Has ganado con [blue]5[/blue] o más [red]Maldiciones[/red]."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_curses.png"
   },
@@ -70,7 +70,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_damage_leader.png"
   },
   {
@@ -86,7 +86,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_debuffer.png"
   },
   {
@@ -143,25 +143,9 @@
         "description": "Has ganado con tus PV máx. reducidos a menos de la mitad de tus PV iniciales."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_famished.png"
-  },
-  {
-    "id": "FAVORITE_CARD",
-    "name": "Carta favorita",
-    "description": "Has ganado una partida jugando una misma carta más de [blue]100[/blue] veces.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "Carta favorita",
-        "description": "Has ganado una partida jugando una misma carta más de [blue]100[/blue] veces."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_favorite_card.png"
   },
   {
     "id": "GLUTTON",
@@ -185,7 +169,7 @@
         "description": "Has ganado una partida con una cantidad absurda de PV máx. (aumentados en [blue]50[/blue] o más)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_glutton.png"
   },
@@ -212,7 +196,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_healer.png"
   },
   {
@@ -227,7 +211,7 @@
         "description": "Has ganado una partida con un mazo sin cartas repetidas (excluyendo las básicas)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_highlander.png"
   },
@@ -243,7 +227,7 @@
         "description": "Has ganado con un mazo con [blue]5[/blue] cartas repetidas o más (excluyendo las básicas)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_honed.png"
   },
@@ -301,7 +285,7 @@
         "description": "Gana con [blue]600[/blue] de [gold]Oro[/gold] o más."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_money_money.png"
   },
@@ -359,7 +343,7 @@
         "description": "Has ganado una partida descansando en todos los lugares de descanso."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restful.png"
   },
@@ -375,7 +359,7 @@
         "description": "Has ganado una partida sin descansar una sola vez."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restless.png"
   },
@@ -401,7 +385,7 @@
         "description": "Gana una partida en menos de [blue]30[/blue] minutos."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_speedy.png"
   },
@@ -417,7 +401,7 @@
         "description": "Has ganado con solo [blue]1[/blue] PV máx."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tablet.png"
   },
@@ -434,7 +418,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_team_player.png"
   },
   {
@@ -459,24 +443,8 @@
         "description": "Has ganado con un mazo de [blue]5[/blue] cartas o menos."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tiny_deck.png"
-  },
-  {
-    "id": "WHOMPER",
-    "name": "Castañazo",
-    "description": "Has infligido más de [blue]100[/blue] de daño con un solo ataque.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "Castañazo",
-        "description": "Has infligido más de [blue]100[/blue] de daño con un solo ataque."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_whomper.png"
   }
 ]

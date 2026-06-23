@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "牌组{Hotkey:choose(None):|（{}）}",
+    "name": "牌组",
     "description": "查看你牌组中的所有卡牌。",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "弃牌堆{Hotkey:choose(None):|（{}）}",
+    "name": "弃牌堆",
     "description": "如果你的抽牌堆为空，则弃牌堆会被洗入抽牌堆。\n\n点击查看你弃牌堆中的卡牌。",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "抽牌堆{Hotkey:choose(None):|（{}）}",
+    "name": "抽牌堆",
     "description": "在每回合开始时，\n你会从这里抽取[blue]5[/blue]张卡牌。\n\n点击这里查看你抽牌堆中的卡牌（顺序打乱）。",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "消耗牌堆{Hotkey:choose(None):|（{}）}",
+    "name": "消耗牌堆",
     "description": "点击查看在本场战斗中被消耗的卡牌。",
     "category": "zones"
   },

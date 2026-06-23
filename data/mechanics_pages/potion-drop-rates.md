@@ -20,7 +20,7 @@ order: 3
 > **Elite bonus:**
 > The source constant `eliteBonus = {{constants.potion_reward_odds.eliteBonus | pct}}` is *halved* when applied to the roll: `currentValue + eliteBonus * 0.5`. So the **effective** Elite bonus is **+12.5%**, not +25%. That bonus is added to the drop threshold for one roll only — it is never written into the pity counter. The roll is a single check (`rng < currentValue + bonus`); if it passes you get the potion **and** pity moves **−10%**, exactly like any other drop, even when the potion only landed because of the bonus.
 
-> **Bosses roll just like monsters.** The reward switch in `RewardsSet.GenerateRewardsForRoom` calls the same `RollForPotionAndAddTo` path for `Monster`, `Elite`, and `Boss`. Bosses don't get the Elite bonus, so they roll against the bare pity counter, and the result moves the counter ±10% like any other combat.
+> **Bosses roll just like monsters.** The reward switch in `RewardsSet.GenerateRewardsFor` calls the same `RollForPotionAndAddTo` path for `Monster`, `Elite`, and `Boss`. Bosses don't get the Elite bonus, so they roll against the bare pity counter, and the result moves the counter ±10% like any other combat.
 
 ### What the Elite bonus actually does
 

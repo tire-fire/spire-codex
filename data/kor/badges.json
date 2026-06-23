@@ -21,7 +21,7 @@
         "description": "카드 [blue]100[/blue]장 이상의 덱으로 승리했습니다."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_big_deck.png"
   },
@@ -53,7 +53,7 @@
         "description": "[blue]5[/blue]장 이상의 [red]저주[/red] 카드를 지닌 채로 승리했습니다."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_curses.png"
   },
@@ -70,7 +70,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_damage_leader.png"
   },
   {
@@ -86,7 +86,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_debuffer.png"
   },
   {
@@ -143,25 +143,9 @@
         "description": "최대 체력이 시작 체력의 절반 이하로 감소한 상태에서 승리했습니다."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_famished.png"
-  },
-  {
-    "id": "FAVORITE_CARD",
-    "name": "최애 카드",
-    "description": "한 번의 도전에서 같은 카드를 [blue]100[/blue]번 이상 사용하고 승리했습니다.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "최애 카드",
-        "description": "한 번의 도전에서 같은 카드를 [blue]100[/blue]번 이상 사용하고 승리했습니다."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_favorite_card.png"
   },
   {
     "id": "GLUTTON",
@@ -185,7 +169,7 @@
         "description": "최대 체력이 터무니없이 높은 상태로 도전을 승리했습니다 ([blue]50[/blue] 이상 증가했습니다)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_glutton.png"
   },
@@ -212,7 +196,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_healer.png"
   },
   {
@@ -227,7 +211,7 @@
         "description": "똑같은 카드가 없는 덱으로 승리했습니다 (시작 카드 제외)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_highlander.png"
   },
@@ -243,7 +227,7 @@
         "description": "같은 카드가 [blue]5[/blue]장 이상 있는 덱으로 승리했습니다 (시작 카드 제외)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_honed.png"
   },
@@ -301,7 +285,7 @@
         "description": "[blue]600[/blue] 이상의 [gold]골드[/gold]를 지닌 채로 승리했습니다."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_money_money.png"
   },
@@ -359,7 +343,7 @@
         "description": "모든 휴식 장소에서 휴식을 취하고 승리했습니다."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restful.png"
   },
@@ -375,7 +359,7 @@
         "description": "휴식을 취하지 않고 도전을 승리했습니다."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restless.png"
   },
@@ -401,7 +385,7 @@
         "description": "[blue]30[/blue]분 이내에 도전을 승리하세요."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_speedy.png"
   },
@@ -417,7 +401,7 @@
         "description": "최대 체력이 [blue]1[/blue]인 상태로 승리하세요."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tablet.png"
   },
@@ -434,7 +418,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_team_player.png"
   },
   {
@@ -459,24 +443,8 @@
         "description": "카드 [blue]5[/blue]장 이하의 덱으로 승리했습니다."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tiny_deck.png"
-  },
-  {
-    "id": "WHOMPER",
-    "name": "일격필살",
-    "description": "한 번의 공격으로 [blue]100[/blue]이 넘는 피해를 줬습니다.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "일격필살",
-        "description": "한 번의 공격으로 [blue]100[/blue]이 넘는 피해를 줬습니다."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_whomper.png"
   }
 ]

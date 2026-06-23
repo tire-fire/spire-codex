@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "Deck {Hotkey:choose(None):| ({})}",
+    "name": "Deck",
     "description": "Sieh alle Karten in deinem Deck an.",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "Abwurfstapel {Hotkey:choose(None):| ({})}",
+    "name": "Abwurfstapel",
     "description": "Wenn dein Nachziehstapel leer ist, wird der Abwurfstapel in den Nachziehstapel gemischt.\n\nKlicke, um die Karten in deinem Abwurfstapel zu sehen.",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "Nachziehstapel {Hotkey:choose(None):| ({})}",
+    "name": "Nachziehstapel",
     "description": "Zu Beginn jedes Zuges werden\n[blue]5[/blue] Karten von hier gezogen.\n\nKlicke, um die Karten in deinem Nachziehstapel anzusehen (gemischt).",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "Erschöpfte Karten {Hotkey:choose(None):| ({})}",
+    "name": "Erschöpfte Karten",
     "description": "Klicke, um Karten zu sehen, die in diesem Kampf Erschöpft wurden.",
     "category": "zones"
   },

@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "Deck {Hotkey:choose(None):| ({})}",
+    "name": "Deck",
     "description": "Visionnez toutes les cartes de votre deck.",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "Défausse {Hotkey:choose(None):| ({})}",
+    "name": "Défausse",
     "description": "Si votre pioche est vide, la défausse est remélangée à la pioche.\n\nCliquez pour visionner les cartes dans la défausse.",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "Pioche {Hotkey:choose(None):| ({})}",
+    "name": "Pioche",
     "description": "Au début de chaque tour,\nvous piochez [blue]5[/blue] cartes de cette pile.\n\nCliquez pour visionner les cartes de la pioche (dans le désordre).",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "Cartes Épuisées {Hotkey:choose(None):| ({})}",
+    "name": "Cartes Épuisées",
     "description": "Cliquez pour visionner les cartes Épuisées pendant ce combat.",
     "category": "zones"
   },

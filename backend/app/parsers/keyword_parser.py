@@ -43,8 +43,13 @@ def parse_keywords(loc_dir: Path) -> list[dict]:
         if kw_id in seen:
             continue
         seen.add(kw_id)
-        title = loc.get(f"{kw_id}.title", kw_id.replace("_", " ").title())
-        desc = loc.get(f"{kw_id}.description", "")
+        # Real CardKeyword loc entries always carry both a `.title` and a
+        # `.description` sub-key. Skip bare loc strings like `"PERIOD": "."`
+        # (trailing punctuation used by CardKeywordExtensions, not a keyword).
+        title = loc.get(f"{kw_id}.title")
+        desc = loc.get(f"{kw_id}.description")
+        if title is None or desc is None:
+            continue
         desc_clean = clean_description(desc)
         keywords.append(
             {
@@ -279,33 +284,18 @@ def parse_achievements(loc_dir: Path) -> list[dict]:
     with open(loc_file, "r", encoding="utf-8") as f:
         loc = json.load(f)
 
-    # Achievement metadata from C# source
+    # Achievement metadata keyed by the SCREAMING_SNAKE_CASE form of each
+    # member of the `Achievement` enum (MegaCrit.Sts2.Core.Achievements.
+    # Achievement.cs — 22 members). Every key below is enum-backed; loc-only
+    # ids that have no enum member (e.g. *_ASCENSION10, COMPLETE_ACT4,
+    # COMPLETE_TIMELINE, DISCOVER_ALL_*, ALL_OTHER_ACHIEVEMENTS) are not real
+    # achievements and are filtered out below.
     ACHIEVEMENT_META: dict[str, dict] = {
         "IRONCLAD_WIN": {"category": "character_win", "character": "Ironclad"},
         "SILENT_WIN": {"category": "character_win", "character": "Silent"},
         "REGENT_WIN": {"category": "character_win", "character": "Regent"},
         "NECROBINDER_WIN": {"category": "character_win", "character": "Necrobinder"},
         "DEFECT_WIN": {"category": "character_win", "character": "Defect"},
-        "IRONCLAD_ASCENSION10": {
-            "category": "character_ascension",
-            "character": "Ironclad",
-        },
-        "SILENT_ASCENSION10": {
-            "category": "character_ascension",
-            "character": "Silent",
-        },
-        "REGENT_ASCENSION10": {
-            "category": "character_ascension",
-            "character": "Regent",
-        },
-        "NECROBINDER_ASCENSION10": {
-            "category": "character_ascension",
-            "character": "Necrobinder",
-        },
-        "DEFECT_ASCENSION10": {
-            "category": "character_ascension",
-            "character": "Defect",
-        },
         "CHARACTER_SKILL_IRONCLAD1": {
             "category": "character_skill",
             "character": "Ironclad",
@@ -384,31 +374,10 @@ def parse_achievements(loc_dir: Path) -> list[dict]:
             "category": "run",
             "condition": "Win with a fully-upgraded deck",
         },
-        "COMPLETE_ACT4": {"category": "run", "condition": "Complete Act 4"},
         "FLOOR_TEN_THOUSAND": {
             "category": "collection",
             "threshold": 10000,
             "condition": "Climb 10,000 floors total",
-        },
-        "DISCOVER_ALL_CARDS": {
-            "category": "collection",
-            "condition": "Discover all cards",
-        },
-        "DISCOVER_ALL_RELICS": {
-            "category": "collection",
-            "condition": "Discover all relics",
-        },
-        "DISCOVER_ALL_EVENTS": {
-            "category": "collection",
-            "condition": "Encounter all events",
-        },
-        "COMPLETE_TIMELINE": {
-            "category": "collection",
-            "condition": "Complete the Timeline",
-        },
-        "ALL_OTHER_ACHIEVEMENTS": {
-            "category": "meta",
-            "condition": "Complete all other achievements",
         },
     }
 
@@ -422,11 +391,17 @@ def parse_achievements(loc_dir: Path) -> list[dict]:
             continue
         seen.add(ach_id)
 
+        # Only emit ids that are backed by a member of the Achievement enum.
+        # Orphan loc strings (*_ASCENSION10, COMPLETE_ACT4, COMPLETE_TIMELINE,
+        # DISCOVER_ALL_*, ALL_OTHER_ACHIEVEMENTS) have no enum member and are
+        # not real achievements.
+        meta = ACHIEVEMENT_META.get(ach_id)
+        if meta is None:
+            continue
+
         title = loc.get(f"{ach_id}.title", ach_id.replace("_", " ").title())
         desc = loc.get(f"{ach_id}.description", "")
         desc_clean = clean_description(desc)
-
-        meta = ACHIEVEMENT_META.get(ach_id, {})
         achievements.append(
             {
                 "id": ach_id,
@@ -524,6 +499,15 @@ def parse_glossary(loc_dir: Path) -> list[dict]:
             continue
         # Strip keyboard shortcut hints like "(D)", "(ESC)"
         title = re.sub(r"\s*\([A-Z]+\)\s*$", "", title)
+        # Strip unresolved template tokens like "{Hotkey:choose(None):| ({})}"
+        # so names read "Deck"/"Discard Pile"/"Draw Pile"/"Exhausted Cards".
+        # Tokens nest, so peel innermost braces until none remain.
+        while "{" in title:
+            new_title = re.sub(r"\{[^{}]*\}", "", title)
+            if new_title == title:
+                break
+            title = new_title
+        title = re.sub(r"  +", " ", title).strip()
         desc = clean_description(desc)
         # Clean unresolvable template variables
         desc = re.sub(r"\{[^}]+\}", "", desc).strip()

@@ -20,11 +20,6 @@
     "description": "每场战斗开始时这张牌会出现在你的[gold]手牌[/gold]。"
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "保留",
     "description": "保留的牌不会在回合结束时被弃掉。"

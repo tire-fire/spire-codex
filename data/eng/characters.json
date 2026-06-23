@@ -25,7 +25,7 @@
     "unlocks_after": "Necrobinder",
     "gender": "Neutral",
     "color": "blue",
-    "dialogue_color": "new",
+    "dialogue_color": "13446B",
     "quotes": {
       "event_death_prevention": "I must live on for my friends!",
       "gold_monologue": "[sine]This gold can be exchanged for parts...[/sine]",
@@ -469,7 +469,7 @@
     "unlocks_after": null,
     "gender": "Masculine",
     "color": "red",
-    "dialogue_color": "new",
+    "dialogue_color": "590700",
     "quotes": {
       "event_death_prevention": "My team still needs me.",
       "gold_monologue": "[sine]These riches can bolster my tribe's armory...[/sine]",
@@ -882,7 +882,7 @@
     "unlocks_after": "Regent",
     "gender": "Feminine",
     "color": "purple",
-    "dialogue_color": "new",
+    "dialogue_color": "6B4658",
     "quotes": {
       "event_death_prevention": "My friends won't make it without me.",
       "gold_monologue": "[sine]Maybe I can finally buy some shoes...[/sine]",
@@ -1397,7 +1397,7 @@
     "unlocks_after": "Silent",
     "gender": "Masculine",
     "color": "orange",
-    "dialogue_color": "new",
+    "dialogue_color": "52371D",
     "quotes": {
       "event_death_prevention": "I must live on to help my team!!",
       "gold_monologue": "[sine]I can commandeer an army of non-idiots...[/sine]",
@@ -1908,7 +1908,7 @@
     "unlocks_after": null,
     "gender": "Feminine",
     "color": "green",
-    "dialogue_color": "new",
+    "dialogue_color": "284719",
     "quotes": {
       "event_death_prevention": "Must live on to hunt another day...",
       "gold_monologue": "[sine]My sisters would be proud of these riches...[/sine]",

@@ -1,6 +1,6 @@
 ---
-title: Two Relics Are Banned From Shops
-description: The Courier and Old Coin are hardcoded into the merchant blacklist — they can never appear in shops.
+title: Five Relics Are Banned From Shops
+description: The Courier, Old Coin, Lucky Fysh, Bowler Hat, and Amethyst Aubergine are hardcoded into the merchant blacklist, so they can never appear in shops.
 category: secrets
 order: 24
 ---

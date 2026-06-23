@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "Mazzo {Hotkey:choose(None):| ({})}",
+    "name": "Mazzo",
     "description": "Vedi tutte le carte del tuo mazzo.",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "Pila degli scarti {Hotkey:choose(None):| ({})}",
+    "name": "Pila degli scarti",
     "description": "Se il tuo mazzo di pesca è vuoto, la pila degli scarti viene mischiata nel mazzo di pesca.\n\nFai clic per vedere le carte nella tua pila degli scarti.",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "Mazzo di pesca {Hotkey:choose(None):| ({})}",
+    "name": "Mazzo di pesca",
     "description": "All'inizio di ogni turno,\npeschi [blue]5[/blue] carte da questo mazzo.\n\nFai clic per vedere le carte nel tuo mazzo di pesca (mischiate).",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "Carte esaurite {Hotkey:choose(None):| ({})}",
+    "name": "Carte esaurite",
     "description": "Fai clic per vedere le carte esaurite in questo combattimento.",
     "category": "zones"
   },

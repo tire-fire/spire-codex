@@ -21,7 +21,7 @@
         "description": "Partie remportée avec un deck de [blue]100[/blue] cartes ou plus."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_big_deck.png"
   },
@@ -53,7 +53,7 @@
         "description": "Partie remportée avec [blue]5[/blue] [red]Malédictions[/red] ou plus."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_curses.png"
   },
@@ -70,7 +70,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_damage_leader.png"
   },
   {
@@ -86,7 +86,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_debuffer.png"
   },
   {
@@ -143,25 +143,9 @@
         "description": "Partie remportée avec les PV Max à moins de la moitié des PV Max de départ."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_famished.png"
-  },
-  {
-    "id": "FAVORITE_CARD",
-    "name": "Carte favorite",
-    "description": "Partie remportée en ayant joué une même carte plus de [blue]100[/blue] fois.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "Carte favorite",
-        "description": "Partie remportée en ayant joué une même carte plus de [blue]100[/blue] fois."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_favorite_card.png"
   },
   {
     "id": "GLUTTON",
@@ -185,7 +169,7 @@
         "description": "Partie remportée avec les PV Max absurdement élevés (augmentés de [blue]50[/blue] ou plus)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_glutton.png"
   },
@@ -212,7 +196,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_healer.png"
   },
   {
@@ -227,7 +211,7 @@
         "description": "Partie remportée avec un deck n'incluant aucune carte en double (hormis les cartes basiques)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_highlander.png"
   },
@@ -243,7 +227,7 @@
         "description": "Partie remportée avec un deck contenant au moins [blue]5[/blue] copies d'une même carte (hormis les cartes basiques)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_honed.png"
   },
@@ -301,7 +285,7 @@
         "description": "Partie remportée avec [blue]600[/blue] [gold]Pièces d'or[/gold] ou plus."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_money_money.png"
   },
@@ -359,7 +343,7 @@
         "description": "Partie remportée en se reposant à chaque Site de repos."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restful.png"
   },
@@ -375,7 +359,7 @@
         "description": "Partie remportée sans jamais se reposer."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restless.png"
   },
@@ -401,7 +385,7 @@
         "description": "Partie remportée en moins de [blue]30[/blue] minutes."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_speedy.png"
   },
@@ -417,7 +401,7 @@
         "description": "Partie remportée avec seulement [blue]1[/blue] PV Max."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tablet.png"
   },
@@ -434,7 +418,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_team_player.png"
   },
   {
@@ -459,24 +443,8 @@
         "description": "Partie remportée avec un deck de [blue]5[/blue] cartes ou moins."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tiny_deck.png"
-  },
-  {
-    "id": "WHOMPER",
-    "name": "Coup de massue",
-    "description": "A infligé plus de [blue]100[/blue] dégâts en une seule attaque.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "Coup de massue",
-        "description": "A infligé plus de [blue]100[/blue] dégâts en une seule attaque."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_whomper.png"
   }
 ]

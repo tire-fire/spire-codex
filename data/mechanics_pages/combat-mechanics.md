@@ -23,7 +23,7 @@ An attack's damage is computed in a fixed order. First, the printed value is add
 
 > Buffs (Strength, Dexterity) accumulate additively and last the whole combat. Debuffs (Vulnerable, Weak, Frail) are *counters* — the multiplier is fixed regardless of stack count, but the counter ticks down by 1 at the end of each turn until it reaches zero. Multi-hit attacks apply the full damage pipeline (Strength + multipliers + Block) on every hit.
 
-> **Enemy ascension scaling.** Monster HP and damage are bumped per-monster at **ToughEnemies** (A7+) and **DeadlyEnemies** (A2+) respectively, using the `AscensionHelper.GetValueIfAscension` pattern. Each monster ships with both its base and ascended values — see the [full scaling table](/mechanics/enemy-ascension-scaling).
+> **Enemy ascension scaling.** Monster HP and damage are bumped per-monster at **ToughEnemies** (A8+) and **DeadlyEnemies** (A9+) respectively, using the `AscensionHelper.GetValueIfAscension` pattern. Each monster ships with both its base and ascended values — see the [full scaling table](/mechanics/enemy-ascension-scaling).
 
 ## Hand & Draw
 

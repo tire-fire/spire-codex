@@ -25,7 +25,7 @@
     "unlocks_after": "Necrobinder",
     "gender": "Neutral",
     "color": "blue",
-    "dialogue_color": "new",
+    "dialogue_color": "13446B",
     "quotes": {
       "event_death_prevention": "Devo sopravvivere per i miei amici!",
       "gold_monologue": "[sine]Con questo oro posso comprare dei pezzi...[/sine]",
@@ -469,7 +469,7 @@
     "unlocks_after": null,
     "gender": "Masculine",
     "color": "red",
-    "dialogue_color": "new",
+    "dialogue_color": "590700",
     "quotes": {
       "event_death_prevention": "La mia squadra ha ancora bisogno di me.",
       "gold_monologue": "[sine]Con tutto questo sfarzo potrò rafforzare l'armeria della mia tribù...[/sine]",
@@ -882,7 +882,7 @@
     "unlocks_after": "Regent",
     "gender": "Feminine",
     "color": "purple",
-    "dialogue_color": "new",
+    "dialogue_color": "6B4658",
     "quotes": {
       "event_death_prevention": "I miei amici non ce la faranno senza di me.",
       "gold_monologue": "[sine]Forse ora posso finalmente comprarmi delle scarpe...[/sine]",
@@ -1397,7 +1397,7 @@
     "unlocks_after": "Silent",
     "gender": "Masculine",
     "color": "orange",
-    "dialogue_color": "new",
+    "dialogue_color": "52371D",
     "quotes": {
       "event_death_prevention": "Devo sopravvivere per aiutare la mia squadra!",
       "gold_monologue": "[sine]Così potrei comandare un esercito con un po' di sale in zucca...[/sine]",
@@ -1908,7 +1908,7 @@
     "unlocks_after": null,
     "gender": "Feminine",
     "color": "green",
-    "dialogue_color": "new",
+    "dialogue_color": "284719",
     "quotes": {
       "event_death_prevention": "Devo sopravvivere per continuare a cacciare...",
       "gold_monologue": "[sine]Le mie sorelle sarebbero orgogliose di tutto questo sfarzo...[/sine]",

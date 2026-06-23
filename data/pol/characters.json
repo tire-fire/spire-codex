@@ -25,7 +25,7 @@
     "unlocks_after": "Necrobinder",
     "gender": "Neutral",
     "color": "blue",
-    "dialogue_color": "new",
+    "dialogue_color": "13446B",
     "quotes": {
       "event_death_prevention": "Muszę przetrwać dla moich przyjaciół!",
       "gold_monologue": "[sine]Mogę wymienić to złoto na części...[/sine]",
@@ -469,7 +469,7 @@
     "unlocks_after": null,
     "gender": "Masculine",
     "color": "red",
-    "dialogue_color": "new",
+    "dialogue_color": "590700",
     "quotes": {
       "event_death_prevention": "Moja kompania wciąż mnie potrzebuje.",
       "gold_monologue": "[sine]Mogę wzmocnić zbrojownię klanu tym majątkiem...[/sine]",
@@ -882,7 +882,7 @@
     "unlocks_after": "Regent",
     "gender": "Feminine",
     "color": "purple",
-    "dialogue_color": "new",
+    "dialogue_color": "6B4658",
     "quotes": {
       "event_death_prevention": "Moi przyjaciele nie przetrwają beze mnie.",
       "gold_monologue": "[sine]Może wreszcie kupię sobie buty...[/sine]",
@@ -1397,7 +1397,7 @@
     "unlocks_after": "Silent",
     "gender": "Masculine",
     "color": "orange",
-    "dialogue_color": "new",
+    "dialogue_color": "52371D",
     "quotes": {
       "event_death_prevention": "Muszę przeżyć, aby pomóc mojej drużynie!!",
       "gold_monologue": "[sine]Mogę dowodzić armią nie-idiotów...[/sine]",
@@ -1908,7 +1908,7 @@
     "unlocks_after": null,
     "gender": "Feminine",
     "color": "green",
-    "dialogue_color": "new",
+    "dialogue_color": "284719",
     "quotes": {
       "event_death_prevention": "Muszę przeżyć, aby polować dalej...",
       "gold_monologue": "[sine]Siostry byłyby dumne z takich bogactw...[/sine]",

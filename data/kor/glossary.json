@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "덱 {Hotkey:choose(None):| ({})}",
+    "name": "덱",
     "description": "덱에 있는 모든 카드를 확인합니다.",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "버린 카드 더미 {Hotkey:choose(None):| ({})}",
+    "name": "버린 카드 더미",
     "description": "뽑을 카드 더미가 비어있다면, 버린 카드 더미를 뽑을 카드 더미에 섞어 넣습니다.\n\n버린 카드 더미의 카드들을 보려면 클릭하세요.",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "뽑을 카드 더미 {Hotkey:choose(None):| ({})}",
+    "name": "뽑을 카드 더미",
     "description": "매 턴 시작 시,\n이곳에서 카드를 [blue]5[/blue]장 뽑습니다.\n\n뽑을 카드 더미의 카드들을 보려면 클릭하세요 (섞여있음).",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "소멸된 카드 {Hotkey:choose(None):| ({})}",
+    "name": "소멸된 카드",
     "description": "이번 전투 동안 소멸된 카드들을 보려면 클릭하세요.",
     "category": "zones"
   },

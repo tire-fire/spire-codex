@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "Baralho {Hotkey:choose(None):| ({})}",
+    "name": "Baralho",
     "description": "Exibe todas as cartas no seu baralho.",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "Pilha de Descarte {Hotkey:choose(None):| ({})}",
+    "name": "Pilha de Descarte",
     "description": "Se a sua pilha de compra estiver vazia, a pilha de descarte é embaralhada na pilha de compra.\n\nClique para exibir as cartas na sua pilha de descarte.",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "Pilha de Compra {Hotkey:choose(None):| ({})}",
+    "name": "Pilha de Compra",
     "description": "No início de cada turno,\n[blue]5[/blue] cartas são compradas daqui.\n\nClique para exibir as cartas na sua pilha de compra (embaralhadas).",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "Cartas Exauridas {Hotkey:choose(None):| ({})}",
+    "name": "Cartas Exauridas",
     "description": "Clique para exibir as cartas Exauridas neste combate.",
     "category": "zones"
   },

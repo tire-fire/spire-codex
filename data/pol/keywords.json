@@ -20,11 +20,6 @@
     "description": "Zaczynasz walkę z tą kartą w [gold]ręce[/gold]."
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "Zachowanie",
     "description": "Zachowane karty nie są odrzucane pod koniec tury."

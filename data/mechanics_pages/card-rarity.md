@@ -90,7 +90,8 @@ The pity counter only moves on **combat reward** rolls (Monster, Elite, Boss roo
 
 | Source | Reads offset? | Updates offset? |
 |--------|:-------------:|:---------------:|
-| Combat / elite / boss reward | yes | yes |
+| Combat / elite reward | yes | yes |
+| Boss reward | **no** (boss always rolls Rare at 100%) | yes (reset to {{constants.card_rarity_odds._baseRarityOffset | pct}}) |
 | Sealed Deck (Neow option) | yes | yes |
 | Shop's class card slots | yes | **no** |
 | "Random card" events (e.g. Infested Automaton, Brain Leech, Trial, Endless Conveyor) | **no** | **no** |
@@ -141,7 +142,7 @@ These hand out one or more card rewards, each **locked to a specific rarity** (t
 | Source | Card rewards (each is a 3-card pick unless noted) | Pool |
 |--------|------|------|
 | Glass Eye | Common, Common, Uncommon, Uncommon, Rare | your character |
-| Sea Glass | Common, Uncommon, Rare | your character |
+| Sea Glass | 15 cards: 5 Common + 5 Uncommon + 5 Rare, keep as many as you want (not a 3-card pick) | your character |
 | Crystal Sphere | Common, Uncommon, Rare | your character |
 | Colorful Philosophers | Common, Uncommon, Rare | a chosen **other** character |
 | Room Full of Cheese | 8 cards, all Common | your character |

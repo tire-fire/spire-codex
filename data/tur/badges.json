@@ -21,7 +21,7 @@
         "description": "[blue]100[/blue] veya daha fazla kartı içeren bir desteyle kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_big_deck.png"
   },
@@ -53,7 +53,7 @@
         "description": "[blue]5[/blue] veya daha fazla [red]Lanet[/red] ile kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_curses.png"
   },
@@ -70,7 +70,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_damage_leader.png"
   },
   {
@@ -86,7 +86,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_debuffer.png"
   },
   {
@@ -143,25 +143,9 @@
         "description": "Maksimum CP değerin başlangıç CP'nin yarısından azken kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_famished.png"
-  },
-  {
-    "id": "FAVORITE_CARD",
-    "name": "Favori Kartın",
-    "description": "Bir kartı [blue]100[/blue]'den fazla kez oynadın ve oyunu kazandın.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "Favori Kartın",
-        "description": "Bir kartı [blue]100[/blue]'den fazla kez oynadın ve oyunu kazandın."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_favorite_card.png"
   },
   {
     "id": "GLUTTON",
@@ -185,7 +169,7 @@
         "description": "Absürt miktarda yüksek bir Maksimum CP ile oyun kazandın. ([blue]50[/blue] veya daha fazla artırılmış)"
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_glutton.png"
   },
@@ -212,7 +196,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_healer.png"
   },
   {
@@ -227,7 +211,7 @@
         "description": "Başlangıç kartları hariç, hiçbir kartın aynı olmadığı bir desteyle kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_highlander.png"
   },
@@ -243,7 +227,7 @@
         "description": "Başlangıç kartları hariç, aynı karttan [blue]5[/blue] veya daha fazlasını içeren bir desteyle kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_honed.png"
   },
@@ -301,7 +285,7 @@
         "description": "[blue]600[/blue] veya daha fazla [gold]Altın[/gold] ile kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_money_money.png"
   },
@@ -359,7 +343,7 @@
         "description": "Her Dinlenme Yeri'nde dinlenerek oyunu kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restful.png"
   },
@@ -375,7 +359,7 @@
         "description": "Hiç dinlenmeden bir oyun kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restless.png"
   },
@@ -401,7 +385,7 @@
         "description": "[blue]30[/blue] dakikanın altında bir oyun kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_speedy.png"
   },
@@ -417,7 +401,7 @@
         "description": "Yalnızca [blue]1[/blue] Maksimum CP ile kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tablet.png"
   },
@@ -434,7 +418,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_team_player.png"
   },
   {
@@ -459,24 +443,8 @@
         "description": "[blue]5[/blue] veya daha az kartın olduğu bir desteyle kazandın."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tiny_deck.png"
-  },
-  {
-    "id": "WHOMPER",
-    "name": "Şamarcı",
-    "description": "Tek bir saldırı ile [blue]100[/blue]'ün üzerinde hasar verdin.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "Şamarcı",
-        "description": "Tek bir saldırı ile [blue]100[/blue]'ün üzerinde hasar verdin."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_whomper.png"
   }
 ]

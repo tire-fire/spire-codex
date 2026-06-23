@@ -21,7 +21,7 @@
         "description": "Wygrano talią złożoną z przynajmniej [blue]100[/blue] kart."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_big_deck.png"
   },
@@ -53,7 +53,7 @@
         "description": "Wygrano z przynajmniej [blue]5[/blue] [red]Klątwami[/red]."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_curses.png"
   },
@@ -70,7 +70,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_damage_leader.png"
   },
   {
@@ -86,7 +86,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_debuffer.png"
   },
   {
@@ -143,25 +143,9 @@
         "description": "Wygrano z przynajmniej dwukrotnie zmniejszonymi maks. PŻ."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_famished.png"
-  },
-  {
-    "id": "FAVORITE_CARD",
-    "name": "Ulubiona karta",
-    "description": "Wygrano po zagraniu jednej karty ponad [blue]100[/blue] razy.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "Ulubiona karta",
-        "description": "Wygrano po zagraniu jednej karty ponad [blue]100[/blue] razy."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_favorite_card.png"
   },
   {
     "id": "GLUTTON",
@@ -185,7 +169,7 @@
         "description": "Wygrano z absurdalnie wielką liczbą maks. PŻ (zwiększone o przynajmniej [blue]50[/blue] pkt.)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_glutton.png"
   },
@@ -212,7 +196,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_healer.png"
   },
   {
@@ -227,7 +211,7 @@
         "description": "Wygrano talią, w której nie ma dwóch takich samych kart (nie obejmuje kart Startowych)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_highlander.png"
   },
@@ -243,7 +227,7 @@
         "description": "Wygrano z przynajmniej [blue]5[/blue] kopiami karty (nie licząc kart Startowych)."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_honed.png"
   },
@@ -301,7 +285,7 @@
         "description": "Wygrano z przynajmniej [blue]600[/blue] szt. [gold]Złota[/gold]."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_money_money.png"
   },
@@ -359,7 +343,7 @@
         "description": "Wygrano odpoczywając w każdym Obozowisku."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restful.png"
   },
@@ -375,7 +359,7 @@
         "description": "Wygrano bez odpoczywania w Obozowisku."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_restless.png"
   },
@@ -401,7 +385,7 @@
         "description": "Wygrano w mniej niż [blue]30[/blue] minut."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_speedy.png"
   },
@@ -417,7 +401,7 @@
         "description": "Wygrano tylko z [blue]1[/blue] maks. PŻ."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tablet.png"
   },
@@ -434,7 +418,7 @@
       }
     ],
     "requires_win": false,
-    "multiplayer_only": false,
+    "multiplayer_only": true,
     "image_url": "/static/images/badges/badge_team_player.png"
   },
   {
@@ -459,24 +443,8 @@
         "description": "Wygrano talią złożoną z maksymalnie [blue]5[/blue] kart."
       }
     ],
-    "requires_win": false,
+    "requires_win": true,
     "multiplayer_only": false,
     "image_url": "/static/images/badges/badge_tiny_deck.png"
-  },
-  {
-    "id": "WHOMPER",
-    "name": "Strzał z hukiem",
-    "description": "Zadano więcej niż [blue]100[/blue] pkt. obrażeń jednym atakiem.",
-    "tiered": false,
-    "tiers": [
-      {
-        "rarity": "bronze",
-        "title": "Strzał z hukiem",
-        "description": "Zadano więcej niż [blue]100[/blue] pkt. obrażeń jednym atakiem."
-      }
-    ],
-    "requires_win": false,
-    "multiplayer_only": false,
-    "image_url": "/static/images/badges/badge_whomper.png"
   }
 ]

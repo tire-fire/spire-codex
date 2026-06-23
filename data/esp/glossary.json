@@ -25,19 +25,19 @@
   },
   {
     "id": "DECK",
-    "name": "Mazo {Hotkey:choose(None):| ({})}",
+    "name": "Mazo",
     "description": "Muestra todas las cartas del mazo.",
     "category": "zones"
   },
   {
     "id": "DISCARD_PILE",
-    "name": "Pila de descarte {Hotkey:choose(None):| ({})}",
+    "name": "Pila de descarte",
     "description": "Si tu mazo de robo está vacío, la pila de descarte se barajará en tu mazo de robo.\n\nToca para ver las cartas de tu pila de descarte.",
     "category": "zones"
   },
   {
     "id": "DRAW_PILE",
-    "name": "Mazo de robo {Hotkey:choose(None):| ({})}",
+    "name": "Mazo de robo",
     "description": "Al comienzo de cada turno,\nrobas [blue]5[/blue] cartas de aquí.\n\nToca para ver las cartas del mazo de robo (barajadas).",
     "category": "zones"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": "EXHAUST_PILE",
-    "name": "Pila de agotamiento {Hotkey:choose(None):| ({})}",
+    "name": "Pila de agotamiento",
     "description": "Haz clic aquí para ver las cartas agotadas en este combate.",
     "category": "zones"
   },

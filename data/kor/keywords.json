@@ -20,11 +20,6 @@
     "description": "매 전투마다 이 카드를 [gold]손[/gold]에 든 상태로 시작합니다."
   },
   {
-    "id": "PERIOD",
-    "name": "Period",
-    "description": ""
-  },
-  {
     "id": "RETAIN",
     "name": "보존",
     "description": "보존된 카드는 턴 종료 시 버려지지 않습니다."
