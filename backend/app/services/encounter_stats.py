@@ -20,11 +20,19 @@ stats.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # Bump when the cell shape below changes so stale snapshots are ignored
 # (the run_entity_stats snapshot version gates the actual reload).
-ENCOUNTER_VERSION = 1
+ENCOUNTER_VERSION = 2
+
+# Content brackets the blob is accumulated per (matches charts_stats). A run
+# feeds every bracket it matches: "all" plus the A10-gated win-rate ladder, so
+# the encounter table can re-slice by skill.
+_BLOB_BRACKETS = ["all", "a10", "wr30", "wr50", "wr75"]
 
 # Room types that count as combat. Matches the old aggregation's default
 # `rooms_filter` ([monster, elite, boss]); other room types never carry an
@@ -32,7 +40,7 @@ ENCOUNTER_VERSION = 1
 _COMBAT_ROOMS = ("monster", "elite", "boss")
 
 
-def new_accumulator() -> dict[str, Any]:
+def _new_acc_one() -> dict[str, Any]:
     return {
         # (encounter_id, act, room_type, character, mp) ->
         #   [total, fatal, total_damage, total_turns]
@@ -42,7 +50,37 @@ def new_accumulator() -> dict[str, Any]:
     }
 
 
+def new_accumulator() -> dict[str, Any]:
+    """Per-bracket accumulators; accumulate() folds each run into every content
+    bracket it belongs to."""
+    return {b: _new_acc_one() for b in _BLOB_BRACKETS}
+
+
 def accumulate(
+    acc: dict[str, Any],
+    blob: dict,
+    *,
+    brackets,
+    character: str,
+    is_win: bool,
+    player_count: int,
+    killed_by: str | None,
+) -> None:
+    """Fold one run into the sub-accumulator of every bracket it belongs to."""
+    for b in brackets:
+        sub = acc.get(b)
+        if sub is not None:
+            _accumulate_one(
+                sub,
+                blob,
+                character=character,
+                is_win=is_win,
+                player_count=player_count,
+                killed_by=killed_by,
+            )
+
+
+def _accumulate_one(
     acc: dict[str, Any],
     blob: dict,
     *,
@@ -108,9 +146,14 @@ def accumulate(
 
 
 def finalize(acc: dict[str, Any]) -> dict[str, Any]:
-    """JSON/BSON-able cell list for the snapshot. Tuple keys flatten into a
-    list so entity ids never collide with Mongo field-name rules; rollups
-    happen per request."""
+    """Per-bracket JSON/BSON-able blob for the snapshot: {bracket: <cells>}."""
+    return {b: _finalize_one(sub) for b, sub in acc.items()}
+
+
+def _finalize_one(acc: dict[str, Any]) -> dict[str, Any]:
+    """JSON/BSON-able cell list for one bracket. Tuple keys flatten into a list
+    so entity ids never collide with Mongo field-name rules; rollups happen per
+    request."""
     return {
         "version": ENCOUNTER_VERSION,
         "cells": [
@@ -126,7 +169,49 @@ def finalize(acc: dict[str, Any]) -> dict[str, Any]:
 
 
 def empty() -> dict[str, Any]:
+    """Per-bracket empty blob ({bracket: <empty cells>})."""
     return finalize(new_accumulator())
+
+
+def empty_one() -> dict[str, Any]:
+    """One bracket's empty finalized blob (the rollup fallback)."""
+    return _finalize_one(_new_acc_one())
+
+
+_official_enc_ids: frozenset[str] | None = None
+
+
+def _official_encounter_ids() -> frozenset[str]:
+    """Uppercase official encounter ids (main + current beta catalog), memoized.
+    Beta-only encounters are official (they ship in the Steam beta build), so
+    they're included. An empty set means the catalog could not be read; rollup
+    then skips the filter, so a transient data-read failure never blanks the
+    table (matches the modded-id guards elsewhere)."""
+    global _official_enc_ids
+    if _official_enc_ids is not None:
+        return _official_enc_ids
+    ids: set[str] = set()
+    try:
+        from . import data_service
+
+        def _add() -> None:
+            for e in data_service.load_encounters() or []:
+                eid = e.get("id") or ""
+                if eid:
+                    ids.add(eid.split(".", 1)[-1].upper())
+
+        _add()
+        if data_service.get_beta_version():
+            token = data_service.current_channel.set("beta")
+            try:
+                _add()
+            finally:
+                data_service.current_channel.reset(token)
+    except Exception:
+        logger.warning("encounter official-id load failed", exc_info=True)
+        return frozenset()
+    _official_enc_ids = frozenset(ids)
+    return _official_enc_ids
 
 
 def rollup(
@@ -156,10 +241,16 @@ def rollup(
     else:
         mp_keep = {"solo", "multi"}
 
+    # Modded-id scrub: drop encounter ids not in the official (main + beta)
+    # catalog, like charts_stats.encounter_ranking. Empty set -> don't filter.
+    official = _official_encounter_ids()
+
     # (encounter, act, room_type) -> aggregate with a nested per-character map.
     grouped: dict[tuple[str, int, str], dict[str, Any]] = {}
     for cell in cells:
         enc_id, act, room_type, character, mp, total, fatal, dmg, turns = cell
+        if official and enc_id not in official:
+            continue
         if mp not in mp_keep:
             continue
         if room_type not in rooms_filter:

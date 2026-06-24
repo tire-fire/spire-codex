@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import os
+from functools import lru_cache
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -70,8 +71,15 @@ def _merge_starter(cid: str | None) -> str | None:
     return cid
 
 
-def new_accumulator() -> dict[str, Any]:
-    """A fresh, mutable accumulator for one full run-file walk."""
+COMMUNITY_VERSION = 1
+# Content brackets the blob is accumulated per (matches charts_stats /
+# encounter_stats): "all" plus the A10-gated win-rate ladder, so the community
+# datasets can re-slice by skill.
+_BLOB_BRACKETS = ["all", "a10", "wr30", "wr50", "wr75"]
+
+
+def _new_acc_one() -> dict[str, Any]:
+    """A fresh, mutable accumulator for one full run-file walk (one bracket)."""
     return {
         "total_runs": 0,
         "total_wins": 0,
@@ -98,6 +106,12 @@ def new_accumulator() -> dict[str, Any]:
     }
 
 
+def new_accumulator() -> dict[str, Any]:
+    """Per-bracket accumulators; accumulate() folds each run into every content
+    bracket it belongs to."""
+    return {b: _new_acc_one() for b in _BLOB_BRACKETS}
+
+
 def _bump(d: dict, key: Any, n: int = 1) -> None:
     d[key] = d.get(key, 0) + n
 
@@ -106,13 +120,37 @@ def accumulate(
     acc: dict[str, Any],
     blob: dict,
     *,
+    brackets,
     run_hash: str,
     is_win: bool,
     character: str,
     ascension: int,
 ) -> None:
-    """Fold one run into the accumulator. Safe on partial/old blobs: every
-    field is read defensively so a missing key never aborts the walk."""
+    """Fold one run into the sub-accumulator of every bracket it belongs to."""
+    for b in brackets:
+        sub = acc.get(b)
+        if sub is not None:
+            _accumulate_one(
+                sub,
+                blob,
+                run_hash=run_hash,
+                is_win=is_win,
+                character=character,
+                ascension=ascension,
+            )
+
+
+def _accumulate_one(
+    acc: dict[str, Any],
+    blob: dict,
+    *,
+    run_hash: str,
+    is_win: bool,
+    character: str,
+    ascension: int,
+) -> None:
+    """Fold one run into ONE bracket's accumulator. Safe on partial/old blobs:
+    every field is read defensively so a missing key never aborts the walk."""
     acc["total_runs"] += 1
     if is_win:
         acc["total_wins"] += 1
@@ -264,9 +302,14 @@ def accumulate(
 # ── Finalize: resolve names + compute percentages ────────────────────────────
 
 
+@lru_cache(maxsize=1)
 def _name_maps() -> dict[str, dict[str, str]]:
     """Build id -> display-name lookups from the game data. Each is best
-    effort; a failed load just means we fall back to a prettified id."""
+    effort; a failed load just means we fall back to a prettified id.
+
+    Memoized: per-bracket finalize calls this once per bracket, but the catalog
+    is stable within a process (a beta promotion is a deploy = restart), so the
+    underlying data loads happen once."""
     from . import data_service
 
     out: dict[str, dict[str, str]] = {}
@@ -409,7 +452,12 @@ def _beta_spotlight(acc: dict[str, Any], names: dict) -> dict[str, Any]:
 
 
 def finalize(acc: dict[str, Any]) -> dict[str, Any]:
-    """Turn the raw accumulator into the JSON the API/page render."""
+    """Per-bracket finalized blob for the snapshot: {bracket: <datasets>}."""
+    return {b: _finalize_one(sub) for b, sub in acc.items()}
+
+
+def _finalize_one(acc: dict[str, Any]) -> dict[str, Any]:
+    """Turn one bracket's raw accumulator into the JSON the API/page render."""
     names = _name_maps()
     ev_names = names["events"]
     ev_opts = names["_event_options"]  # type: ignore[index]
@@ -578,5 +626,10 @@ def _ancient_picks(acc: dict[str, Any], names: dict) -> list[dict]:
 
 
 def empty() -> dict[str, Any]:
-    """The shape returned before any snapshot exists."""
+    """Per-bracket empty blob, before any snapshot exists."""
     return finalize(new_accumulator())
+
+
+def empty_one() -> dict[str, Any]:
+    """One bracket's empty finalized blob (the read-side fallback)."""
+    return _finalize_one(_new_acc_one())

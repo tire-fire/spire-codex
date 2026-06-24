@@ -663,6 +663,7 @@ def get_encounter_stats_endpoint(
     multiplayer: str | None = None,
     page: int = 1,
     limit: int = 50,
+    bracket: str | None = None,
 ):
     """Per-encounter combat stats over submitted runs.
 
@@ -682,21 +683,17 @@ def get_encounter_stats_endpoint(
         `exclude` removes multiplayer runs, omit for both.
       * `page` (default 1) + `limit` (default 50, max 200) — pagination
         applied after grouping, sorted by sample size descending.
+      * `bracket` — content bracket: `a10`, `wr30`, `wr50`, `wr75`
+        (A10-gated win-rate tiers). Omit for all runs.
 
     Each row contains the encounter's total appearances, fatal count,
     avg damage taken, avg turns, plus a `characters` array with the
     same fields scoped per character. Returns `{encounters, page,
-    limit, total, has_next}`. Mongo-only (returns empty when MONGO_URL
-    is unset for local dev).
+    limit, total, has_next}`. Served from the in-memory snapshot, which
+    is built on both the Mongo and SQLite paths.
     """
-    if not os.environ.get("MONGO_URL", "").strip():
-        return {
-            "encounters": [],
-            "page": page,
-            "limit": limit,
-            "total": 0,
-            "has_next": False,
-        }
+    if bracket is not None and bracket not in ("a10", "wr30", "wr50", "wr75"):
+        raise HTTPException(status_code=400, detail="bad bracket")
 
     from ..services.run_entity_stats import (
         get_encounter_stats as _get_encounter_stats,
@@ -714,6 +711,7 @@ def get_encounter_stats_endpoint(
         multiplayer=multiplayer,
         page=page,
         limit=limit,
+        bracket=bracket,
     )
 
 
@@ -983,18 +981,23 @@ def runs_snapshot_status(request: Request, response: Response):
 
 @router.get("/community-stats", tags=["Runs"])
 @limiter.limit("60/minute")
-def community_stats(request: Request, response: Response):
+def community_stats(request: Request, response: Response, bracket: str | None = None):
     """Community / fun stats for the /community-stats page: per-event player
     decision breakdowns, deadliest encounters/events, headline totals by
     ascension and character, and a few records and quirks. Official game
     content only (modded entities are filtered out). Built in the same walk
-    as the Codex Score cache, so this is an in-memory read."""
+    as the Codex Score cache, so this is an in-memory read.
+
+    `bracket` slices to a content bracket (`a10`, `wr30`, `wr50`, `wr75`);
+    omit for all runs."""
+    if bracket is not None and bracket not in ("a10", "wr30", "wr50", "wr75"):
+        raise HTTPException(status_code=400, detail="bad bracket")
     # An empty shell during a post-deploy rebuild must not stick in the
     # edge cache for 5 minutes on top of the rebuild itself.
     response.headers["Cache-Control"] = (
         "public, max-age=300" if snapshot_loaded() else "no-store"
     )
-    return get_community_fun_stats()
+    return get_community_fun_stats(bracket=bracket)
 
 
 @router.get("/me/picks", tags=["Runs"])
