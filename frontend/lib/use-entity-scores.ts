@@ -20,14 +20,18 @@ export type ScoresMap = Record<string, ScoreEntry>;
  * client-side cache survives soft navs. Use this on list pages to
  * surface tier badges without N round-trips per row.
  */
-export function useEntityScores(entityType: "cards" | "relics" | "potions"): ScoresMap {
+export function useEntityScores(
+  entityType: "cards" | "relics" | "potions",
+  param?: string,
+): ScoresMap {
   const [scores, setScores] = useState<ScoresMap>({});
 
   useEffect(() => {
-    cachedFetch<ScoresMap>(`${API}/api/runs/scores/${entityType}`)
+    const qs = param && param !== "all" ? `?bracket=${encodeURIComponent(param)}` : "";
+    cachedFetch<ScoresMap>(`${API}/api/runs/scores/${entityType}${qs}`)
       .then(setScores)
       .catch(() => setScores({}));
-  }, [entityType]);
+  }, [entityType, param]);
 
   return scores;
 }

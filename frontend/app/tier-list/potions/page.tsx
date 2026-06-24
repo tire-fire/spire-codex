@@ -4,6 +4,8 @@ import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE, buildLanguageAlternates } from "
 import JsonLd from "@/app/components/JsonLd";
 import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd } from "@/lib/jsonld";
 import TierList, { type TierEntity } from "@/app/components/TierList";
+import BracketFilter from "@/app/components/BracketFilter";
+import { bracketParam, normalizeBracket } from "@/lib/content-brackets";
 
 const API_INTERNAL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -40,11 +42,18 @@ export const metadata: Metadata = {
   },
 };
 
-async function fetchData(): Promise<{ potions: ApiPotion[]; scores: ScoresMap }> {
+interface PageProps {
+  searchParams: Promise<{ bracket?: string }>;
+}
+
+async function fetchData(
+  param?: string | null,
+): Promise<{ potions: ApiPotion[]; scores: ScoresMap }> {
   try {
+    const scoresUrl = `${API_INTERNAL}/api/runs/scores/potions${param ? `?bracket=${param}` : ""}`;
     const [potionsRes, scoresRes] = await Promise.all([
       fetch(`${API_INTERNAL}/api/potions`, { next: { revalidate: 1800 } }),
-      fetch(`${API_INTERNAL}/api/runs/scores/potions`, { next: { revalidate: 300 } }),
+      fetch(scoresUrl, { next: { revalidate: 300 } }),
     ]);
     const potions = potionsRes.ok ? ((await potionsRes.json()) as ApiPotion[]) : [];
     const scores = scoresRes.ok ? ((await scoresRes.json()) as ScoresMap) : {};
@@ -54,8 +63,11 @@ async function fetchData(): Promise<{ potions: ApiPotion[]; scores: ScoresMap }>
   }
 }
 
-export default async function PotionsTierListPage() {
-  const { potions, scores } = await fetchData();
+export default async function PotionsTierListPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const bracket = normalizeBracket(sp.bracket);
+  const param = bracketParam(bracket);
+  const { potions, scores } = await fetchData(param);
 
   const entities: TierEntity[] = potions.map((p) => ({
     id: p.id,
@@ -103,6 +115,9 @@ export default async function PotionsTierListPage() {
         Ranked by <Link href="/leaderboards/scoring" className="text-[var(--accent-gold)] hover:underline">Codex Score</Link>,
         community win-rate data with Bayesian shrinkage. Click any potion for full stats.
       </p>
+
+      {/* Content bracket: grade against all runs, A10, or win-rate skill tiers. */}
+      <BracketFilter basePath="/tier-list/potions" current={bracket} />
 
       <TierList route="potions" entities={entities} />
     </div>

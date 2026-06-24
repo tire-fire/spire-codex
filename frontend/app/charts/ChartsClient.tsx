@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { CONTENT_BRACKETS, normalizeBracket } from "@/lib/content-brackets";
 import {
   Chart as ChartJS,
   LineElement,
@@ -159,6 +160,8 @@ const MODE_OPTS = [
   { value: "daily", label: "Daily" },
   { value: "custom", label: "Custom" },
 ];
+// Content brackets (frame charts only). "all" sends no param.
+const BRACKET_OPTS = CONTENT_BRACKETS.map((b) => ({ value: b.key, label: b.label }));
 const SPLIT_LABELS: Record<string, string> = {
   character: "By character",
   players: "By player count",
@@ -215,6 +218,7 @@ export default function ChartsClient() {
   const [chart, setChart] = useState(searchParams.get("chart") || "winrate-by-floor");
   const [players, setPlayers] = useState(searchParams.get("players") || "");
   const [ascension, setAscension] = useState(searchParams.get("ascension") || "");
+  const [bracket, setBracket] = useState(() => normalizeBracket(searchParams.get("bracket")));
   const [gameMode, setGameMode] = useState(searchParams.get("mode") || "");
   const [usernameInput, setUsernameInput] = useState(searchParams.get("user") || "");
   const [username, setUsername] = useState(searchParams.get("user") || "");
@@ -304,6 +308,7 @@ export default function ChartsClient() {
     if (chart !== "winrate-by-floor") p.set("chart", chart);
     if (players) p.set("players", players);
     if (ascension) p.set("ascension", ascension);
+    if (bracket !== "all") p.set("bracket", bracket);
     if (gameMode) p.set("mode", gameMode);
     if (username) p.set("user", username);
     if (split !== "character" && spec?.splits.includes(split)) p.set("split", split);
@@ -320,7 +325,7 @@ export default function ChartsClient() {
     }
     const qs = p.toString();
     router.replace(`/charts${qs ? `?${qs}` : ""}`, { scroll: false });
-  }, [chart, players, ascension, gameMode, username, split, stat, xStat, yStat, encounter, event, etype, entity, needsEntity, spec, router]);
+  }, [chart, players, ascension, bracket, gameMode, username, split, stat, xStat, yStat, encounter, event, etype, entity, needsEntity, spec, router]);
 
   // Fetch the chart itself.
   useEffect(() => {
@@ -331,6 +336,7 @@ export default function ChartsClient() {
     const p = new URLSearchParams();
     if (players) p.set("players", players);
     if (spec.kind === "frame" && !spec.daily && ascension) p.set("ascension", ascension);
+    if (!spec.daily && bracket !== "all") p.set("bracket", bracket);
     if (spec.kind === "frame" && !spec.daily && gameMode) p.set("game_mode", gameMode);
     if (username) p.set("username", username);
     if (spec.splits.includes(split) && split !== "character") p.set("split", split);
@@ -368,7 +374,7 @@ export default function ChartsClient() {
         }
       });
     return () => ctrl.abort();
-  }, [spec, meta, players, ascension, gameMode, username, split, stat, xStat, yStat, encounter, event, effEtype, entity, needsEntity]);
+  }, [spec, meta, players, ascension, bracket, gameMode, username, split, stat, xStat, yStat, encounter, event, effEtype, entity, needsEntity]);
 
   const groups = useMemo(() => {
     const g = new Map<string, ChartSpec[]>();
@@ -509,9 +515,17 @@ export default function ChartsClient() {
               ))}
             </select>
           </div>
+          {/* Content bracket: works on both frame and blob charts (the blob is
+              accumulated per bracket). Only the daily chart opts out. */}
+          <Pills
+            options={BRACKET_OPTS}
+            value={bracket}
+            onChange={setBracket}
+            disabled={spec?.daily}
+          />
           {spec?.kind === "blob" && (
             <span className="text-xs text-[var(--text-muted)]">
-              This chart covers all ascensions and modes.
+              Exact ascension and mode don&apos;t apply here; use the Bracket to slice by skill.
             </span>
           )}
           {spec?.daily && (

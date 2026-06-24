@@ -4,6 +4,8 @@ import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE, buildLanguageAlternates } from "
 import JsonLd from "@/app/components/JsonLd";
 import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd } from "@/lib/jsonld";
 import TierList, { type TierEntity } from "@/app/components/TierList";
+import BracketFilter from "@/app/components/BracketFilter";
+import { bracketParam, normalizeBracket } from "@/lib/content-brackets";
 
 const API_INTERNAL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -80,7 +82,7 @@ function eloTiered(cards: BaseCard[]): TierEntity[] {
 }
 
 interface PageProps {
-  searchParams: Promise<{ color?: string; sort?: string }>;
+  searchParams: Promise<{ color?: string; sort?: string; bracket?: string }>;
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -111,13 +113,16 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   };
 }
 
-async function fetchData(color?: string): Promise<{ cards: ApiCard[]; scores: ScoresMap }> {
+async function fetchData(
+  color?: string,
+  param?: string | null,
+): Promise<{ cards: ApiCard[]; scores: ScoresMap }> {
   // Two parallel fetches: the entity list (filtered by color server-side
   // to keep payloads small) + the bulk-scores map. Failures degrade
   // gracefully to empty so the page still renders the "no data" state
   // instead of a 500 (e.g. during cold-start cache miss).
   const cardsUrl = `${API_INTERNAL}/api/cards${color ? `?color=${color}` : ""}`;
-  const scoresUrl = `${API_INTERNAL}/api/runs/scores/cards`;
+  const scoresUrl = `${API_INTERNAL}/api/runs/scores/cards${param ? `?bracket=${param}` : ""}`;
   try {
     const [cardsRes, scoresRes] = await Promise.all([
       fetch(cardsUrl, { next: { revalidate: 1800 } }),
@@ -135,7 +140,9 @@ export default async function CardsTierListPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const color = sp.color?.toLowerCase();
   const sort: SortMode = sp.sort === "elo" ? "elo" : "score";
-  const { cards, scores } = await fetchData(color);
+  const bracket = normalizeBracket(sp.bracket);
+  const param = bracketParam(bracket);
+  const { cards, scores } = await fetchData(color, param);
 
   const base: BaseCard[] = cards
     // mad_science is a multi-type event card with no full render; hide it.
@@ -173,6 +180,7 @@ export default async function CardsTierListPage({ searchParams }: PageProps) {
     const params = new URLSearchParams();
     if (color) params.set("color", color);
     if (s === "elo") params.set("sort", "elo");
+    if (bracket !== "all") params.set("bracket", bracket);
     const qs = params.toString();
     return `/tier-list/cards${qs ? `?${qs}` : ""}`;
   };
@@ -264,12 +272,14 @@ export default async function CardsTierListPage({ searchParams }: PageProps) {
 
       {/* Character filter, anchor links so each filtered view is its
           own indexable URL (good for "ironclad tier list" SEO). */}
-      <div className="flex flex-wrap gap-1.5 mb-6">
+      <div className="flex flex-wrap items-center gap-1.5 mb-6">
+        <span className="text-xs text-[var(--text-muted)] mr-1">Characters</span>
         {COLOR_FILTERS.map((opt) => {
           const isActive = (color ?? "") === opt.value;
           const params = new URLSearchParams();
           if (opt.value) params.set("color", opt.value);
           if (sort === "elo") params.set("sort", "elo");
+          if (bracket !== "all") params.set("bracket", bracket);
           const qs = params.toString();
           const href = `/tier-list/cards${qs ? `?${qs}` : ""}`;
           return (
@@ -287,6 +297,13 @@ export default async function CardsTierListPage({ searchParams }: PageProps) {
           );
         })}
       </div>
+
+      {/* Content bracket: grade against all runs, A10, or win-rate skill tiers. */}
+      <BracketFilter
+        basePath="/tier-list/cards"
+        current={bracket}
+        extraParams={{ color, sort: sort === "elo" ? "elo" : undefined }}
+      />
 
       <TierList route="cards" entities={entities} valueLabel={sort === "elo" ? "Elo" : "Score"} />
     </div>

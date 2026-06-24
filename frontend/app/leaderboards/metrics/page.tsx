@@ -84,33 +84,37 @@ async function fetchJson<T>(url: string): Promise<T | null> {
 // page and the localized /[lang] variant so both render server-side
 // (one in-memory join, no client round trips). `lang` only affects card
 // names; the metrics themselves are language-agnostic.
-// Run cohorts the page can slice by. Keep in sync with _COHORT_KEYS in
+// Run brackets the page can slice by. Keep in sync with _BRACKET_KEYS in
 // run_entity_stats.py. "all" is the default and omits the query param.
-export const COHORTS = [
+export const BRACKETS = [
   { key: "all", label: "All runs" },
   { key: "solo", label: "Solo" },
   { key: "2p", label: "2P" },
   { key: "3p", label: "3P" },
   { key: "4p", label: "4P" },
-  { key: "a10", label: "A10" },
+  { key: "a10", label: "Asc. 10" },
   { key: "daily", label: "Daily" },
   { key: "custom", label: "Custom" },
+  // Win-rate skill brackets (A10-gated quality ladder). Mirror _BRACKET_KEYS.
+  { key: "wr30", label: "Asc. >30% WR" },
+  { key: "wr50", label: "Asc. >50% WR" },
+  { key: "wr75", label: "Asc. >75% WR" },
 ] as const;
 
 export async function loadMetrics(
   lang = "eng",
-  cohort = "all"
+  bracket = "all"
 ): Promise<{
   rows: MetricRow[];
   baselineWinRate: number;
   totalRuns: number;
-  cohort: string;
+  bracket: string;
 }> {
-  const valid = COHORTS.some((c) => c.key === cohort) ? cohort : "all";
+  const valid = BRACKETS.some((c) => c.key === bracket) ? bracket : "all";
   const [cards, metrics] = await Promise.all([
     fetchJson<ApiCard[]>(`${API_INTERNAL}/api/cards?lang=${lang}`),
     fetchJson<MetricsResponse>(
-      `${API_INTERNAL}/api/runs/metrics/cards?cohort=${valid}`
+      `${API_INTERNAL}/api/runs/metrics/cards?bracket=${valid}`
     ),
   ]);
 
@@ -147,19 +151,19 @@ export async function loadMetrics(
     rows,
     baselineWinRate: metrics?.baseline_win_rate ?? 0,
     totalRuns: metrics?.total_runs ?? 0,
-    cohort: valid,
+    bracket: valid,
   };
 }
 
 export default async function MetricsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cohort?: string }>;
+  searchParams: Promise<{ bracket?: string }>;
 }) {
   const sp = await searchParams;
-  const { rows, baselineWinRate, totalRuns, cohort } = await loadMetrics(
+  const { rows, baselineWinRate, totalRuns, bracket } = await loadMetrics(
     "eng",
-    sp.cohort || "all"
+    sp.bracket || "all"
   );
 
   const jsonLd = [
@@ -182,7 +186,7 @@ export default async function MetricsPage({
         rows={rows}
         baselineWinRate={baselineWinRate}
         totalRuns={totalRuns}
-        cohort={cohort}
+        bracket={bracket}
       />
     </>
   );

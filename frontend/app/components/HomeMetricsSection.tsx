@@ -37,7 +37,7 @@ function pct(v: number | null): string {
 }
 
 /**
- * Home-page preview of the Card Metrics table, scoped to the A10 cohort
+ * Home-page preview of the Card Metrics table, scoped to the A10 bracket
  * (ascension 10) and ranked by Codex Elo, the way /leaderboards/metrics
  * opens. Server-rendered; renders nothing when there's no A10 data yet so
  * the home page never shows an empty block.
@@ -50,7 +50,7 @@ export default async function HomeMetricsSection({
   lang?: string;
 }) {
   const [metrics, cards] = await Promise.all([
-    fetchJson<{ rows: ApiMetricRow[] }>(`${API}/api/runs/metrics/cards?cohort=a10`),
+    fetchJson<{ rows: ApiMetricRow[] }>(`${API}/api/runs/metrics/cards?bracket=a10`),
     fetchJson<ApiCard[]>(`${API}/api/cards?lang=${lang}`),
   ]);
   if (!metrics?.rows || !cards) return null;
@@ -65,7 +65,7 @@ export default async function HomeMetricsSection({
     .slice(0, 8);
   if (top.length === 0) return null;
 
-  const href = `${langPrefix}/leaderboards/metrics?cohort=a10`;
+  const href = `${langPrefix}/leaderboards/metrics?bracket=a10`;
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
