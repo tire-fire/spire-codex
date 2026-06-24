@@ -178,7 +178,10 @@ SNAPSHOT_COLLECTION_NAME = "entity_stats_snapshot"
 # it to its own "charts" snapshot doc, so blob charts re-slice by content bracket.
 # Version 8 renames the persisted cohort_* fields to bracket_* (and each entity's
 # "cohorts" sub-tree to "brackets"); the loader reads either for back-compat.
-SNAPSHOT_VERSION = 8
+# Version 9 makes the community and encounter blobs per-bracket (like charts) and
+# moves each to its own snapshot doc; the loader falls back to the old inline
+# __meta__ fields and to a flat blob for a pre-v9 snapshot.
+SNAPSHOT_VERSION = 9
 # The oldest snapshot version readers can still serve. Bump SNAPSHOT_VERSION
 # on every shape change; bump this floor ONLY when a change actually breaks
 # readers (a removed/retyped field). Everything in between is additive, and
@@ -464,7 +467,10 @@ def _walk_rest_upgrade_choices(blob: dict) -> Iterable[tuple[list[str], list[str
             if not stripped or stripped[0] != "cards":
                 continue
             cid = stripped[1]
-            if cid in upgradeable:
+            # Empty upgradeable set (catalog read failed) -> don't filter, like
+            # the other modded scrubs, so a transient failure can't blank the
+            # Upgrade Elo. Official upgradeable cards only otherwise.
+            if not upgradeable or cid in upgradeable:
                 deck_cards.append((c.get("floor_added_to_deck") or 0, cid))
         if not deck_cards:
             continue
@@ -483,7 +489,15 @@ def _walk_rest_upgrade_choices(blob: dict) -> Iterable[tuple[list[str], list[str
                     winners = []
                     for raw in ps.get("upgraded_cards") or []:
                         stripped = _strip_prefix(raw)
-                        if stripped and stripped[0] == "cards":
+                        # Official upgradeable cards only (empty set = catalog
+                        # unavailable -> don't filter, matching the deck side and
+                        # the other modded scrubs), so a modded rest-site upgrade
+                        # never feeds the Upgrade Elo.
+                        if (
+                            stripped
+                            and stripped[0] == "cards"
+                            and (not upgradeable or stripped[1] in upgradeable)
+                        ):
                             winners.append(stripped[1])
                     if not winners:
                         continue
@@ -827,12 +841,20 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
             logger.warning("skipping unreadable run %s: %s", run_hash, e)
             continue
 
+        # The content brackets this run feeds, shared by the community, charts,
+        # and encounter blobs so all three re-slice by skill: "all" plus the
+        # A10-gated win-rate brackets it already matched above.
+        blob_brackets = ["all"] + [
+            c for c in extra_brackets if c in ("a10", "wr30", "wr50", "wr75")
+        ]
+
         # Community / fun stats, accumulated from the same blob. Guarded so
         # one malformed blob can't abort the whole snapshot rebuild.
         try:
             community_stats.accumulate(
                 community_acc,
                 blob,
+                brackets=blob_brackets,
                 run_hash=run_hash,
                 is_win=is_win,
                 character=character,
@@ -843,17 +865,12 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
                 "community-stats accumulate failed for %s", run_hash, exc_info=True
             )
 
-        # Chart cells for /api/charts, same guard. The blob is accumulated per
-        # content bracket so blob charts can re-slice by skill: "all" plus the
-        # A10-gated win-rate brackets this run already matched above.
-        chart_brackets = ["all"] + [
-            c for c in extra_brackets if c in ("a10", "wr30", "wr50", "wr75")
-        ]
+        # Chart cells for /api/charts, same guard.
         try:
             charts_stats.accumulate(
                 charts_acc,
                 blob,
-                brackets=chart_brackets,
+                brackets=blob_brackets,
                 is_win=is_win,
                 character=character,
                 player_count=row.get("player_count") or 1,
@@ -871,6 +888,7 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
             encounter_stats.accumulate(
                 encounter_acc,
                 blob,
+                brackets=blob_brackets,
                 character=character,
                 is_win=is_win,
                 player_count=row.get("player_count") or 1,
@@ -1214,14 +1232,15 @@ def _persist_snapshot(
             upsert=True,
         )
     bracket_meta = bracket_meta or {}
-    # The charts blob is now per-bracket (~5x bigger), so it lives in its own doc
-    # rather than __meta__ — that keeps either one from bumping Mongo's 16MB
-    # per-document cap as more bracketed cells accumulate.
-    coll.replace_one(
-        {"_id": "charts"},
-        {"_id": "charts", "blob": bracket_meta.get("charts", {}), "updated_at": now},
-        upsert=True,
-    )
+    # The charts, community, and encounter blobs are all per-bracket now (~5x
+    # bigger), so each lives in its own doc rather than __meta__ to stay well
+    # under Mongo's 16MB per-document cap as more bracketed cells accumulate.
+    for blob_id in ("charts", "community", "encounters"):
+        coll.replace_one(
+            {"_id": blob_id},
+            {"_id": blob_id, "blob": bracket_meta.get(blob_id, {}), "updated_at": now},
+            upsert=True,
+        )
     coll.replace_one(
         {"_id": "__meta__"},
         {
@@ -1230,8 +1249,6 @@ def _persist_snapshot(
             "type_baselines": baselines,
             "bracket_baselines": bracket_meta.get("baselines", {}),
             "bracket_totals": bracket_meta.get("totals", {}),
-            "community": bracket_meta.get("community", {}),
-            "encounters": bracket_meta.get("encounters", {}),
             "entity_types": list(by_type.keys()),
             "built_at": now,
             "snapshot_version": SNAPSHOT_VERSION,
@@ -1306,10 +1323,15 @@ def _load_snapshot() -> bool:
                 agg["act_picks"] = e["act_picks"]
                 agg["act_wins"] = e.get("act_wins") or [0] * _ACT_BUCKETS
             new_cache[(etype, e["id"])] = agg
-    # Charts blob lives in its own doc (see _persist_snapshot). A pre-split
-    # snapshot has none; it stays empty until the leader rebuilds the new shape.
-    charts_doc = coll.find_one({"_id": "charts"})
-    charts_blob = (charts_doc or {}).get("blob") or {}
+
+    # The charts, community, and encounter blobs each live in their own doc (see
+    # _persist_snapshot). Back-compat: a pre-split snapshot kept community and
+    # encounters inline in __meta__, so fall back to that. A genuinely missing
+    # blob stays empty until the leader rebuilds the new shape.
+    def _blob_doc(blob_id: str):
+        doc = coll.find_one({"_id": blob_id})
+        return (doc or {}).get("blob") or meta.get(blob_id) or {}
+
     _apply_cache(
         new_cache,
         meta.get("global_totals", {"total_runs": 0, "total_wins": 0}),
@@ -1320,9 +1342,9 @@ def _load_snapshot() -> bool:
             or meta.get("cohort_baselines")
             or {},
             "totals": meta.get("bracket_totals") or meta.get("cohort_totals") or {},
-            "community": meta.get("community", {}),
-            "charts": charts_blob,
-            "encounters": meta.get("encounters", {}),
+            "community": _blob_doc("community"),
+            "charts": _blob_doc("charts"),
+            "encounters": _blob_doc("encounters"),
         },
     )
     _cache_snapshot_version = meta_version
@@ -1459,15 +1481,30 @@ def _compute_score(wins: int, picks: int, baseline: float) -> int | None:
     return max(0, min(100, round(raw)))
 
 
-def get_community_stats() -> dict[str, Any]:
+def _pick_bracket_blob(blob: dict, bracket: str | None, empty_one):
+    """Pick one bracket's finalized sub-blob from a per-bracket blob. Unknown
+    bracket falls back to 'all'; a pre-v9 FLAT blob (no per-bracket keys) is
+    served as-is for any bracket; an empty/missing blob -> a single empty blob."""
+    if not blob:
+        return empty_one()
+    if "all" in blob:  # per-bracket shape {all: ..., a10: ..., ...}
+        return blob.get(bracket or "all") or blob.get("all") or empty_one()
+    return blob  # flat pre-v9 blob; the bracket can't apply until it rebuilds
+
+
+def get_community_stats(bracket: str | None = None) -> dict[str, Any]:
     """Community / fun stats (event decisions, deaths, headline numbers,
-    records). Built in the same walk as the entity cache and carried through
-    the snapshot, so this is an O(1) read. Empty shape before the first
-    snapshot exists."""
+    records) for one content bracket. Built in the same walk as the entity
+    cache and carried through the snapshot, so this is an O(1) read. Empty
+    shape before the first snapshot exists."""
     _maybe_rebuild()
     from . import community_stats
 
-    return _community_stats or community_stats.empty()
+    return _pick_bracket_blob(
+        _community_stats or community_stats.empty(),
+        bracket,
+        community_stats.empty_one,
+    )
 
 
 def get_charts_blob_stats() -> dict[str, Any]:
@@ -1486,16 +1523,23 @@ def get_encounter_stats(
     multiplayer: str | None = None,
     page: int = 1,
     limit: int = 50,
+    bracket: str | None = None,
 ) -> dict[str, Any]:
     """Per-encounter combat stats for /api/runs/encounter-stats, rolled up
-    from the precomputed snapshot cells. Same lifecycle as the community /
-    charts stats: built in the walk, carried through the snapshot, O(rows)
-    to slice — no per-request walk over every run's map_point_history."""
+    from the precomputed snapshot cells for one content bracket. Same lifecycle
+    as the community / charts stats: built in the walk, carried through the
+    snapshot, O(rows) to slice — no per-request walk over every run's
+    map_point_history."""
     _maybe_rebuild()
     from . import encounter_stats
 
-    return encounter_stats.rollup(
+    sub = _pick_bracket_blob(
         _encounter_blob_stats or encounter_stats.empty(),
+        bracket,
+        encounter_stats.empty_one,
+    )
+    return encounter_stats.rollup(
+        sub,
         acts=acts,
         room_types=room_types,
         multiplayer=multiplayer,
@@ -1853,7 +1897,7 @@ def get_entity_stats(entity_type: str, entity_id: str) -> dict[str, Any] | None:
     # against that bracket's own baseline). Elo is card-reward only, so it's null
     # for relics/potions and for non-offered cards. Brackets with no data in
     # this entity are omitted.
-    brackets = agg.get("brackets") or {}
+    agg_brackets = agg.get("brackets") or {}
     brackets: dict[str, Any] = {
         "all": {
             "picks": picks,
@@ -1864,7 +1908,7 @@ def get_entity_stats(entity_type: str, entity_id: str) -> dict[str, Any] | None:
         }
     }
     for ck in ("a10", "wr30", "wr50", "wr75"):
-        cd = brackets.get(ck)
+        cd = agg_brackets.get(ck)
         if not cd:
             continue
         cp = cd.get("picks", 0)
