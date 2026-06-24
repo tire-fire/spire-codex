@@ -1161,6 +1161,19 @@ def _filter_key(
     return "|".join(parts) if parts else "global"
 
 
+# Per-username summary docs are only ever written lazily (write-through on a
+# cache miss in get_community_stats); the periodic refresher only touches the
+# hot community/character combos, never a username combo. Without a TTL the
+# first doc written for a user is therefore served forever, freezing their run
+# count at whatever it was on the first query — which pins users first queried
+# at ~0 runs (e.g. the overlay's Metrics tab firing on sign-in before uploads
+# finish) at 0. Past this TTL we ignore a per-username doc so the read falls
+# through to a live recompute that rewrites a fresh one. Existing frozen docs
+# have a stale updated_at, so they go stale immediately — no manual purge
+# needed.
+_USER_SUMMARY_TTL = timedelta(minutes=10)
+
+
 @_instrument("read_stats_summary", collection="stats_summary")
 def read_stats_summary(
     character: str | None = None,
@@ -1170,13 +1183,25 @@ def read_stats_summary(
     players: str | None = None,
     username: str | None = None,
 ) -> dict | None:
-    """Read a pre-computed stats doc by filter key. Returns None if no
-    doc exists (refresher hasn't populated it yet). O(1) read."""
+    """Read a pre-computed stats doc by filter key. Returns None if no doc
+    exists (refresher hasn't populated it yet), or if a per-username doc is
+    older than _USER_SUMMARY_TTL (so a stale personal count recomputes instead
+    of serving frozen). O(1) read."""
     try:
         key = _filter_key(character, win, ascension, game_mode, players, username)
         doc = _summary_coll().find_one({"_id": key})
         if not doc:
             return None
+        # Per-username docs are never refreshed in the background, so honor
+        # their age; hot (no-username) combos stay always-served.
+        if username:
+            updated = doc.get("updated_at")
+            if not isinstance(updated, datetime):
+                return None
+            if updated.tzinfo is None:
+                updated = updated.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) - updated >= _USER_SUMMARY_TTL:
+                return None
         # Strip the wrapper fields before returning to the API caller.
         doc.pop("_id", None)
         doc.pop("updated_at", None)
