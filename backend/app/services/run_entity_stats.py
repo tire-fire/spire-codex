@@ -765,7 +765,7 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
         WINRATE_MIN_RUNS = 5
     _wr_counts: dict[str, list[int]] = {}
     for row in rows:
-        uname = row.get("username") or ""
+        uname = (row.get("username") or "").lower()
         if not uname:
             continue
         c = _wr_counts.setdefault(uname, [0, 0])
@@ -803,7 +803,7 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
         # Skill brackets: append the A10-gated win-rate brackets the submitter
         # qualifies for, so they flow through every downstream consumer of
         # extra_brackets (totals, deck membership, card-reward picks) unchanged.
-        uname = row.get("username") or ""
+        uname = (row.get("username") or "").lower()
         if uname:
             extra_brackets = extra_brackets + _winrate_brackets(_asc, wr_map.get(uname))
         for ck in extra_brackets:

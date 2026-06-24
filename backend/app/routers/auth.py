@@ -240,7 +240,7 @@ def _compute_personal_bests(username: str) -> dict:
 
     coll = _get_collection()
     base_match = {
-        "username": username,
+        "username_lower": username.lower() if username else None,
         "win": {"$in": [True, 1]},
     }
     proj = {
@@ -505,7 +505,12 @@ def _propagate_username(user_id: str, new_username: str) -> None:
 
         coll.update_many(
             {"user_id": ObjectId(user_id)},
-            {"$set": {"username": new_username}},
+            {
+                "$set": {
+                    "username": new_username,
+                    "username_lower": (new_username or "").lower() or None,
+                }
+            },
         )
     except Exception:
         pass
@@ -527,6 +532,7 @@ def _try_claim_run(run_hash: str, user: dict) -> None:
                 "$set": {
                     "user_id": ObjectId(user["_id"]),
                     "username": user.get("username", ""),
+                    "username_lower": (user.get("username") or "").lower() or None,
                 }
             },
         )

@@ -779,7 +779,10 @@ def admin_set_username(user_id: str, new_name: str) -> dict:
     try:
         runs = _runs_collection()
         hashes = [d["_id"] for d in runs.find({"user_id": oid}, {"_id": 1})]
-        runs.update_many({"user_id": oid}, {"$set": {"username": cleaned}})
+        runs.update_many(
+            {"user_id": oid},
+            {"$set": {"username": cleaned, "username_lower": lower}},
+        )
         _bust_run_cache(hashes)
     except Exception:
         pass
@@ -846,7 +849,13 @@ def admin_merge_users(source_id: str, target_id: str) -> dict:
         moved_hashes = [d["_id"] for d in runs.find({"user_id": s_oid}, {"_id": 1})]
         res = runs.update_many(
             {"user_id": s_oid},
-            {"$set": {"user_id": t_oid, "username": target.get("username")}},
+            {
+                "$set": {
+                    "user_id": t_oid,
+                    "username": target.get("username"),
+                    "username_lower": (target.get("username") or "").lower() or None,
+                }
+            },
         )
         moved = res.modified_count
     except Exception:
