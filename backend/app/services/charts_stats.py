@@ -1267,14 +1267,12 @@ def build_user_blob_stats(username: str) -> dict[str, Any]:
         return empty_one()
     rows: list[dict] = []
     if os.environ.get("MONGO_URL", "").strip():
-        import re as _re
-
         from .runs_db_mongo import _get_collection
 
         cursor = (
             _get_collection()
             .find(
-                {"username": {"$regex": f"^{_re.escape(u)}$", "$options": "i"}},
+                {"username_lower": u.lower()},
                 {
                     "_id": 1,
                     "character": 1,
@@ -1304,9 +1302,9 @@ def build_user_blob_stats(username: str) -> dict[str, Any]:
                 dict(r)
                 for r in conn.execute(
                     "SELECT run_hash, character, win, player_count, submitted_at"
-                    " FROM runs WHERE username = ? COLLATE NOCASE"
+                    " FROM runs WHERE username_lower = ?"
                     " ORDER BY id DESC LIMIT ?",
-                    (u, _USER_BLOB_CAP),
+                    (u.lower(), _USER_BLOB_CAP),
                 )
             ]
 

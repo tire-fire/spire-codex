@@ -298,6 +298,10 @@ def list_runs(
     win rate percentage; only users with at least 5 submitted runs qualify,
     and anonymous runs never match.
     """
+    # Normalize once so the cache key and the DB filter key off the same
+    # case-insensitive value (the runs are matched on username_lower).
+    if username:
+        username = username.strip().lower()
     # Browser/edge caching: new runs arrive constantly, but 30s of staleness
     # on a browse page is invisible and lets Cloudflare absorb repeat hits.
     response.headers["Cache-Control"] = "public, max-age=30"
@@ -371,8 +375,10 @@ def list_runs(
         elif win == "false":
             conditions.append("win = 0 AND was_abandoned = 0")
         if username:
-            conditions.append("username LIKE ?")
-            params.append(f"%{username}%")
+            # Case-insensitive exact match (replaces the LIKE substring that
+            # bled peter->peter123); mirrors the Mongo username_lower path.
+            conditions.append("username_lower = ?")
+            params.append(username.lower())
         if seed:
             conditions.append("seed LIKE ?")
             params.append(f"%{seed}%")
@@ -390,8 +396,9 @@ def list_runs(
             # Mirror the Mongo path: submitter winrate within range, with a
             # 5-run floor so one-run wonders don't flood winrate:100.
             conditions.append(
-                "username IN (SELECT username FROM runs WHERE username != '' "
-                "GROUP BY username HAVING COUNT(*) >= 5 "
+                "username_lower IN (SELECT username_lower FROM runs "
+                "WHERE username_lower IS NOT NULL AND username_lower != '' "
+                "GROUP BY username_lower HAVING COUNT(*) >= 5 "
                 "AND 100.0 * SUM(win) / COUNT(*) BETWEEN ? AND ?)"
             )
             params.append(winrate_min if winrate_min is not None else 0.0)
@@ -1235,6 +1242,11 @@ def get_community_stats(
          materialized yet, fall through to a process-local TTL cache.
       3. On cache miss, run the live aggregation (slow, ~5-10s).
     """
+    # Normalize once so the Redis key, the materialized-summary key, and the DB
+    # filter all key off the same case-insensitive value (the per-user docs are
+    # keyed and matched on the lowercased name).
+    if username:
+        username = username.strip().lower()
     # 0. Redis layer: one cluster-wide copy per filter combo, refreshed on
     # the same cadence as the refresher cycle. Misses fall through to the
     # existing chain unchanged.

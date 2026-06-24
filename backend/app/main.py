@@ -174,6 +174,23 @@ def _warm_run_entity_stats() -> None:
             start_stats_refresher()
         except Exception:
             pass
+        # One-time username_lower backfill for pre-normalization runs, off the
+        # request path (the runs collection is large). Idempotent via the
+        # $exists guard, so running it on every worker is safe — all but the
+        # first are a bounded no-op.
+        import threading
+
+        def _backfill_username_lower():
+            try:
+                from .services.runs_db_mongo import backfill_username_lower
+
+                backfill_username_lower()
+            except Exception:
+                pass
+
+        threading.Thread(
+            target=_backfill_username_lower, daemon=True, name="username-lc-backfill"
+        ).start()
         return
     import threading
 

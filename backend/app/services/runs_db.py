@@ -168,6 +168,7 @@ def init_db():
                 deck_size INTEGER NOT NULL DEFAULT 0,
                 relic_count INTEGER NOT NULL DEFAULT 0,
                 username TEXT,
+                username_lower TEXT,
                 submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -222,6 +223,7 @@ def init_db():
             ("was_abandoned", "INTEGER NOT NULL DEFAULT 0"),
             ("player_count", "INTEGER NOT NULL DEFAULT 1"),
             ("username", "TEXT"),
+            ("username_lower", "TEXT"),
             ("build_id", "TEXT"),
         ]:
             try:
@@ -237,6 +239,24 @@ def init_db():
         try:
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_runs_build_id ON runs(build_id)"
+            )
+        except Exception:
+            pass
+        try:
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_runs_username_lower "
+                "ON runs(username_lower)"
+            )
+        except Exception:
+            pass
+        # One-time backfill: normalize existing rows. Idempotent via the NULL
+        # guard, so later boots are near-instant no-ops. SQLite lower() is
+        # ASCII-only, fine since usernames are already sanitized to ASCII.
+        try:
+            conn.execute(
+                "UPDATE runs SET username_lower = lower(username) "
+                "WHERE username IS NOT NULL AND username != '' "
+                "AND (username_lower IS NULL OR username_lower = '')"
             )
         except Exception:
             pass
@@ -370,8 +390,8 @@ def _submit_player_run(
             """
             INSERT INTO runs (run_hash, seed, character, win, was_abandoned, ascension, game_mode,
                               player_count, run_time, floors_reached, acts_completed, killed_by,
-                              deck_size, relic_count, username, build_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              deck_size, relic_count, username, username_lower, build_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             (
                 run_hash,
@@ -389,6 +409,7 @@ def _submit_player_run(
                 len(player["deck"]),
                 len(player["relics"]),
                 username,
+                username.lower() if username else None,
                 data.get("build_id"),
             ),
         )
@@ -515,10 +536,10 @@ def claim_runs(username: str, hashes: list[str]) -> dict:
         if unclaimed:
             unclaimed_placeholders = ",".join("?" for _ in unclaimed)
             conn.execute(
-                f"UPDATE runs SET username = ? "
+                f"UPDATE runs SET username = ?, username_lower = ? "
                 f"WHERE run_hash IN ({unclaimed_placeholders}) "
                 f"AND (username IS NULL OR username = '')",
-                [username, *unclaimed],
+                [username, username.lower(), *unclaimed],
             )
 
     return {
@@ -568,8 +589,8 @@ def get_stats(
         elif players == "multi":
             non_char_conditions.append("r.player_count > 1")
         if username:
-            non_char_conditions.append("r.username = ?")
-            non_char_params.append(username)
+            non_char_conditions.append("r.username_lower = ?")
+            non_char_params.append(username.lower())
 
         conditions: list[str] = list(non_char_conditions)
         params: list = list(non_char_params)

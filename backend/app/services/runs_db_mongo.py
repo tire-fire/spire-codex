@@ -148,6 +148,12 @@ def _ensure_indexes(coll) -> None:
     no-op when an equivalent index already exists."""
     coll.create_index([("character", ASCENDING)])
     coll.create_index([("username", ASCENDING), ("submitted_at", DESCENDING)])
+    # Case-insensitive username matching (stats/list/leaderboard filter on
+    # username_lower). The compound prefix serves the stats equality match; the
+    # full compound serves list filter + submitted_at sort without an in-memory
+    # sort. The plain `username` index above stays for the display-name reads
+    # that don't normalize (claim, username-for-hash).
+    coll.create_index([("username_lower", ASCENDING), ("submitted_at", DESCENDING)])
     coll.create_index([("submitted_at", DESCENDING)])
     coll.create_index(
         [("character", ASCENDING), ("win", ASCENDING), ("ascension", ASCENDING)]
@@ -515,6 +521,10 @@ def _submit_player_run(
         "deck_size": len(deck),
         "relic_count": len(relics),
         "username": username,
+        # Normalized for case-insensitive matching (stats/list/leaderboard all
+        # filter on this; display `username` keeps its original case). Mirrors
+        # the users collection's username_lower convention.
+        "username_lower": username.lower() if username else None,
         # Submitter identity (when the client sends it). Lets a run be linked
         # to its owner's account on sign-in even if it was submitted
         # anonymously. user_id is set here when an account already exists for
@@ -569,6 +579,7 @@ def _submit_player_run(
             owner_set: dict = {"user_id": ObjectId(linked_user_id)}
             if username:
                 owner_set["username"] = username
+                owner_set["username_lower"] = username.lower()
             coll.update_one(
                 {"_id": run_hash, "user_id": None},
                 {"$set": owner_set},
@@ -614,12 +625,29 @@ def backfill_user_runs(
     update: dict = {"user_id": ObjectId(user_id)}
     if username:
         update["username"] = username
+        update["username_lower"] = username.lower()
 
     result = coll.update_many(
         {"user_id": None, "$or": identity_conds},
         {"$set": update},
     )
     return result.modified_count
+
+
+def backfill_username_lower() -> int:
+    """One-time backfill: set username_lower = lower(username) on existing docs
+    that predate the field. Idempotent via the username_lower $exists guard, so
+    re-runs are bounded no-ops. Returns the number of docs updated. Best effort
+    (failures swallowed): the write sites keep new docs current regardless."""
+    try:
+        coll = _get_collection()
+        result = coll.update_many(
+            {"username": {"$nin": [None, ""]}, "username_lower": {"$exists": False}},
+            [{"$set": {"username_lower": {"$toLower": "$username"}}}],
+        )
+        return result.modified_count
+    except Exception:
+        return 0
 
 
 @_instrument("claim_runs")
@@ -641,7 +669,7 @@ def claim_runs(username: str, hashes: list[str]) -> dict:
     if unclaimed:
         coll.update_many(
             {"_id": {"$in": unclaimed}, "$or": [{"username": None}, {"username": ""}]},
-            {"$set": {"username": username}},
+            {"$set": {"username": username, "username_lower": username.lower()}},
         )
 
     return {
@@ -695,7 +723,8 @@ def _build_match(
     elif players == "multi":
         m["player_count"] = {"$gt": 1}
     if username:
-        m["username"] = username
+        # Case-insensitive, exact (anchored) match on the normalized field.
+        m["username_lower"] = username.lower()
     return m
 
 
@@ -1157,7 +1186,9 @@ def _filter_key(
     if players:
         parts.append(f"players:{players}")
     if username:
-        parts.append(f"username:{username}")
+        # Lowercased so PeTeR and peter share one summary doc (the match is
+        # case-insensitive, so the cache key must be too).
+        parts.append(f"username:{username.lower()}")
     return "|".join(parts) if parts else "global"
 
 
@@ -1454,16 +1485,21 @@ def get_user_winrates() -> dict[str, list[int]]:
     One $group over the collection (a few hundred ms) once per TTL instead
     of per request. Anonymous runs (no username) are excluded; abandoned
     runs count as losses, matching the profile-page win rate.
+
+    Keyed by username_lower (not display username) so the keys compose with the
+    case-insensitive username_lower filters that consume this map (list /
+    leaderboard winrate filters); otherwise mixed-case users would silently
+    drop out.
     """
-    cached = app_cache.get_json("user_winrates:all")
+    cached = app_cache.get_json("user_winrates:all:lc")
     if cached is not None:
         return cached
     coll = _get_collection()
     pipeline = [
-        {"$match": {"username": {"$nin": [None, ""]}}},
+        {"$match": {"username_lower": {"$nin": [None, ""]}}},
         {
             "$group": {
-                "_id": "$username",
+                "_id": "$username_lower",
                 "total": {"$sum": 1},
                 "wins": {"$sum": {"$cond": [{"$in": ["$win", [True, 1]]}, 1, 0]}},
             }
@@ -1472,7 +1508,7 @@ def get_user_winrates() -> dict[str, list[int]]:
     out: dict[str, list[int]] = {}
     for row in coll.aggregate(pipeline, allowDiskUse=True):
         out[str(row["_id"])] = [int(row["total"]), int(row["wins"])]
-    app_cache.set_json("user_winrates:all", out, ttl_seconds=300)
+    app_cache.set_json("user_winrates:all:lc", out, ttl_seconds=300)
     return out
 
 
@@ -1509,12 +1545,13 @@ def list_runs(
         q["win"] = {"$in": [False, 0]}
         q["was_abandoned"] = {"$in": [False, 0]}
     if username:
-        q["username"] = {"$regex": username, "$options": "i"}
+        # Case-insensitive exact match on the normalized field (replaces the old
+        # unanchored, unescaped $regex substring match that bled peter->peter123).
+        q["username_lower"] = username.lower()
     if winrate_min is not None or winrate_max is not None:
-        # Filter runs by their submitter's overall win rate. The per-user
-        # map is one cached aggregation; the run query then becomes an $in
-        # over the qualifying usernames (composable with the regex above,
-        # since both live under the same field's operator object).
+        # Filter runs by their submitter's overall win rate. The per-user map is
+        # one cached aggregation keyed by username_lower; restrict the query to
+        # the qualifying users.
         lo = winrate_min if winrate_min is not None else 0.0
         hi = winrate_max if winrate_max is not None else 100.0
         rates = get_user_winrates()
@@ -1523,7 +1560,10 @@ def list_runs(
             for name, (total, wins) in rates.items()
             if total >= WINRATE_MIN_RUNS and lo <= (wins / total * 100) <= hi
         ]
-        if not names:
+        # With a username filter the equality above already pins one user, so it
+        # only needs to qualify; without one, restrict to the qualifying users.
+        disqualified = (username.lower() not in set(names)) if username else (not names)
+        if disqualified:
             return {
                 "runs": [],
                 "total": 0,
@@ -1531,11 +1571,8 @@ def list_runs(
                 "per_page": min(limit, 100),
                 "total_pages": 0,
             }
-        user_q = q.get("username")
-        if isinstance(user_q, dict):
-            user_q["$in"] = names
-        else:
-            q["username"] = {"$in": names}
+        if not username:
+            q["username_lower"] = {"$in": names}
     if seed:
         # Anchored prefix, case-sensitive: uses the seed index instead of
         # scanning every document. Daily seeds are date-prefixed so the
@@ -1723,7 +1760,8 @@ def _leaderboard_live(
             for name, (total, wins) in rates.items()
             if total >= WINRATE_MIN_RUNS and (wins / total * 100) >= winrate_min
         ]
-        q["username"] = {"$in": names}  # empty -> no matches, the correct result
+        # names are username_lower keys, so match the normalized field.
+        q["username_lower"] = {"$in": names}  # empty -> no matches, correct
     if today:
         q["seed"] = _today_daily_seed_match()
 
@@ -1971,13 +2009,15 @@ def get_daily_leaderboard(username: str | None = None) -> dict:
     runs = []
     for r in top_10:
         row = _row_to_dict(r)
-        row["is_current_user"] = bool(username and row.get("username") == username)
+        row["is_current_user"] = bool(
+            username and (row.get("username") or "").lower() == username.lower()
+        )
         runs.append(row)
 
     user_rank = None
     if username:
         user_run = coll.find_one(
-            {**base, "username": username},
+            {**base, "username_lower": username.lower()},
             {"run_time": 1},
             sort=[("run_time", 1)],
         )
@@ -2049,7 +2089,7 @@ def get_win_rate_comparison(username: str) -> list[dict]:
     user_chars = list(
         coll.aggregate(
             [
-                {"$match": {"username": username}},
+                {"$match": {"username_lower": username.lower()}},
                 {
                     "$group": {
                         "_id": "$character",
