@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cachedFetch } from "@/lib/fetch-cache";
 import ScoreBadge from "@/app/components/ScoreBadge";
+import { CONTENT_BRACKETS } from "@/lib/content-brackets";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -12,6 +13,14 @@ interface CharacterRow {
   picks: number;
   wins: number;
   win_rate: number;
+}
+
+interface BracketStat {
+  picks: number;
+  wins: number;
+  win_rate: number;
+  elo: number | null;
+  score: number | null;
 }
 
 interface EntityStats {
@@ -24,6 +33,8 @@ interface EntityStats {
   total_runs: number;
   baseline_win_rate: number;
   score: number | null;
+  elo: number | null;
+  brackets?: Record<string, BracketStat>;
   by_character: CharacterRow[];
   last_submitted_at: string | null;
   last_run_hash: string | null;
@@ -71,6 +82,7 @@ function characterPretty(c: string): string {
  */
 export default function EntityRunStats({ entityType, entityId, entityName }: Props) {
   const [stats, setStats] = useState<EntityStats | null>(null);
+  const [selectedBracket, setSelectedBracket] = useState("all");
 
   useEffect(() => {
     cachedFetch<EntityStats>(`${API}/api/runs/stats/${entityType}/${entityId}`).then(setStats);
@@ -85,21 +97,61 @@ export default function EntityRunStats({ entityType, entityId, entityName }: Pro
   const last = relativeTime(stats.last_submitted_at);
   const maxCharPicks = top?.picks ?? 0;
 
+  // Bracket sub-menu: only the brackets with data for this entity. Selecting
+  // one re-scopes the headline stats below to that bracket's numbers.
+  const brackets = stats.brackets ?? {};
+  const availableBrackets = CONTENT_BRACKETS.filter((b) => brackets[b.key]);
+  const sel = brackets[selectedBracket] ?? brackets["all"];
+  const selLabel =
+    CONTENT_BRACKETS.find((b) => b.key === selectedBracket)?.label ?? "All";
+
   return (
     <div className="space-y-5">
-      {/* Codex Score hero, single 0-100 badge that summarizes the
-          entity's community-meta strength. Bayesian-shrunk so low-N
-          entities sit near neutral instead of saturating S/F tiers.
-          See `_compute_score` in run_entity_stats.py for the formula. */}
-      {stats.score != null && (
+      {/* Bracket sub-menu: re-scopes the headline stats below. Only shown when
+          a bracket beyond "All" has data for this entity. */}
+      {!empty && availableBrackets.length > 1 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-[var(--text-muted)] mr-1">Bracket</span>
+          {availableBrackets.map((b) => {
+            const isActive = selectedBracket === b.key;
+            return (
+              <button
+                key={b.key}
+                type="button"
+                onClick={() => setSelectedBracket(b.key)}
+                className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+                  isActive
+                    ? "bg-[var(--accent-gold)]/10 border-[var(--accent-gold)]/40 text-[var(--accent-gold)]"
+                    : "bg-[var(--bg-card)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-accent)]"
+                }`}
+              >
+                {b.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Codex Score hero for the selected bracket: 0-100 score badge plus the
+          win rate with Codex Elo right beside it, and picks. Bayesian-shrunk so
+          low-N entities sit near neutral. See `_compute_score`. */}
+      {sel && sel.score != null && (
         <div className="flex items-center gap-3 pb-4 border-b border-[var(--border-subtle)]">
-          <ScoreBadge score={stats.score} size="lg" showNumber />
+          <ScoreBadge score={sel.score} size="lg" showNumber />
           <div className="text-xs text-[var(--text-muted)] leading-snug">
             <div className="text-[var(--text-secondary)] font-semibold mb-0.5">
-              Codex Score
+              Codex Score{selectedBracket !== "all" ? ` · ${selLabel}` : ""}
             </div>
             <div>
-              {stats.win_rate}% win rate vs {stats.baseline_win_rate}% baseline
+              <strong className="text-[var(--text-secondary)]">{sel.win_rate}%</strong> win rate
+              {sel.elo != null && (
+                <>
+                  {" · "}
+                  <strong className="text-[var(--text-secondary)]">{Math.round(sel.elo)}</strong> Elo
+                </>
+              )}
+              {" · "}
+              {sel.picks.toLocaleString()} picks
               {" · "}
               <Link
                 href="/leaderboards/scoring"

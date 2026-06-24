@@ -4,6 +4,8 @@ import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE, buildLanguageAlternates } from "
 import JsonLd from "@/app/components/JsonLd";
 import { buildBreadcrumbJsonLd, buildCollectionPageJsonLd } from "@/lib/jsonld";
 import TierList, { type TierEntity } from "@/app/components/TierList";
+import BracketFilter from "@/app/components/BracketFilter";
+import { bracketParam, normalizeBracket } from "@/lib/content-brackets";
 
 const API_INTERNAL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -54,11 +56,17 @@ const ACT_FILTERS = [
   { value: "3", label: "Act 3" },
 ];
 
-function relicHref(pool?: string, rarity?: string, act?: string): string {
+function relicHref(
+  pool?: string,
+  rarity?: string,
+  act?: string,
+  bracket?: string,
+): string {
   const params = new URLSearchParams();
   if (pool) params.set("pool", pool);
   if (rarity) params.set("rarity", rarity);
   if (act) params.set("act", act);
+  if (bracket && bracket !== "all") params.set("bracket", bracket);
   const qs = params.toString();
   return `/tier-list/relics${qs ? `?${qs}` : ""}`;
 }
@@ -68,7 +76,7 @@ function parseAct(raw?: string): string {
 }
 
 interface PageProps {
-  searchParams: Promise<{ pool?: string; rarity?: string; act?: string }>;
+  searchParams: Promise<{ pool?: string; rarity?: string; act?: string; bracket?: string }>;
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -94,9 +102,16 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   };
 }
 
-async function fetchData(pool?: string, act?: string): Promise<{ relics: ApiRelic[]; scores: ScoresMap }> {
+async function fetchData(
+  pool?: string,
+  act?: string,
+  param?: string | null,
+): Promise<{ relics: ApiRelic[]; scores: ScoresMap }> {
   const relicsUrl = `${API_INTERNAL}/api/relics${pool ? `?pool=${pool}` : ""}`;
-  const scoresUrl = `${API_INTERNAL}/api/runs/scores/relics${act ? `?act=${act}` : ""}`;
+  // act and param both reslice scores; the backend prioritizes act, so mirror
+  // that here (act view ignores the bracket).
+  const scoreQs = act ? `?act=${act}` : param ? `?bracket=${param}` : "";
+  const scoresUrl = `${API_INTERNAL}/api/runs/scores/relics${scoreQs}`;
   try {
     const [relicsRes, scoresRes] = await Promise.all([
       fetch(relicsUrl, { next: { revalidate: 1800 } }),
@@ -115,7 +130,9 @@ export default async function RelicsTierListPage({ searchParams }: PageProps) {
   const pool = sp.pool?.toLowerCase();
   const rarity = sp.rarity?.toLowerCase();
   const act = parseAct(sp.act);
-  const { relics, scores } = await fetchData(pool, act);
+  const bracket = normalizeBracket(sp.bracket);
+  const param = bracketParam(bracket);
+  const { relics, scores } = await fetchData(pool, act, param);
 
   const entities: TierEntity[] = relics
     .filter((r) => !rarity || (r.rarity_key ?? "").toLowerCase() === rarity)
@@ -189,13 +206,14 @@ export default async function RelicsTierListPage({ searchParams }: PageProps) {
       </p>
 
       {/* Pool (character) filter */}
-      <div className="flex flex-wrap gap-1.5 mb-2">
+      <div className="flex flex-wrap items-center gap-1.5 mb-2">
+        <span className="text-xs text-[var(--text-muted)] mr-1">Characters</span>
         {POOL_FILTERS.map((opt) => {
           const isActive = (pool ?? "") === opt.value;
           return (
             <Link
               key={opt.value || "all"}
-              href={relicHref(opt.value || undefined, rarity, act)}
+              href={relicHref(opt.value || undefined, rarity, act, bracket)}
               className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
                 isActive
                   ? "bg-[var(--accent-gold)]/10 border-[var(--accent-gold)]/40 text-[var(--accent-gold)]"
@@ -208,13 +226,14 @@ export default async function RelicsTierListPage({ searchParams }: PageProps) {
         })}
       </div>
       {/* Rarity / source filter (Neow/Starter, Shop, Event, Ancient, …) */}
-      <div className="flex flex-wrap gap-1.5 mb-2">
+      <div className="flex flex-wrap items-center gap-1.5 mb-2">
+        <span className="text-xs text-[var(--text-muted)] mr-1">Rarity</span>
         {RARITY_FILTERS.map((opt) => {
           const isActive = (rarity ?? "") === opt.value;
           return (
             <Link
               key={opt.value || "all-rarities"}
-              href={relicHref(pool, opt.value || undefined, act)}
+              href={relicHref(pool, opt.value || undefined, act, bracket)}
               className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
                 isActive
                   ? "bg-sky-500/10 border-sky-500/40 text-sky-300"
@@ -227,13 +246,14 @@ export default async function RelicsTierListPage({ searchParams }: PageProps) {
         })}
       </div>
       {/* Acquisition act filter (when in the run the relic was picked up) */}
-      <div className="flex flex-wrap gap-1.5 mb-6">
+      <div className="flex flex-wrap items-center gap-1.5 mb-6">
+        <span className="text-xs text-[var(--text-muted)] mr-1">Act</span>
         {ACT_FILTERS.map((opt) => {
           const isActive = act === opt.value;
           return (
             <Link
               key={opt.value || "all-acts"}
-              href={relicHref(pool, rarity, opt.value || undefined)}
+              href={relicHref(pool, rarity, opt.value || undefined, bracket)}
               className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
                 isActive
                   ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-300"
@@ -245,6 +265,14 @@ export default async function RelicsTierListPage({ searchParams }: PageProps) {
           );
         })}
       </div>
+
+      {/* Content bracket: grade against all runs, A10, or win-rate skill tiers.
+          Ignored while an Act filter is active (Act scoring takes precedence). */}
+      <BracketFilter
+        basePath="/tier-list/relics"
+        current={bracket}
+        extraParams={{ pool, rarity, act }}
+      />
 
       <TierList route="relics" entities={entities} />
     </div>

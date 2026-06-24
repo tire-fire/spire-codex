@@ -9,6 +9,11 @@ import { t } from "@/lib/ui-translations";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 import { imageUrl } from "@/lib/image-url";
+import {
+  CONTENT_BRACKETS,
+  normalizeBracket,
+  bracketListParams,
+} from "@/lib/content-brackets";
 
 function cleanId(id: string): string {
   return id.replace(/^(CHARACTER|CARD|RELIC|ENCOUNTER|EVENT|MONSTER|ACT|POTION)\./, "");
@@ -129,6 +134,10 @@ export default function LeaderboardBrowseClient() {
   const [browseUser, setBrowseUser] = useState(() => searchParams.get("username") || "");
   const [browseSeed, setBrowseSeed] = useState("");
   const [browseBuildId, setBrowseBuildId] = useState(() => searchParams.get("build_id") || "");
+  // Content bracket (All / Asc 10 / win-rate skill tiers) -> ascension_min + winrate_min.
+  const [browseBracket, setBrowseBracket] = useState(() =>
+    normalizeBracket(searchParams.get("bracket")),
+  );
   const [browseSort, setBrowseSort] = useState("date");
   const [browsePage, setBrowsePage] = useState(1);
   const [runList, setRunList] = useState<BrowseRun[]>([]);
@@ -180,13 +189,14 @@ export default function LeaderboardBrowseClient() {
     if (browseWin) params.set("win", browseWin);
     if (browseUser) params.set("username", browseUser);
     if (browseBuildId) params.set("build_id", browseBuildId);
+    if (browseBracket !== "all") params.set("bracket", browseBracket);
     const qs = params.toString();
     const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
     window.history.replaceState(null, "", url);
-  }, [tab, mode, gameMode, lbChar, browseChar, browseWin, browseUser, browseBuildId]);
+  }, [tab, mode, gameMode, lbChar, browseChar, browseWin, browseUser, browseBuildId, browseBracket]);
 
   // Reset leaderboard page when filters change
-  useEffect(() => { setLbPage(1); }, [tab, lbChar, mode, gameMode]);
+  useEffect(() => { setLbPage(1); }, [tab, lbChar, mode, gameMode, browseBracket]);
 
   // Fetch leaderboard (only when on a leaderboard tab)
   useEffect(() => {
@@ -202,6 +212,10 @@ export default function LeaderboardBrowseClient() {
       params.set("game_mode", gameMode);
     }
     if (lbChar) params.set("character", lbChar);
+    // Content bracket -> ascension_min + winrate_min (A10-gated win-rate tiers).
+    const bp = bracketListParams(browseBracket);
+    if (bp.ascension_min) params.set("ascension_min", String(bp.ascension_min));
+    if (bp.winrate_min) params.set("winrate_min", String(bp.winrate_min));
     params.set("page", String(lbPage));
     params.set("limit", "20");
     fetch(`${API}/api/runs/leaderboard?${params}`)
@@ -222,10 +236,10 @@ export default function LeaderboardBrowseClient() {
         setLbTotalPages(0);
       })
       .finally(() => setLbLoading(false));
-  }, [tab, lbChar, lbPage, mode, gameMode]);
+  }, [tab, lbChar, lbPage, mode, gameMode, browseBracket]);
 
   // Reset browse page when filters change
-  useEffect(() => { setBrowsePage(1); }, [browseChar, browseWin, browseUser, browseSeed, browseBuildId, browseSort, mode, gameMode]);
+  useEffect(() => { setBrowsePage(1); }, [browseChar, browseWin, browseUser, browseSeed, browseBuildId, browseSort, browseBracket, mode, gameMode]);
 
   // Fetch browse runs (only when on browse tab)
   useEffect(() => {
@@ -244,6 +258,10 @@ export default function LeaderboardBrowseClient() {
     if (browseSeed) params.set("seed", browseSeed);
     if (browseBuildId) params.set("build_id", browseBuildId);
     if (browseSort) params.set("sort", browseSort);
+    // Content bracket -> per-run filters (A10-gated win-rate tiers).
+    const bp = bracketListParams(browseBracket);
+    if (bp.ascension_min) params.set("ascension_min", String(bp.ascension_min));
+    if (bp.winrate_min) params.set("winrate_min", String(bp.winrate_min));
     params.set("page", String(browsePage));
     fetch(`${API}/api/runs/list?${params}`)
       .then((r) => (r.ok ? r.json() : { runs: [], total: 0, total_pages: 0 }))
@@ -253,7 +271,7 @@ export default function LeaderboardBrowseClient() {
         setBrowseTotalPages(data.total_pages || 0);
       })
       .catch(() => {});
-  }, [tab, browseChar, browseWin, browseUser, browseSeed, browseBuildId, browseSort, browsePage, mode, gameMode]);
+  }, [tab, browseChar, browseWin, browseUser, browseSeed, browseBuildId, browseSort, browseBracket, browsePage, mode, gameMode]);
 
   const TABS: { key: Tab; label: string; shortLabel: string }[] = [
     { key: "fastest", label: t("Fastest Wins", lang), shortLabel: t("Fastest", lang) },
@@ -325,6 +343,24 @@ export default function LeaderboardBrowseClient() {
               }`}
             >
               {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content bracket: All / Asc 10 / win-rate skill tiers. Applies to
+            both the ladders and the browse list. */}
+        <div className="inline-flex flex-wrap gap-1 p-1 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)]">
+          {CONTENT_BRACKETS.map((b) => (
+            <button
+              key={b.key}
+              onClick={() => setBrowseBracket(b.key)}
+              className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
+                browseBracket === b.key
+                  ? "bg-[var(--accent-gold)] text-[var(--bg-primary)]"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              {b.label}
             </button>
           ))}
         </div>

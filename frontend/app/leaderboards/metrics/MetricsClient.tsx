@@ -51,16 +51,20 @@ const COLOR_FILTERS = [
 ];
 
 
-// Run cohorts (single-select). Mirrors COHORTS in page.tsx / _COHORT_KEYS.
-const COHORTS = [
+// Run brackets (single-select). Mirrors BRACKETS in page.tsx / _BRACKET_KEYS.
+const BRACKETS = [
   { key: "all", label: "All runs" },
   { key: "solo", label: "Solo" },
   { key: "2p", label: "2P" },
   { key: "3p", label: "3P" },
   { key: "4p", label: "4P" },
-  { key: "a10", label: "A10" },
+  { key: "a10", label: "Asc. 10" },
   { key: "daily", label: "Daily" },
   { key: "custom", label: "Custom" },
+  // Win-rate skill brackets (A10-gated quality ladder). Mirror _BRACKET_KEYS.
+  { key: "wr30", label: "Asc. >30% WR" },
+  { key: "wr50", label: "Asc. >50% WR" },
+  { key: "wr75", label: "Asc. >75% WR" },
 ];
 
 type SortKey =
@@ -113,12 +117,12 @@ export default function MetricsClient({
   rows,
   baselineWinRate,
   totalRuns,
-  cohort = "all",
+  bracket = "all",
 }: {
   rows: MetricRow[];
   baselineWinRate: number;
   totalRuns: number;
-  cohort?: string;
+  bracket?: string;
 }) {
   const lp = useLangPrefix();
   const { lang } = useLanguage();
@@ -137,9 +141,9 @@ export default function MetricsClient({
     left: number;
   } | null>(null);
 
-  const pickCohort = (key: string) => {
+  const pickBracket = (key: string) => {
     const base = `${lp}/leaderboards/metrics`;
-    router.push(key === "all" ? base : `${base}?cohort=${key}`);
+    router.push(key === "all" ? base : `${base}?bracket=${key}`);
   };
 
   const showPreview = (
@@ -210,22 +214,22 @@ export default function MetricsClient({
           what players actually want when offered, not who happened to play the card.
         </p>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
-          {COHORTS.find((c) => c.key === cohort)?.label ?? "All runs"} ·{" "}
+          {BRACKETS.find((c) => c.key === bracket)?.label ?? "All runs"} ·{" "}
           {totalRuns.toLocaleString()} runs · baseline win rate {baselineWinRate}% ·{" "}
           {visible.length} cards shown
         </p>
       </header>
 
-      {/* Run-cohort filter. Each cohort is a pre-built slice, so switching
+      {/* Run-bracket filter. Each bracket is a pre-built slice, so switching
           is a server refetch of an already-cached snapshot. */}
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         <span className="mr-1 text-xs text-[var(--text-muted)]">Runs:</span>
-        {COHORTS.map((c) => (
+        {BRACKETS.map((c) => (
           <button
             key={c.key}
-            onClick={() => pickCohort(c.key)}
+            onClick={() => pickBracket(c.key)}
             className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-              cohort === c.key
+              bracket === c.key
                 ? "border-[var(--accent-gold)] bg-[var(--accent-gold)]/15 text-[var(--accent-gold)]"
                 : "border-[var(--border-subtle)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
             }`}

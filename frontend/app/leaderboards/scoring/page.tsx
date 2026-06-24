@@ -333,7 +333,7 @@ score      = clamp(raw, 0, 100)            # rounded to integer`}
           <Link href="/leaderboards/metrics" className="text-[var(--accent-gold)] hover:underline">
             Card Metrics
           </Link>{" "}
-          table puts Codex Elo next to Score and slices both by per-character and per-run cohorts.
+          table puts Codex Elo next to Score and slices both by per-character and per-run brackets.
         </p>
       </section>
 

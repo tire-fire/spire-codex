@@ -61,16 +61,16 @@ export default async function LangMetricsPage({
   searchParams,
 }: {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ cohort?: string }>;
+  searchParams: Promise<{ bracket?: string }>;
 }) {
   const { lang } = await params;
   if (!isValidLang(lang)) return null;
   const langCode = lang as LangCode;
   const gameName = LANG_GAME_NAME[langCode];
   const sp = await searchParams;
-  const { rows, baselineWinRate, totalRuns, cohort } = await loadMetrics(
+  const { rows, baselineWinRate, totalRuns, bracket } = await loadMetrics(
     lang,
-    sp.cohort || "all"
+    sp.bracket || "all"
   );
   const jsonLd = [
     buildBreadcrumbJsonLd([
@@ -92,7 +92,7 @@ export default async function LangMetricsPage({
         rows={rows}
         baselineWinRate={baselineWinRate}
         totalRuns={totalRuns}
-        cohort={cohort}
+        bracket={bracket}
       />
     </>
   );
