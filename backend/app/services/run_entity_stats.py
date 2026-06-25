@@ -89,6 +89,13 @@ _ELO_TOL = 1e-6
 # Acts beyond the third fold into the last bucket.
 _ACT_BUCKETS = 3
 
+# Minimum acquisitions in an act before a relic appears in that act's tier view.
+# The act split shrinks each relic's sample ~3x, and a relic rarely grabbed in an
+# act (e.g. a lategame relic bought from an act-1 shop) carries a survivorship-
+# inflated win rate that otherwise tops the list. The real act relics sit in the
+# thousands, the noise under ~150, so this cleanly separates them. Tunable.
+_ACT_MIN_PICKS = 200
+
 # Run brackets the metrics table can be sliced by. "all" is the default and
 # lives in the top-level entity fields (also what scores/stats read). The
 # rest are pre-built in the same snapshot walk and stored nested per entity,
@@ -276,6 +283,30 @@ def _official_character_ids() -> frozenset[str]:
         except Exception:
             _official_characters_cache = frozenset()
     return _official_characters_cache
+
+
+_official_relics_cache: frozenset[str] | None = None
+
+
+def _official_relic_ids() -> frozenset[str]:
+    """Uppercase ids of the official relics (the real relic catalog).
+
+    Runs can carry modded relic ids (e.g. forge/rune entities) that aren't real
+    relics; the act tier view excludes them. Loaded once; an empty set (catalog
+    unreadable) means "don't filter" so a transient read failure can't blank the
+    list.
+    """
+    global _official_relics_cache
+    if _official_relics_cache is None:
+        try:
+            from .data_service import load_relics
+
+            _official_relics_cache = frozenset(
+                (r.get("id") or "").upper() for r in load_relics() if r.get("id")
+            )
+        except Exception:
+            _official_relics_cache = frozenset()
+    return _official_relics_cache
 
 
 # Card colors that are never a real card-reward choice: curses and status
@@ -1594,8 +1625,9 @@ def get_all_entity_scores(
     to pickups made during that act: picks/wins/score come from the act
     bucket, graded against a per-act baseline. Later-act pickups only happen
     in runs that already got there, so their raw win rates are survivorship-
-    inflated; comparing act-mates against each other cancels that out.
-    Entities never picked up in that act are omitted.
+    inflated; comparing act-mates against each other cancels that out. Modded
+    relic ids and relics with fewer than `_ACT_MIN_PICKS` acquisitions in the
+    act are omitted (a relic rarely grabbed that act is survivorship noise).
     """
     _maybe_rebuild()
     if act is not None:
@@ -1674,13 +1706,21 @@ def _entity_scores_for_act(entity_type: str, act: int) -> dict[str, dict[str, An
 
     Same shape as the all-acts response (`elo` stays null: Codex Elo is a
     card-reward signal, not a relic one). The baseline is the pick-weighted
-    average win rate of every pickup in that act, so each entity is graded
-    against its act-mates rather than the global pool.
+    average win rate of every official pickup in that act, so each entity is
+    graded against its act-mates rather than the global pool.
+
+    Two filters keep the list honest: non-official (modded) relic ids are
+    dropped, and a relic must clear `_ACT_MIN_PICKS` acquisitions in the act to
+    appear, since a relic rarely grabbed in that act (e.g. a lategame relic
+    bought from an act-1 shop) carries a survivorship-inflated win rate that
+    would otherwise top the list. The baseline still spans every official pickup
+    so it stays representative.
     """
     idx = min(max(act, 1), _ACT_BUCKETS) - 1
+    official = _official_relic_ids() if entity_type == "relics" else frozenset()
     total_picks = total_wins = 0
-    for (etype, _), agg in _cache.items():
-        if etype != entity_type:
+    for (etype, eid), agg in _cache.items():
+        if etype != entity_type or (official and eid not in official):
             continue
         act_picks = agg.get("act_picks")
         if act_picks:
@@ -1689,10 +1729,10 @@ def _entity_scores_for_act(entity_type: str, act: int) -> dict[str, dict[str, An
     baseline = (total_wins / total_picks) if total_picks else _baseline_win_rate()
     out: dict[str, dict[str, Any]] = {}
     for (etype, eid), agg in _cache.items():
-        if etype != entity_type:
+        if etype != entity_type or (official and eid not in official):
             continue
         act_picks = agg.get("act_picks")
-        if not act_picks or not act_picks[idx]:
+        if not act_picks or act_picks[idx] < _ACT_MIN_PICKS:
             continue
         picks = act_picks[idx]
         wins = (agg.get("act_wins") or [0] * _ACT_BUCKETS)[idx]
