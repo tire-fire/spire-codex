@@ -906,29 +906,22 @@ def get_stats(
                 }
             },
             {"$sort": {"offered": -1}},
-            {"$limit": 600},
         ]
     )
 
-    # Per-entity stats caps. Sized to comfortably cover the full live
-    # catalog (576 cards / 293 relics / 63 potions) plus headroom for a
-    # patch's worth of new content. The earlier 100-cap was a JSON-
-    # serialization guard from when /api/runs/stats served live on every
-    # request -- a 1000-cap previously produced an 8MB response that
-    # took 1-4s to serialize. With Redis (PR #388) and the existing
-    # stats_summary materialization in front of this, the doc is
-    # serialized once per refresh cycle and served from cache for every
-    # user request, so the per-request cost no longer scales with the
-    # cap. The Discord-flagged "only 20 ancient relics visible" issue
-    # was the rarity filter slicing the already-capped top-100 -- this
-    # restores the full catalog into the stats so frontend filters can
-    # find their full set.
+    # No per-entity cap. The result is bounded by the live catalog (576 cards /
+    # 293 relics / 63 potions) plus the rare modded id the frontend filters out,
+    # so the full list is small. Redis (PR #388) + the stats_summary
+    # materialization serialize it once per refresh and serve from cache, so the
+    # per-request cost doesn't scale with the count. An uncapped list means the
+    # frontend's rarity / skill filters slice the full set instead of an
+    # already-truncated top-N (the "only 20 ancient relics" / "100 relics when
+    # filtered" reports were the filter biting into a capped list).
     cards = agg(
         [
             {"$match": match},
             *_item_stats_pipeline("deck"),
             {"$sort": {"count": -1}},
-            {"$limit": 600},
         ]
     )
     relics = agg(
@@ -936,7 +929,6 @@ def get_stats(
             {"$match": match},
             *_item_stats_pipeline("relics"),
             {"$sort": {"count": -1}},
-            {"$limit": 300},
         ]
     )
     potions_owned_list = agg(
@@ -944,7 +936,6 @@ def get_stats(
             {"$match": match},
             *_item_stats_pipeline("potions"),
             {"$sort": {"count": -1}},
-            {"$limit": 100},
         ]
     )
     potion_owned = {r["_id"]: r for r in potions_owned_list}
@@ -1192,17 +1183,17 @@ def _filter_key(
     return "|".join(parts) if parts else "global"
 
 
-# Per-username summary docs are only ever written lazily (write-through on a
-# cache miss in get_community_stats); the periodic refresher only touches the
-# hot community/character combos, never a username combo. Without a TTL the
-# first doc written for a user is therefore served forever, freezing their run
-# count at whatever it was on the first query — which pins users first queried
-# at ~0 runs (e.g. the overlay's Metrics tab firing on sign-in before uploads
-# finish) at 0. Past this TTL we ignore a per-username doc so the read falls
-# through to a live recompute that rewrites a fresh one. Existing frozen docs
-# have a stale updated_at, so they go stale immediately — no manual purge
-# needed.
-_USER_SUMMARY_TTL = timedelta(minutes=10)
+# Non-hot summary docs (anything beyond the no-filter / per-character combos the
+# refresher warms) are only written lazily on a cache miss. Without a TTL the
+# first doc written for such a combo is served forever: it freezes a user's run
+# count (the overlay's Metrics tab firing on sign-in before uploads finish pins
+# them at ~0), and it pins a filtered list (e.g. an A10 relic stats list) to
+# whatever it was when first written, including an old result cap. Past this TTL
+# we ignore a non-hot doc so the read falls through to a live recompute that
+# rewrites a fresh one. Hot combos stay always-served (the refresher keeps them
+# warm). Existing frozen docs have a stale updated_at, so they go stale
+# immediately — no manual purge needed.
+_FILTERED_SUMMARY_TTL = timedelta(minutes=10)
 
 
 @_instrument("read_stats_summary", collection="stats_summary")
@@ -1215,23 +1206,25 @@ def read_stats_summary(
     username: str | None = None,
 ) -> dict | None:
     """Read a pre-computed stats doc by filter key. Returns None if no doc
-    exists (refresher hasn't populated it yet), or if a per-username doc is
-    older than _USER_SUMMARY_TTL (so a stale personal count recomputes instead
-    of serving frozen). O(1) read."""
+    exists (refresher hasn't populated it yet), or if a non-hot (filtered) doc is
+    older than _FILTERED_SUMMARY_TTL (so a stale filtered list or personal count
+    recomputes instead of serving frozen). O(1) read."""
     try:
         key = _filter_key(character, win, ascension, game_mode, players, username)
         doc = _summary_coll().find_one({"_id": key})
         if not doc:
             return None
-        # Per-username docs are never refreshed in the background, so honor
-        # their age; hot (no-username) combos stay always-served.
-        if username:
+        # Hot combos (no filter, or character only) are kept fresh by the
+        # refresher and always served. Every other combo is write-through only,
+        # so honor its age and fall through to a recompute past the TTL.
+        non_hot = bool(win or ascension or game_mode or players or username)
+        if non_hot:
             updated = doc.get("updated_at")
             if not isinstance(updated, datetime):
                 return None
             if updated.tzinfo is None:
                 updated = updated.replace(tzinfo=timezone.utc)
-            if datetime.now(timezone.utc) - updated >= _USER_SUMMARY_TTL:
+            if datetime.now(timezone.utc) - updated >= _FILTERED_SUMMARY_TTL:
                 return None
         # Strip the wrapper fields before returning to the API caller.
         doc.pop("_id", None)

@@ -11,10 +11,10 @@ export interface ContentBracket {
 
 export const CONTENT_BRACKETS: ContentBracket[] = [
   { key: "all", param: null, label: "All" },
-  { key: "a10", param: "a10", label: "Asc. 10" },
-  { key: "wr30", param: "wr30", label: "Asc. >30% WR" },
-  { key: "wr50", param: "wr50", label: "Asc. >50% WR" },
-  { key: "wr75", param: "wr75", label: "Asc. >75% WR" },
+  { key: "a10", param: "a10", label: "A10" },
+  { key: "wr30", param: "wr30", label: "A10 >30% WR" },
+  { key: "wr50", param: "wr50", label: "A10 >50% WR" },
+  { key: "wr75", param: "wr75", label: "A10 >75% WR" },
 ];
 
 const _BY_KEY = new Map(CONTENT_BRACKETS.map((b) => [b.key, b]));
