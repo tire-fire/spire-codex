@@ -92,13 +92,13 @@ export const BRACKETS = [
   { key: "2p", label: "2P" },
   { key: "3p", label: "3P" },
   { key: "4p", label: "4P" },
-  { key: "a10", label: "Asc. 10" },
+  { key: "a10", label: "A10" },
   { key: "daily", label: "Daily" },
   { key: "custom", label: "Custom" },
   // Win-rate skill brackets (A10-gated quality ladder). Mirror _BRACKET_KEYS.
-  { key: "wr30", label: "Asc. >30% WR" },
-  { key: "wr50", label: "Asc. >50% WR" },
-  { key: "wr75", label: "Asc. >75% WR" },
+  { key: "wr30", label: "A10 >30% WR" },
+  { key: "wr50", label: "A10 >50% WR" },
+  { key: "wr75", label: "A10 >75% WR" },
 ] as const;
 
 export async function loadMetrics(
