@@ -175,6 +175,9 @@ export interface LivePlayer {
   damage_taken?: number | null;
   biggest_hit?: number | null;
   hand?: string[];
+  draw_pile?: string[];
+  discard_pile?: string[];
+  exhaust_pile?: string[];
   player_powers?: LivePower[];
   loot?: LiveLoot | null;
   route?: LiveRoute | null;
