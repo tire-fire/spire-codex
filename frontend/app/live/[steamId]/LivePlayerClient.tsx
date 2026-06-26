@@ -42,6 +42,7 @@ import {
   useMonsterMap,
   usePoll,
   withOrdinalKeys,
+  type EncounterMap,
   type LiveEvent,
   type LivePlayer,
   type LiveSeat,
@@ -68,12 +69,14 @@ function TickerRow({
   e,
   cat,
   monsters,
+  encounters,
   lp,
   won,
 }: {
   e: LiveEvent;
   cat: Catalogs;
   monsters: MonsterMap;
+  encounters: EncounterMap;
   lp: string;
   won?: string;
 }) {
@@ -343,18 +346,31 @@ function TickerRow({
       );
       break;
     }
-    case "combat":
+    case "combat": {
+      // `v` is the encounter id; resolve it to its first monster for the
+      // portrait (encounter -> monster -> image, same join the map uses).
+      const encId = e.v ? cleanId(e.v) : "";
+      const monId = encId ? encounters[encId]?.monsters?.[0]?.id || encId : "";
       body = (
         <span className="inline-flex items-center gap-1.5 text-amber-300">
           Fight started
-          {e.v && <EnemyCircle id={e.v} monsters={monsters} className="h-5 w-5" />}
+          {monId && <EnemyCircle id={monId} monsters={monsters} className="h-5 w-5" />}
         </span>
       );
       break;
+    }
     case "victory":
       body = (
         <span className="text-emerald-300">
           {won ? `Won the fight against ${monsterName(won, monsters)}` : "Won the fight"}
+        </span>
+      );
+      break;
+    case "choice":
+      // An event option the player picked; `v` is the resolved option label.
+      body = (
+        <span className="text-purple-300">
+          Picked{e.v ? `: ${e.v}` : " an option"}
         </span>
       );
       break;
@@ -425,6 +441,28 @@ function LiveCombatPanel({
     ["Exhaust", p.exhaust_count],
   ];
   const shownPiles = piles.filter(([, v]) => v != null);
+  // Hovering a pile lists its contents (grouped by name). The mod sends the
+  // card-id lists per pile; until it does, the hover is just the pile name.
+  const pileCards: Record<string, string[] | undefined> = {
+    Draw: p.draw_pile,
+    Discard: p.discard_pile,
+    Exhaust: p.exhaust_pile,
+  };
+  const pileTitle = (label: string): string => {
+    const ids = pileCards[label];
+    if (!ids?.length) return `${label} pile`;
+    const counts = new Map<string, number>();
+    for (const raw of ids) {
+      const { id, upgraded } = parseDeckId(raw);
+      const nm =
+        (cat.cards[id]?.name || displayName(`CARD.${id}`)) + (upgraded ? "+" : "");
+      counts.set(nm, (counts.get(nm) ?? 0) + 1);
+    }
+    const list = [...counts.entries()]
+      .map(([nm, n]) => (n > 1 ? `${nm} ×${n}` : nm))
+      .join(", ");
+    return `${label} pile: ${list}`;
+  };
   const powers = p.player_powers ?? [];
   const hand = p.hand ?? [];
   if (!shownDmg.length && !shownPiles.length && !powers.length && !hand.length) {
@@ -495,7 +533,7 @@ function LiveCombatPanel({
             label === "Exhaust" ? (
               <span
                 key={label}
-                title="Exhaust pile"
+                title={pileTitle(label)}
                 className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-[11px] font-bold tabular-nums text-white"
               >
                 {v}
@@ -503,7 +541,7 @@ function LiveCombatPanel({
             ) : (
               <span
                 key={label}
-                title={`${label} pile`}
+                title={pileTitle(label)}
                 className="inline-flex items-center gap-1 text-xs tabular-nums text-[var(--text-secondary)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -927,7 +965,15 @@ export default function LivePlayerClient() {
           ) : (
             <ul>
               {events.map(({ e, key, won }) => (
-                <TickerRow key={key} e={e} cat={cat} monsters={monsters} lp={lp} won={won} />
+                <TickerRow
+                  key={key}
+                  e={e}
+                  cat={cat}
+                  monsters={monsters}
+                  encounters={encounters}
+                  lp={lp}
+                  won={won}
+                />
               ))}
             </ul>
           )}

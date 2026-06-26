@@ -54,6 +54,9 @@ _LIST_CAPS = {
     "fighting": 8,
     "hand": 20,
     "modifiers": 20,
+    "draw_pile": 100,
+    "discard_pile": 100,
+    "exhaust_pile": 100,
 }
 
 
@@ -536,6 +539,9 @@ async def post_presence(request: Request):
             "shop",
             "enemies",
             "hand",
+            "draw_pile",
+            "discard_pile",
+            "exhaust_pile",
             "loot",
             "energy",
             "draw_count",

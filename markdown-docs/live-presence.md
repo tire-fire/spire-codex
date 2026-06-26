@@ -53,6 +53,8 @@ Combat context (v2, absent between fights):
 - `block`, `energy`, `max_energy`: the local player's current block and energy
   (`block`/`max_energy` are sent the whole run; `energy` is combat-only)
 - `draw_count`, `discard_count`, `exhaust_count`: pile sizes (combat-only)
+- `draw_pile`, `discard_pile`, `exhaust_pile`: the card ids in each pile (combat-only),
+  for a hover-to-see-contents on the pile counts
 - `hand`: card ids in the current hand, e.g. `["STRIKE", "DEFEND+"]` (combat-only)
 - `damage_dealt`, `damage_dealt_this_turn`, `damage_taken`, `biggest_hit`: live DPS
 - `player_powers`: the local player's combat buffs/debuffs as `[{id, amount}]`
@@ -109,12 +111,17 @@ first, appended by each heartbeat:
 ]
 ```
 
-Kinds: `card` (played), `potion` (used), `combat` (fight started), `victory`,
-`buy` (shop purchase; `v` is the relic/card/potion id, absent for card-removal
-service), `remove` (a card left the deck; `v` = the removed card), `event` (entered an
-event room; `v` = the event id), `death` (the player died), `act` (entered a new act).
-`v` is a bare entity id for the usual name/image lookups. Render as a feed:
-"Turn 2 - played Whirlwind", "Event: Abyssal Baths", "Removed Strike".
+Kinds: `card` (played), `potion` (used), `combat` (fight started; `v` = the encounter
+id, resolve to its first monster for a portrait), `victory`, `buy` (shop purchase; `v`
+is the relic/card/potion id, absent for card-removal service), `loot` (reward taken; `v`
+= a potion/card/relic id, or a gold amount as a numeric string), `relic`/`ancient` (a
+relic obtained; `v` = relic id), `remove` (a card left the deck; `v` = the removed card),
+`upgrade` (a card upgraded; `v` = card id), `rest` (rested at a campfire), `event`
+(entered an event room; `v` = the event id), `choice` (an event option picked; `v` = the
+resolved option label, already localized in the player's language), `death` (the player
+died), `act` (entered a new act). `v` is a bare entity id for the usual name/image
+lookups (except `choice`, which is a display label). Render as a feed: "Turn 2 - played
+Whirlwind", "Event: Abyssal Baths", "Removed Strike".
 
 Heartbeats are event-driven with a 2s debounce: a card play reaches the server in
 ~2-3s, with a 5s cadence floor during combat (enemy HP, turn) and 15s between rooms.
