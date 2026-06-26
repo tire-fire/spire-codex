@@ -169,7 +169,9 @@ def _clean_loot(raw) -> dict | None:
     if not isinstance(raw, dict):
         return None
     out: dict = {}
-    if isinstance(raw.get("gold"), (int, float)) and not isinstance(raw.get("gold"), bool):
+    if isinstance(raw.get("gold"), (int, float)) and not isinstance(
+        raw.get("gold"), bool
+    ):
         out["gold"] = int(raw["gold"])
     for cat in ("cards", "relics", "potions"):
         lst = raw.get(cat)
