@@ -14,7 +14,6 @@ import {
   useSensors,
   type CollisionDetection,
   type DragEndEvent,
-  type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
@@ -237,27 +236,12 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
     setActiveId(String(event.active.id));
   }
 
-  function onDragOver(event: DragOverEvent) {
-    const { active, over } = event;
-    if (!over) return;
-    const activeId = String(active.id);
-    const overId = String(over.id);
-    setContainers((prev) => {
-      const ac = findIn(prev, activeId);
-      const oc = findIn(prev, overId);
-      if (!ac || !oc || ac === oc) return prev;
-      const activeItems = prev[ac];
-      const overItems = prev[oc];
-      const insertAt =
-        overId === oc ? overItems.length : Math.max(0, overItems.indexOf(overId));
-      return {
-        ...prev,
-        [ac]: activeItems.filter((i) => i !== activeId),
-        [oc]: [...overItems.slice(0, insertAt), activeId, ...overItems.slice(insertAt)],
-      };
-    });
-  }
-
+  // All container moves happen on drop, not on hover. Moving items between
+  // containers inside onDragOver re-renders the board mid-drag, which shifts the
+  // layout, which fires another onDragOver, which moves again -- an oscillation
+  // that trips React's "maximum update depth" (#185) once the board is large.
+  // The drag overlay already shows what's being dragged, so settling on drop
+  // loses nothing visible and can't loop.
   function onDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveId(null);
@@ -267,12 +251,26 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
     setContainers((prev) => {
       const ac = findIn(prev, activeId);
       const oc = findIn(prev, overId);
-      if (!ac || !oc || ac !== oc) return prev;
-      const items = prev[ac];
-      const oldIndex = items.indexOf(activeId);
-      const newIndex = overId === oc ? items.length - 1 : items.indexOf(overId);
-      if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return prev;
-      return { ...prev, [ac]: arrayMove(items, oldIndex, newIndex) };
+      if (!ac || !oc) return prev;
+      if (ac === oc) {
+        // Reorder within the same container.
+        const items = prev[ac];
+        const oldIndex = items.indexOf(activeId);
+        const newIndex =
+          overId === oc ? items.length - 1 : items.indexOf(overId);
+        if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return prev;
+        return { ...prev, [ac]: arrayMove(items, oldIndex, newIndex) };
+      }
+      // Move across containers, inserting at the drop position.
+      const activeItems = prev[ac];
+      const overItems = prev[oc];
+      const insertAt =
+        overId === oc ? overItems.length : Math.max(0, overItems.indexOf(overId));
+      return {
+        ...prev,
+        [ac]: activeItems.filter((i) => i !== activeId),
+        [oc]: [...overItems.slice(0, insertAt), activeId, ...overItems.slice(insertAt)],
+      };
     });
   }
 
@@ -566,7 +564,6 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
         sensors={sensors}
         collisionDetection={collisionDetection}
         onDragStart={onDragStart}
-        onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
         <div

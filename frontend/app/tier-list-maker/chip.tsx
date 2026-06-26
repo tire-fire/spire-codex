@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { TierEntity } from "./types";
@@ -8,7 +9,7 @@ import type { TierEntity } from "./types";
  * Used inside sortable items, the drag overlay, and the read-only view.
  * When `commentText` is set the chip shows a styled hover tooltip with the
  * note (rendered outside the clipped art box so it isn't cut off). */
-export function Chip({
+export const Chip = memo(function Chip({
   entity,
   size = 56,
   dragging = false,
@@ -50,6 +51,11 @@ export function Chip({
             src={entity.image}
             alt={entity.name}
             draggable={false}
+            // The card tray renders the whole catalog (~575 full-card images);
+            // lazy + async decode keeps offscreen art from being fetched and
+            // decoded all at once, which was spiking memory until the tab died.
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-contain"
           />
         ) : (
@@ -88,7 +94,7 @@ export function Chip({
       )}
     </div>
   );
-}
+});
 
 /** Draggable + sortable wrapper around a Chip. A plain click (no drag past the
  * sensor threshold) calls onClick, which the builder uses to open the note
