@@ -29,6 +29,7 @@ import {
   type LivePower,
   type MonsterMap,
 } from "../live-shared";
+import { LiveEventPanel, LiveLootPanel, LiveShopPanel } from "../LiveEventShop";
 
 interface Catalogs {
   cards: Record<string, CardInfo>;
@@ -177,6 +178,18 @@ export default function LiveScene({
   const char = (p.character ?? "colorless").toLowerCase();
   const enemies: Enemy[] = (p.enemies ?? []).filter((e) => (e.hp ?? 1) > 0);
   const hand = p.hand ?? [];
+  // The room background for the current screen (combat falls back to the
+  // gradient; not every screen has dedicated art yet).
+  const sceneBg =
+    p.screen === "merchant"
+      ? imageUrl("/static/images/misc/merchant.webp")
+      : p.screen === "treasure"
+        ? imageUrl(
+            "/static/images/renders/backgrounds/treasure_room/chest_room_act_3.png",
+          )
+        : p.event?.id === "NEOW"
+          ? imageUrl("/static/images/renders/backgrounds/neow_room/neow.webp")
+          : "";
 
   return (
     <div className="overflow-hidden rounded-xl border border-[var(--border-subtle)]">
@@ -225,9 +238,27 @@ export default function LiveScene({
         </div>
       </div>
 
-      {/* The arena: player on the left, enemies on the right. */}
-      <div className="relative min-h-[280px] bg-gradient-to-b from-[#1a1320] via-[#120c18] to-[#0c0810] px-6 py-8">
-        <div className="flex items-start justify-between gap-6">
+      {/* The arena: combat shows the battle; other screens render their own
+          scene over the matching room background. */}
+      <div className="relative min-h-[320px] overflow-hidden bg-gradient-to-b from-[#1a1320] via-[#120c18] to-[#0c0810]">
+        {sceneBg && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={sceneBg}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-90"
+              crossOrigin="anonymous"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+            <div className="absolute inset-0 bg-black/45" />
+          </>
+        )}
+        <div className="relative px-6 py-8">
+          {p.screen === "combat" ? (
+            <div className="flex items-start justify-between gap-6">
           {/* Player token */}
           <div className="flex flex-col items-center gap-2">
             <CharacterIcon
@@ -274,6 +305,38 @@ export default function LiveScene({
               ))
             )}
           </div>
+            </div>
+          ) : p.event ? (
+            <div className="mx-auto max-w-2xl">
+              <LiveEventPanel ev={p.event} lp={lp} />
+            </div>
+          ) : p.shop ? (
+            <div className="mx-auto max-w-3xl">
+              <LiveShopPanel
+                shop={p.shop}
+                cards={cat.cards}
+                relics={cat.relics}
+                potions={cat.potions}
+                lp={lp}
+                lang={lang}
+              />
+            </div>
+          ) : p.loot ? (
+            <div className="mx-auto max-w-2xl">
+              <LiveLootPanel
+                loot={p.loot}
+                cards={cat.cards}
+                relics={cat.relics}
+                potions={cat.potions}
+                lp={lp}
+                lang={lang}
+              />
+            </div>
+          ) : (
+            <div className="py-12 text-center text-sm text-white/70">
+              {p.screen ? `On the ${p.screen} screen` : "Between rooms"}
+            </div>
+          )}
         </div>
       </div>
 
