@@ -15,6 +15,7 @@ import { useLanguage } from "@/app/contexts/LanguageContext";
 import { cachedFetch } from "@/lib/fetch-cache";
 import { imageUrl, fullCardUrl } from "@/lib/image-url";
 import LiveMap from "../LiveMap";
+import LiveScene from "./LiveScene";
 import { LiveEventPanel, LiveLootPanel, LiveShopPanel } from "../LiveEventShop";
 import {
   CardPill,
@@ -699,6 +700,13 @@ export default function LivePlayerClient() {
   const [cat, setCat] = useState<Catalogs>({ cards: {}, relics: {}, potions: {}, events: {} });
   const monsters = useMonsterMap(true);
   const encounters = useEncounterMap(true);
+  // EXPERIMENTAL: ?scene=1 renders the game-like battle scene above the panels
+  // (localhost prototype; off by default). Read from the URL on the client to
+  // avoid the useSearchParams static-bailout for a debug toggle.
+  const [sceneMode, setSceneMode] = useState(false);
+  useEffect(() => {
+    setSceneMode(new URLSearchParams(window.location.search).get("scene") === "1");
+  }, []);
 
   useEffect(() => {
     cachedFetch<CardInfo[]>(`${API}/api/cards?lang=${lang}`)
@@ -1160,6 +1168,11 @@ export default function LivePlayerClient() {
           The rail is dropped entirely when there's no map. */}
       {/* Four columns on desktop (play-by-play | character + deck | combat
           context | map); stacks to one column on mobile. */}
+      {sceneMode && (
+        <div className="mt-3">
+          <LiveScene p={p} cat={cat} monsters={monsters} lp={lp} lang={lang} />
+        </div>
+      )}
       <div className="mt-3 grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
         <div className="min-w-0">{playByPlay}</div>
         <div className="space-y-4 min-w-0">
