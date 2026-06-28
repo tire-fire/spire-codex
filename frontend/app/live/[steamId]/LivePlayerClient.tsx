@@ -1224,7 +1224,7 @@ export default function LivePlayerClient() {
           </div>
         </div>
       ) : (
-        <div className="mt-3 grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
+        <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-4 items-start">
           <div className="min-w-0">{playByPlay}</div>
           <div className="space-y-4 min-w-0">
             {characterCard}
