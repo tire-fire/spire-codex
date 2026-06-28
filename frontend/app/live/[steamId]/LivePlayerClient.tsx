@@ -15,6 +15,7 @@ import { useLanguage } from "@/app/contexts/LanguageContext";
 import { cachedFetch } from "@/lib/fetch-cache";
 import { imageUrl, fullCardUrl } from "@/lib/image-url";
 import LiveMap from "../LiveMap";
+import LiveScene from "./LiveScene";
 import { LiveEventPanel, LiveLootPanel, LiveShopPanel } from "../LiveEventShop";
 import {
   CardPill,
@@ -359,13 +360,19 @@ function TickerRow({
       );
       break;
     }
-    case "victory":
+    case "victory": {
+      // `won` is the encounter id; prefer its clean encounter name over the
+      // raw id fallback (which renders ALL-CAPS like "SLUDGE SPINNER WEAK").
+      const wonName = won
+        ? encounters[cleanId(won)]?.name || monsterName(won, monsters)
+        : "";
       body = (
         <span className="text-emerald-300">
-          {won ? `Won the fight against ${monsterName(won, monsters)}` : "Won the fight"}
+          {wonName ? `Won the fight against ${wonName}` : "Won the fight"}
         </span>
       );
       break;
+    }
     case "choice":
       // An event option the player picked; `v` is the resolved option label.
       body = (
@@ -699,6 +706,18 @@ export default function LivePlayerClient() {
   const [cat, setCat] = useState<Catalogs>({ cards: {}, relics: {}, potions: {}, events: {} });
   const monsters = useMonsterMap(true);
   const encounters = useEncounterMap(true);
+  // EXPERIMENTAL: ?scene=1 renders the game-like battle scene above the panels
+  // (localhost prototype; off by default). Read from the URL on the client to
+  // avoid the useSearchParams static-bailout for a debug toggle.
+  const [sceneMode, setSceneMode] = useState(true);
+  const [pbpOpen, setPbpOpen] = useState(true);
+  useEffect(() => {
+    // The battle scene is the default view now (no opt-in); `?scene=0` is a
+    // debug opt-out back to the old data panels.
+    setSceneMode(
+      new URLSearchParams(window.location.search).get("scene") !== "0",
+    );
+  }, []);
 
   useEffect(() => {
     cachedFetch<CardInfo[]>(`${API}/api/cards?lang=${lang}`)
@@ -968,7 +987,14 @@ export default function LivePlayerClient() {
       {p.screen === "combat" && !p.loot && (
         <LiveCombatPanel p={p} cat={cat} lp={lp} lang={lang} />
       )}
-      {p.event && <LiveEventPanel ev={p.event} lp={lp} />}
+      {p.event && (
+        <LiveEventPanel
+          ev={p.event}
+          lp={lp}
+          cards={cat.cards}
+          relics={cat.relics}
+        />
+      )}
       {p.shop && (
         <LiveShopPanel
           shop={p.shop}
@@ -1160,17 +1186,56 @@ export default function LivePlayerClient() {
           The rail is dropped entirely when there's no map. */}
       {/* Four columns on desktop (play-by-play | character + deck | combat
           context | map); stacks to one column on mobile. */}
-      <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-4 items-start">
-        <div className="min-w-0">{playByPlay}</div>
-        <div className="space-y-4 min-w-0">
-          {characterCard}
-          {deckColumn}
+      {sceneMode ? (
+        // Scene mode: a collapsible play-by-play (~1/5) beside the battle scene,
+        // which carries the character/combat/deck/map itself.
+        <div className="mt-3 flex items-start gap-3">
+          {pbpOpen ? (
+            <div className="relative w-1/5 min-w-[180px] shrink-0">
+              <button
+                type="button"
+                onClick={() => setPbpOpen(false)}
+                title="Collapse play-by-play"
+                className="absolute right-2 top-2 z-10 text-lg leading-none text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              >
+                »
+              </button>
+              {playByPlay}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPbpOpen(true)}
+              title="Show play-by-play"
+              className="shrink-0 self-stretch rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] px-2 text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            >
+              «
+            </button>
+          )}
+          <div className="min-w-0 flex-1">
+            <LiveScene
+              p={p}
+              cat={cat}
+              monsters={monsters}
+              encounters={encounters}
+              lp={lp}
+              lang={lang}
+            />
+          </div>
         </div>
-        <div className="space-y-4 min-w-0">{screenPanels}</div>
-        {mapCard && (
-          <div className="lg:sticky lg:top-4 self-start min-w-0">{mapCard}</div>
-        )}
-      </div>
+      ) : (
+        <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-4 items-start">
+          <div className="min-w-0">{playByPlay}</div>
+          <div className="space-y-4 min-w-0">
+            {characterCard}
+            {deckColumn}
+          </div>
+          <div className="space-y-4 min-w-0">{screenPanels}</div>
+          {mapCard && (
+            <div className="lg:sticky lg:top-4 self-start min-w-0">{mapCard}</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
