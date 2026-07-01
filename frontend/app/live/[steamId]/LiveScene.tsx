@@ -104,7 +104,9 @@ function PowerRow({ powers }: { powers: LivePower[] }) {
         <span key={pw.id} className="relative inline-flex" title={displayName(pw.id)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={imageUrl(`/static/images/powers/${pw.id.toLowerCase()}_power.png`)}
+            // power ids already end in _POWER (e.g. DEXTERITY_POWER), and the
+            // asset is dexterity_power.png -- so no extra _power suffix.
+            src={imageUrl(`/static/images/powers/${pw.id.toLowerCase()}.png`)}
             alt={displayName(pw.id)}
             className="h-5 w-5 object-contain"
             crossOrigin="anonymous"
