@@ -64,7 +64,7 @@ def parse_encounter_data(
                 if room_type == "Elite"
                 else "Normal"
             )
-            for m in enc.get("monsters", []):
+            for m in enc.get("monsters") or []:
                 mid = m["id"]
                 # Convert ID back to class name for type lookup
                 # Boss/Elite takes priority
