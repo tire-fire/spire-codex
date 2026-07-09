@@ -586,10 +586,7 @@
     "feedlabel": "Community Announcements",
     "feedname": "steam_community_announcements",
     "feed_type": 1,
-    "tags": [
-      "mod_reviewed",
-      "ModAct_1847323374_1774375760_0"
-    ],
+    "tags": [],
     "date": 1774373637,
     "appid": 2868840
   },
@@ -635,11 +632,11 @@
   {
     "gid": "1827626365757612",
     "title": "New Slay The Spire 2 patch will \"make infinites harder to achieve\" by letting the Doormaker eat your cards, amongst other surprises",
-    "url": "https://steamstore-a.akamaihd.net/news/externalpost/Rock, Paper, Shotgun/1827626365757612",
+    "url": "https://steamstore-a.akamaihd.net/news/externalpost/rps/1827626365757612",
     "is_external_url": true,
     "author": "",
     "feedlabel": "Rock, Paper, Shotgun",
-    "feedname": "Rock, Paper, Shotgun",
+    "feedname": "rps",
     "feed_type": 0,
     "tags": [],
     "date": 1774010869,
