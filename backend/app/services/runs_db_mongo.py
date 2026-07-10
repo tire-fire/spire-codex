@@ -1679,7 +1679,11 @@ def set_run_hidden(run_hash: str, hidden: bool) -> dict:
     clear the run on their next ~60s rebuild. Returns how many docs changed."""
     coll = _get_collection()
     update = {"$set": {"hidden": True}} if hidden else {"$unset": {"hidden": ""}}
-    result = coll.update_many({"run_hash": run_hash}, update)
+    # Single-player runs key on _id (= run hash) with no run_hash field;
+    # multiplayer runs share a run_hash field across per-player docs. Match either.
+    result = coll.update_many(
+        {"$or": [{"_id": run_hash}, {"run_hash": run_hash}]}, update
+    )
     return {"matched": result.matched_count, "modified": result.modified_count}
 
 

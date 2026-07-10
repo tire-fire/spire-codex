@@ -143,7 +143,14 @@ def delete_run(run_hash: str, runs_dir: Path) -> dict[str, Any]:
     removal on their next scheduled rebuild."""
     deleted_docs = 0
     if _enabled():
-        deleted_docs = _db()["runs"].delete_many({"run_hash": run_hash}).deleted_count
+        # Single-player runs key on _id (= run hash) with no run_hash field;
+        # multiplayer runs share a run_hash field. Match either so the doc is
+        # actually removed, not just the blob file.
+        deleted_docs = (
+            _db()["runs"]
+            .delete_many({"$or": [{"_id": run_hash}, {"run_hash": run_hash}]})
+            .deleted_count
+        )
     file_removed = False
     blob = runs_dir / f"{run_hash}.json"
     try:
