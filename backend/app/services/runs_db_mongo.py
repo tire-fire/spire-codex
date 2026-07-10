@@ -165,6 +165,12 @@ def _ensure_indexes(coll) -> None:
     # /api/runs/list hot shapes: filter+sort compounds so Mongo never
     # in-memory-sorts a 40k-doc subset, plus seed for anchored prefix search.
     coll.create_index([("seed", ASCENDING)])
+    # Admin hide/delete/search look runs up by hash. _id IS the hash for
+    # single-player runs; multiplayer runs carry a shared run_hash field. Index
+    # it (sparse — only MP docs have the field) so the admin lookup
+    # $or: [{_id}, {run_hash}] is an index union instead of a full scan of the
+    # ~740k-doc collection.
+    coll.create_index([("run_hash", ASCENDING)], sparse=True)
     coll.create_index([("run_time", ASCENDING)])
     coll.create_index([("ascension", DESCENDING), ("run_time", ASCENDING)])
     coll.create_index([("character", ASCENDING), ("submitted_at", DESCENDING)])
