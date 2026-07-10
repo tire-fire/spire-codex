@@ -60,7 +60,7 @@ class Card(BaseModel):
     keywords_key: list[str] | None = None
     tags: list[str] | None = None
     spawns_cards: list[str] | None = None
-    vars: dict[str, int] | None = None
+    vars: dict[str, int | float] | None = None
     upgrade: dict[str, str | int | None] | None = None
     upgrade_description: str | None = None
     image_url: str | None = None
