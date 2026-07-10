@@ -202,8 +202,13 @@ def runs_search(
 
     limit = max(1, min(limit, 100))
     if run_hash:
-        docs = list(get_database()["runs"].find({"run_hash": run_hash.strip()}))
+        # Single-player runs key on _id (= the run hash) with no run_hash field;
+        # multiplayer runs share a run_hash field across per-player docs. Match
+        # either, and expose the hash as run_hash for the UI.
+        h = run_hash.strip()
+        docs = list(get_database()["runs"].find({"$or": [{"_id": h}, {"run_hash": h}]}))
         for d in docs:
+            d["run_hash"] = d.get("run_hash") or d.pop("_id", None)
             d.pop("_id", None)
             d.pop("raw", None)
         return {"runs": docs, "total": len(docs)}
@@ -219,7 +224,8 @@ def runs_search(
             coll.find(
                 q,
                 {
-                    "_id": 0,
+                    # _id is the run hash for single-player; multiplayer docs also
+                    # carry a run_hash field. Keep both and resolve below.
                     "run_hash": 1,
                     "run_time": 1,
                     "character": 1,
@@ -235,6 +241,9 @@ def runs_search(
         )
         runs = list(cursor)
         for d in runs:
+            # Expose the hash as run_hash so the admin UI can hide/delete these.
+            d["run_hash"] = d.get("run_hash") or d.pop("_id", None)
+            d.pop("_id", None)
             sa = d.get("submitted_at")
             if hasattr(sa, "isoformat"):
                 d["submitted_at"] = sa.isoformat()
