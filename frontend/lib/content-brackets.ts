@@ -33,14 +33,60 @@ const _BY_KEY = new Map(
   [...CONTENT_BRACKETS, ...PLAYER_BRACKETS].map((b) => [b.key, b]),
 );
 
-/** Normalize a raw ?bracket= value to a known bracket key ("all" if unknown). */
-export function normalizeBracket(raw: string | undefined | null): string {
-  return raw && _BY_KEY.has(raw) ? raw : "all";
+const _PLAYER_KEYS = new Set(PLAYER_BRACKETS.map((b) => b.key));
+const _SKILL_KEYS = new Set(
+  CONTENT_BRACKETS.filter((b) => b.key !== "all").map((b) => b.key),
+);
+
+/**
+ * A "player:skill" composite (e.g. "solo:wr50") combines a player-count bracket
+ * with a content/skill bracket. Only the entity cache (tier list + metrics)
+ * materializes these, so BracketFilter offers them only in composite mode.
+ */
+export function isCompositeBracket(raw: string | undefined | null): boolean {
+  if (!raw || !raw.includes(":")) return false;
+  const [p, s] = raw.split(":");
+  return _PLAYER_KEYS.has(p) && _SKILL_KEYS.has(s);
 }
 
-/** The ?bracket= API value for a bracket key (null = all runs, no param). */
+/** Split a bracket value into its player + skill axes. A single bracket maps to
+ * whichever axis owns it; "all"/unknown gives both empty. */
+export function splitBracket(raw: string | undefined | null): {
+  player: string;
+  skill: string;
+} {
+  const b = normalizeBracket(raw);
+  if (isCompositeBracket(b)) {
+    const [player, skill] = b.split(":");
+    return { player, skill };
+  }
+  if (_PLAYER_KEYS.has(b)) return { player: b, skill: "" };
+  if (_SKILL_KEYS.has(b)) return { player: "", skill: b };
+  return { player: "", skill: "" };
+}
+
+/** Combine a player + skill selection into one ?bracket= value. */
+export function combineBracket(player: string, skill: string): string {
+  if (player && skill) return `${player}:${skill}`;
+  return player || skill || "all";
+}
+
+/** Normalize a raw ?bracket= value to a known bracket key or a player:skill
+ * composite ("all" if unknown). */
+export function normalizeBracket(raw: string | undefined | null): string {
+  if (!raw) return "all";
+  if (_BY_KEY.has(raw)) return raw;
+  if (isCompositeBracket(raw)) return raw;
+  return "all";
+}
+
+/** The ?bracket= API value for a bracket key (null = all runs, no param). A
+ * composite passes through unchanged (its API value is the composite itself). */
 export function bracketParam(key: string | undefined | null): string | null {
-  return _BY_KEY.get(normalizeBracket(key))?.param ?? null;
+  const n = normalizeBracket(key);
+  if (n === "all") return null;
+  if (isCompositeBracket(n)) return n;
+  return _BY_KEY.get(n)?.param ?? null;
 }
 
 /**

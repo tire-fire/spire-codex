@@ -272,6 +272,7 @@ export default async function RelicsTierListPage({ searchParams }: PageProps) {
         basePath="/tier-list/relics"
         current={bracket}
         extraParams={{ pool, rarity, act }}
+        composite
       />
 
       <TierList route="relics" entities={entities} />

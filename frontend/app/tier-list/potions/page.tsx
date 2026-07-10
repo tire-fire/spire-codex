@@ -117,7 +117,7 @@ export default async function PotionsTierListPage({ searchParams }: PageProps) {
       </p>
 
       {/* Content bracket: grade against all runs, A10, or win-rate skill tiers. */}
-      <BracketFilter basePath="/tier-list/potions" current={bracket} />
+      <BracketFilter basePath="/tier-list/potions" current={bracket} composite />
 
       <TierList route="potions" entities={entities} />
     </div>
