@@ -341,6 +341,32 @@ def _excluded_card_ids() -> frozenset[str]:
     return _excluded_card_ids_cache
 
 
+_token_card_ids_cache: frozenset[str] | None = None
+
+
+def _token_card_ids() -> frozenset[str]:
+    """Token card ids (color "token": Shiv, Soul, Giant Rock, the Minion cards,
+    ...). Tokens are generated mid-combat and can't be obtained in the official
+    game, so any per-entity stats for them come only from modded runs and are
+    meaningless. Empty if the card data can't be read."""
+    global _token_card_ids_cache
+    if _token_card_ids_cache is None:
+        try:
+            from .data_service import load_cards
+
+            _token_card_ids_cache = frozenset(
+                c["id"]
+                for c in load_cards()
+                if c.get("id") and (c.get("color") or "").lower() == "token"
+            )
+        except Exception:
+            logger.warning(
+                "could not load card colors for token exclusion", exc_info=True
+            )
+            _token_card_ids_cache = frozenset()
+    return _token_card_ids_cache
+
+
 _starter_card_ids_cache: frozenset[str] | None = None
 
 
@@ -1943,6 +1969,10 @@ def get_entity_stats(entity_type: str, entity_id: str) -> dict[str, Any] | None:
     blocks while the initial build runs (a few seconds at current run
     counts); subsequent calls within the TTL window are O(1).
     """
+    # Tokens can't be obtained in the official game, so any aggregate for them is
+    # mod-only noise. Report no data (the endpoint renders a zero-filled stub).
+    if entity_type == "cards" and entity_id.upper() in _token_card_ids():
+        return None
     _maybe_rebuild()
     key = (entity_type, entity_id.upper())
     agg = _cache.get(key)
