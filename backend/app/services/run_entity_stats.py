@@ -205,10 +205,13 @@ SNAPSHOT_COLLECTION_NAME = "entity_stats_snapshot"
 # Version 10 adds a per-character split to each entity's win-rate/A10 bracket data
 # so the detail page's character table re-slices by bracket (additive).
 # Version 11 adds solo/2p/3p/4p player-count brackets to the community and
-# encounter blobs so those pages can filter by co-op size, plus player-count x
-# skill composite brackets (solo:wr50, ...) in the entity cache so the metrics
-# page can filter by both at once (additive).
-SNAPSHOT_VERSION = 11
+# encounter blobs so those pages can filter by co-op size.
+# Version 12 adds player-count x skill composite brackets (solo:wr50, ...) to the
+# entity cache so the metrics table and tier list can filter by both at once.
+# These landed in the same deploy as v11 but reused version 11, so the leader
+# considered its (composite-less) v11 snapshot current and never rebuilt them in;
+# the bump forces the rebuild.
+SNAPSHOT_VERSION = 12
 # The oldest snapshot version readers can still serve. Bump SNAPSHOT_VERSION
 # on every shape change; bump this floor ONLY when a change actually breaks
 # readers (a removed/retyped field). Everything in between is additive, and
