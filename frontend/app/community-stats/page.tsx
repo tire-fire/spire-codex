@@ -110,7 +110,7 @@ function Empty({ jsonLd, current }: { jsonLd: object[]; current: string }) {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <JsonLd data={jsonLd} />
       <h1 className="text-3xl font-bold mb-2"><span className="text-[var(--accent-gold)]">Community Stats</span></h1>
-      <BracketFilter basePath="/community-stats" current={current} />
+      <BracketFilter basePath="/community-stats" current={current} composite />
       <p className="text-sm text-[var(--text-muted)]">
         No data for this bracket yet. Stats build from community-submitted runs, <Link href="/leaderboards/submit" className="text-[var(--accent-gold)] hover:underline">submit a run</Link> to seed them.
       </p>
@@ -161,7 +161,7 @@ export default async function CommunityStatsPage({
       </p>
 
       {/* Content bracket: slice every dataset below by skill. */}
-      <BracketFilter basePath="/community-stats" current={bracket} />
+      <BracketFilter basePath="/community-stats" current={bracket} composite />
 
       {/* Headline numbers */}
       <section className="mb-10">

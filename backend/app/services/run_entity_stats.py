@@ -221,7 +221,9 @@ SNAPSHOT_COLLECTION_NAME = "entity_stats_snapshot"
 # Score + Win% only). The full-Elo v12 build over 26 brackets x ~740k runs was
 # too heavy to finish, so the snapshot never advanced past v10; this cuts the
 # walk back to a healthy duration. The bump forces the (now cheap) rebuild.
-SNAPSHOT_VERSION = 13
+# Version 14: the community blob also carries the player x skill composites so
+# /community-stats can combine both axes (additive; the bump forces the rebuild).
+SNAPSHOT_VERSION = 14
 # The oldest snapshot version readers can still serve. Bump SNAPSHOT_VERSION
 # on every shape change; bump this floor ONLY when a change actually breaks
 # readers (a removed/retyped field). Everything in between is additive, and
@@ -229,8 +231,13 @@ SNAPSHOT_VERSION = 13
 # rebuild takes beats serving nothing: to users an empty stats page is
 # indistinguishable from the site losing its data.
 SNAPSHOT_MIN_COMPAT = 3
-# Leader rebuilds the heavy walk at most this often.
-_SNAPSHOT_REBUILD_SECONDS = 10 * 60
+# Leader rebuilds the heavy walk at most this often. The walk reads every run
+# blob (~750k files, ~80 min on the current box), so a 10-minute interval had the
+# leader walking almost continuously — one worker pegged, a full run + file scan
+# back-to-back — which starved the DB and slowed the whole site. These stats
+# (tier list / community / Codex Score) don't need minute-fresh data, so rebuild
+# a few times a day instead; the walk now runs a fraction of the time.
+_SNAPSHOT_REBUILD_SECONDS = 2 * 60 * 60
 # Workers reload the snapshot from Mongo this often (cheap read).
 _SNAPSHOT_LOAD_SECONDS = 5 * 60
 
@@ -1017,6 +1024,12 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
         mp_blob_brackets = blob_brackets + [
             c for c in extra_brackets if c in ("solo", "2p", "3p", "4p")
         ]
+        # Community blob ALSO slices by the player x skill composites (solo:wr50,
+        # ...) so its page can combine both axes like the tier list. These only
+        # apply to A10 runs from qualifying players, so most runs add nothing.
+        community_blob_brackets = mp_blob_brackets + [
+            c for c in extra_brackets if c in _COMPOSITE_BRACKETS_SET
+        ]
 
         # Community / fun stats, accumulated from the same blob. Guarded so
         # one malformed blob can't abort the whole snapshot rebuild.
@@ -1024,7 +1037,7 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
             community_stats.accumulate(
                 community_acc,
                 blob,
-                brackets=mp_blob_brackets,
+                brackets=community_blob_brackets,
                 run_hash=run_hash,
                 is_win=is_win,
                 character=character,
