@@ -13,6 +13,7 @@ import { t } from "@/lib/ui-translations";
 import LocalizedNames from "@/app/components/LocalizedNames";
 import EntityHistory from "@/app/components/EntityHistory";
 import RelatedCards from "@/app/components/RelatedCards";
+import EntityProse from "@/app/components/EntityProse";
 import { imageUrl, fullCardUrl, enchantedCardUrl } from "@/lib/image-url";
 import EntityRunStats, { type EntityStats } from "@/app/components/EntityRunStats";
 import HoverTooltip from "@/app/components/HoverTooltip";
@@ -573,6 +574,9 @@ export default function CardDetail({ initialCard, initialEnchantments, initialSt
                 </div>
               </>
             )}
+
+            {/* Programmatic prose block for SEO */}
+            <EntityProse kind="card" card={card} />
           </section>
 
           {/* Relations */}

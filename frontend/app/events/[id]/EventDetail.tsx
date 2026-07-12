@@ -15,6 +15,7 @@ import { cachedFetch } from "@/lib/fetch-cache";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { t } from "@/lib/ui-translations";
 import LocalizedNames from "@/app/components/LocalizedNames";
+import EntityProse from "@/app/components/EntityProse";
 import BetaDiffNotice from "@/app/components/BetaDiffNotice";
 import { imageUrl } from "@/lib/image-url";
 import "../../card-revamp.css";
@@ -230,6 +231,9 @@ export default function EventDetail({
                 <RichDescription text={event.description} />
               </div>
             )}
+
+            {/* Programmatic prose block for SEO */}
+            <EntityProse kind="event" event={event} />
           </section>
 
           {/* Choices & outcomes */}
