@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import EventDetail from "./EventDetail";
+import { fetchEventVotes } from "@/lib/event-votes";
 import { stripTags, stripTagsFlat, clipMetaDescription, buildLanguageAlternates, SITE_NAME, SITE_URL } from "@/lib/seo";
 import JsonLd from "@/app/components/JsonLd";
 import { buildDetailPageJsonLd, buildFAQPageJsonLd } from "@/lib/jsonld";
@@ -76,10 +77,12 @@ export default async function Page({ params }: Props) {
     apiUnreachable = true;
   }
   if (!event && !apiUnreachable) redirectMissingEntity("events", id);
+  // Server-render the community choice distribution (unique, crawlable data).
+  const voteStats = event ? await fetchEventVotes(id) : null;
   return (
     <>
       {jsonLd && <JsonLd data={jsonLd} />}
-      <EventDetail initialEvent={event} />
+      <EventDetail initialEvent={event} voteStats={voteStats} />
     </>
   );
 }
