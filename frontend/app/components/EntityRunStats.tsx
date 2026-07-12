@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cachedFetch } from "@/lib/fetch-cache";
 import ScoreBadge, { scoreToTier } from "@/app/components/ScoreBadge";
+import EntityTrends from "./EntityTrends";
 import { CONTENT_BRACKETS } from "@/lib/content-brackets";
 import { useLanguage } from "@/app/contexts/LanguageContext";
 import { t } from "@/lib/ui-translations";
@@ -243,16 +244,6 @@ export default function EntityRunStats({ entityType, entityId, entityName, varia
                 <h3 className="subh">
                   {t("Win rate by character", lang)}{!isAll ? ` · ${selLabel}` : ""}
                 </h3>
-                <p className="h-note">
-                  {top ? (
-                    <>
-                      {t("Picked most on", lang)} <b>{characterPretty(top.character)}</b> —{" "}
-                      {t("the story shifts by character and bracket.", lang)}
-                    </>
-                  ) : (
-                    t("By character and bracket.", lang)
-                  )}
-                </p>
                 <div className="bars">
                   {selByChar.map((row) => (
                     <div className="bar-row" key={row.character}>
@@ -288,6 +279,12 @@ export default function EntityRunStats({ entityType, entityId, entityName, varia
                 ) : null}
               </p>
             )}
+            <EntityTrends
+              entityType={entityType}
+              entityId={entityId}
+              bracket={selectedBracket}
+              lang={lang}
+            />
           </>
         )}
 
