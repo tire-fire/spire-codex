@@ -256,8 +256,8 @@ def export_runs(
       constant across a paged sequence.
     * ``start`` / ``end`` filter on ``submitted_at``, so they exclude legacy
       runs that have no ``submitted_at``. Omit both to receive the whole corpus.
-    * Browser clients reading ``X-Next-Cursor`` need it in the CORS
-      ``Access-Control-Expose-Headers`` list; non-browser clients are unaffected.
+    * ``X-Next-Cursor`` is in the CORS ``Access-Control-Expose-Headers`` list,
+      so browser clients can read it too; non-browser clients never needed it.
     """
     start_dt, end_dt, cursor_key = page
 
