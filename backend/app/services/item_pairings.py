@@ -57,21 +57,38 @@ _official_cache: dict[str, frozenset[str]] | None = None
 
 
 def _official_sets() -> dict[str, frozenset[str]]:
-    """Upper-cased official id sets for cards / relics / potions, so modded ids
-    in a run get dropped (they'd otherwise pollute the synergy signal). Loaded
-    once from the committed game-data catalogs."""
+    """Upper-cased id sets of the *draftable* official cards / relics / potions.
+
+    Modded ids are dropped (they'd pollute the signal), and so are the
+    non-drafted "starters": Basic cards (Strike / Defend / each character's
+    starting cards), the auto-added Ascender's Bane curse, and every character's
+    Starter Relic. Those sit in ~every deck by default, so as pairing partners
+    they only ever say "everyone has these" — not synergy — and swamp the real
+    picks. Loaded once from the committed game-data catalogs."""
     global _official_cache
     if _official_cache is None:
         from .data_service import load_cards, load_potions, load_relics
 
-        def ids(rows):
-            return frozenset((r.get("id") or "").upper() for r in rows if r.get("id"))
+        def up(x):
+            return (x or "").upper()
 
         try:
             _official_cache = {
-                "cards": ids(load_cards()),
-                "relics": ids(load_relics()),
-                "potions": ids(load_potions()),
+                "cards": frozenset(
+                    up(c["id"])
+                    for c in load_cards()
+                    if c.get("id")
+                    and c.get("rarity") != "Basic"
+                    and up(c["id"]) != "ASCENDERS_BANE"
+                ),
+                "relics": frozenset(
+                    up(r["id"])
+                    for r in load_relics()
+                    if r.get("id") and r.get("rarity") != "Starter Relic"
+                ),
+                "potions": frozenset(
+                    up(p["id"]) for p in load_potions() if p.get("id")
+                ),
             }
         except Exception:
             logger.warning("item-pairings: catalog load failed", exc_info=True)
