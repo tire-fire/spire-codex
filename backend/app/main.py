@@ -576,7 +576,7 @@ app.include_router(images.router)
 app.include_router(changelogs.router)
 # Hidden from the OpenAPI schema (/docs): feedback intake endpoints.
 app.include_router(feedback.router, include_in_schema=False)
-app.include_router(uninstall.router)
+app.include_router(uninstall.router, include_in_schema=False)
 app.include_router(qa_feedback.router, include_in_schema=False)
 app.include_router(acts.router)
 app.include_router(ascensions.router)
