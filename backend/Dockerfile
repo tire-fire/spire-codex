@@ -13,6 +13,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # and ZIP building. main.py skips the /static mount if the dir is absent.
 COPY app/ app/
 
+# Maintenance/ops scripts (run in-container with `python -m scripts.<name>`,
+# e.g. scripts.validate_parallel_rebuild before enabling parallel snapshot
+# rebuilds). Small and dependency-free; ships so the documented commands work
+# without copying files into a running container.
+COPY scripts/ scripts/
+
 EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

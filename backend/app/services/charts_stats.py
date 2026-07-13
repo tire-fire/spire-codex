@@ -641,6 +641,50 @@ def new_accumulator() -> dict[str, Any]:
     return {b: _new_acc_one() for b in _BLOB_BRACKETS}
 
 
+# Merging two accumulators (from parallel run-chunk walks) adds per key. Most
+# charts cells are `key -> [numbers]` (element-wise add); enc_hist and death_room
+# are `key -> count` (scalar add).
+_CHART_LIST_FIELDS = (
+    "hp_floor",
+    "enc",
+    "traj",
+    "elites",
+    "smiths",
+    "events",
+    "entity_week",
+    "week_totals",
+    "copies",
+    "ench",
+)
+_CHART_COUNTER_FIELDS = ("enc_hist", "death_room")
+
+
+def _merge_list_dict(dst: dict, src: dict) -> None:
+    """dst[key] += src[key] element-wise (both are lists of the same length)."""
+    for k, v in src.items():
+        cur = dst.get(k)
+        if cur is None:
+            dst[k] = list(v)
+        else:
+            for i, x in enumerate(v):
+                cur[i] += x
+
+
+def merge(dst: dict, src: dict) -> None:
+    """Fold accumulator `src` into `dst` (both from new_accumulator())."""
+    for bracket, s in src.items():
+        d = dst.get(bracket)
+        if d is None:
+            dst[bracket] = s
+            continue
+        for field in _CHART_LIST_FIELDS:
+            _merge_list_dict(d[field], s[field])
+        for field in _CHART_COUNTER_FIELDS:
+            df = d[field]
+            for k, v in s[field].items():
+                df[k] = df.get(k, 0) + v
+
+
 def _bump2(d: dict, key: Any, win: bool) -> None:
     cell = d.setdefault(key, [0, 0])
     cell[0] += 1

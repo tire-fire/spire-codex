@@ -1032,16 +1032,15 @@ def community_stats(request: Request, response: Response, bracket: str | None = 
 
     `bracket` slices to a content bracket (`a10`, `wr30`, `wr50`, `wr75`);
     omit for all runs."""
-    if bracket is not None and bracket not in (
-        "solo",
-        "2p",
-        "3p",
-        "4p",
-        "a10",
-        "wr30",
-        "wr50",
-        "wr75",
-    ):
+    # Accept the player-count buckets, the skill tiers, and their player:skill
+    # composites (solo:wr50, ...) — the last let the page combine both axes.
+    _players = ("solo", "2p", "3p", "4p")
+    _skills = ("a10", "wr30", "wr50", "wr75")
+    _ok = bracket is None or bracket in _players or bracket in _skills
+    if not _ok and ":" in (bracket or ""):
+        _p, _, _s = bracket.partition(":")
+        _ok = _p in _players and _s in _skills
+    if not _ok:
         raise HTTPException(status_code=400, detail="bad bracket")
     # An empty shell during a post-deploy rebuild must not stick in the
     # edge cache for 5 minutes on top of the rebuild itself.
@@ -1213,20 +1212,12 @@ def start_stats_refresher() -> None:
         _cyc0 = time.time()
         logger.info("refresh cycle: starting (leader)")
 
-        # Warm the /charts page FIRST so the default no-filter view of each chart
-        # is in Redis within seconds of a deploy, instead of waiting behind the
-        # entity-stats snapshot walk below (which can run for minutes). Frame
-        # charts warm immediately; blob charts that still need the snapshot come
-        # back "building" and re-warm on the next cycle. One worker, shared cache.
-        try:
-            if app_cache.enabled():
-                from .charts import prewarm_charts
-
-                prewarm_charts()
-        except Exception:
-            logger.warning("charts prewarm failed", exc_info=True)
-        logger.info("refresh cycle: charts prewarm done at %.1fs", time.time() - _cyc0)
-
+        # The entity-stats snapshot rebuild below is the critical product data
+        # (tier list / Codex Score / metrics), so it runs FIRST and nothing may
+        # starve it. Charts prewarm — which loads the full ~740k-run frame from
+        # Mongo and can run long under DB load — is deferred to the END of the
+        # cycle. This reverses PR #567's ordering: putting prewarm first let it
+        # block the snapshot rebuild indefinitely, so the snapshot never advanced.
         try:
             refresh_stats_summary()
         except Exception:
@@ -1276,6 +1267,19 @@ def start_stats_refresher() -> None:
                     )
         except Exception:
             logger.warning("entity-scores cache warm failed", exc_info=True)
+
+        # Charts prewarm LAST — it loads the full run frame from Mongo and can run
+        # for a while under load, so it must never delay the snapshot rebuild
+        # above. Trade-off: /charts warms a bit later after a deploy; the snapshot
+        # actually completing is the priority.
+        try:
+            if app_cache.enabled():
+                from .charts import prewarm_charts
+
+                prewarm_charts()
+        except Exception:
+            logger.warning("charts prewarm failed", exc_info=True)
+        logger.info("refresh cycle: charts prewarm done at %.1fs", time.time() - _cyc0)
 
     threading.Thread(target=_loop, daemon=True, name="stats-refresher").start()
 

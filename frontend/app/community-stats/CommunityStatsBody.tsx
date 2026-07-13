@@ -89,7 +89,7 @@ function Empty({ jsonLd, current, lang, basePath }: { jsonLd: object[]; current:
     <div className="mx-auto max-w-[1400px] px-3 sm:px-5 py-6">
       <JsonLd data={jsonLd} />
       <h1 className="text-3xl font-bold mb-2"><span className="text-[var(--accent-gold)]">{t("Community Stats", lang)}</span></h1>
-      <BracketFilter basePath={basePath} current={current} />
+      <BracketFilter basePath={basePath} current={current} composite />
       <p className="text-sm text-[var(--text-muted)]">
         {t("No data for this bracket yet. Stats build from community-submitted runs,", lang)} <Link href="/leaderboards/submit" className="text-[var(--accent-gold)] hover:underline">{t("submit a run", lang)}</Link> {t("to seed them.", lang)}
       </p>
@@ -142,8 +142,8 @@ export async function CommunityStatsBody({ lang, bracket }: { lang: string; brac
         {t("How the community actually plays", lang)} <em>Slay the Spire 2</em>{t(", drawn from", lang)} {stats.total_runs.toLocaleString()} {t("submitted runs. A naive snapshot of the data, not a verdict on what is correct.", lang)}
       </p>
 
-      {/* Content bracket: slice every dataset below by skill. */}
-      <BracketFilter basePath={basePath} current={bracket} />
+      {/* Content bracket: slice every dataset below by skill and/or player count. */}
+      <BracketFilter basePath={basePath} current={bracket} composite />
 
       {/* Headline numbers */}
       <section className="mb-10">

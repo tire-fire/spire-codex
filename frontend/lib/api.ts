@@ -87,6 +87,8 @@ export interface Card {
   /** Monsters that generate this card in combat (status cards etc.), parsed
    *  from the game code. Absent on cards with no in-combat source. */
   sources?: { type: string; id: string; name: string }[] | null;
+  /** A short "did you know" note (curated or derived), merged by the API. */
+  trivia?: string | null;
 }
 
 export interface CharacterDialogueLine {

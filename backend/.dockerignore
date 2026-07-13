@@ -1,7 +1,6 @@
 __pycache__
 *.pyc
 .env
-scripts
 # static/ never ships in the image: it's bind-mounted in prod and dev
 # (same pattern as data/), and image bytes are served from the CDN.
 # Keeping it out of the build context saves tarring 2.6 GB per build.

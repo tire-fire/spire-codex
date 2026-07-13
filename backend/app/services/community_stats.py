@@ -72,10 +72,19 @@ def _merge_starter(cid: str | None) -> str | None:
 
 
 COMMUNITY_VERSION = 1
-# Brackets the blob is accumulated per (matches encounter_stats): "all", the
-# exact player-count buckets (solo/2p/3p/4p), and the A10-gated win-rate ladder,
-# so the community datasets can re-slice by co-op size and by skill.
-_BLOB_BRACKETS = ["all", "solo", "2p", "3p", "4p", "a10", "wr30", "wr50", "wr75"]
+# Brackets the blob is accumulated per: "all", the exact player-count buckets
+# (solo/2p/3p/4p), the A10-gated win-rate ladder, AND their player x skill
+# composites (solo:wr50, ...) so the community page can combine co-op size and
+# skill at once (like the tier list). Keep the composite keys in sync with
+# _COMPOSITE_BRACKETS in run_entity_stats.py.
+_PLAYER_BRACKETS = ("solo", "2p", "3p", "4p")
+_SKILL_BRACKETS = ("a10", "wr30", "wr50", "wr75")
+_BLOB_BRACKETS = (
+    ["all"]
+    + list(_PLAYER_BRACKETS)
+    + list(_SKILL_BRACKETS)
+    + [f"{p}:{c}" for p in _PLAYER_BRACKETS for c in _SKILL_BRACKETS]
+)
 
 
 def _new_acc_one() -> dict[str, Any]:
@@ -110,6 +119,67 @@ def new_accumulator() -> dict[str, Any]:
     """Per-bracket accumulators; accumulate() folds each run into every content
     bracket it belongs to."""
     return {b: _new_acc_one() for b in _BLOB_BRACKETS}
+
+
+# Field groups for merging two accumulators (from parallel run-chunk walks).
+# `_INT_FIELDS` add; `_LIST_DICT_FIELDS` add element-wise per key; `events` is a
+# nested event -> {option -> count}; the counter dicts add per key; the three
+# records keep the best (min run_time / max run_time / max deck_size).
+_COMMUNITY_INT_FIELDS = ("total_runs", "total_wins", "reward_screens", "reward_skips")
+_COMMUNITY_LIST_DICT_FIELDS = ("by_ascension", "by_character", "map_danger", "rest")
+_COMMUNITY_COUNTER_FIELDS = (
+    "deaths_encounter",
+    "deaths_event",
+    "ancient",
+    "removed",
+    "stolen",
+)
+
+
+def merge(dst: dict, src: dict) -> None:
+    """Fold accumulator `src` into `dst` (both from new_accumulator()). Called in
+    run-chunk order, so records tie-break to the earlier chunk (matching the
+    serial walk's first-seen-wins on an exact tie)."""
+    for bracket, s in src.items():
+        d = dst.get(bracket)
+        if d is None:
+            dst[bracket] = s
+            continue
+        for f in _COMMUNITY_INT_FIELDS:
+            d[f] += s[f]
+        for f in _COMMUNITY_LIST_DICT_FIELDS:
+            df = d[f]
+            for k, v in s[f].items():
+                cur = df.get(k)
+                if cur is None:
+                    df[k] = list(v)
+                else:
+                    for i, x in enumerate(v):
+                        cur[i] += x
+        for f in _COMMUNITY_COUNTER_FIELDS:
+            df = d[f]
+            for k, v in s[f].items():
+                df[k] = df.get(k, 0) + v
+        # events: event_id -> {option_id -> count}
+        de = d["events"]
+        for eid, opts in s["events"].items():
+            cur = de.setdefault(eid, {})
+            for opt, n in opts.items():
+                cur[opt] = cur.get(opt, 0) + n
+        # Records: replace only when src is STRICTLY better, so the earlier chunk
+        # (already in dst) wins ties, matching the serial walk.
+        if s["fastest_win"] is not None and (
+            d["fastest_win"] is None or s["fastest_win"][0] < d["fastest_win"][0]
+        ):
+            d["fastest_win"] = s["fastest_win"]
+        if s["longest_run"] is not None and (
+            d["longest_run"] is None or s["longest_run"][0] > d["longest_run"][0]
+        ):
+            d["longest_run"] = s["longest_run"]
+        if s["biggest_deck"] is not None and (
+            d["biggest_deck"] is None or s["biggest_deck"][0] > d["biggest_deck"][0]
+        ):
+            d["biggest_deck"] = s["biggest_deck"]
 
 
 def _bump(d: dict, key: Any, n: int = 1) -> None:
