@@ -57,6 +57,25 @@ def new_accumulator() -> dict[str, Any]:
     return {b: _new_acc_one() for b in _BLOB_BRACKETS}
 
 
+def merge(dst: dict, src: dict) -> None:
+    """Fold accumulator `src` into `dst` (both from new_accumulator()). The only
+    field is `cells`: key -> [total, fatal, total_damage, total_turns], a plain
+    element-wise add — so parallel run-chunk walks combine losslessly."""
+    for bracket, s in src.items():
+        d = dst.get(bracket)
+        if d is None:
+            dst[bracket] = s
+            continue
+        dcells = d["cells"]
+        for k, v in s["cells"].items():
+            cur = dcells.get(k)
+            if cur is None:
+                dcells[k] = list(v)
+            else:
+                for i, x in enumerate(v):
+                    cur[i] += x
+
+
 def accumulate(
     acc: dict[str, Any],
     blob: dict,
