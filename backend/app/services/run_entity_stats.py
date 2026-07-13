@@ -189,6 +189,12 @@ _RUNS_DIR = (
 # walking the files itself — this is what stops N workers each pegging a
 # CPU rebuilding the same data. Mirrors the stats_summary pattern.
 SNAPSHOT_COLLECTION_NAME = "entity_stats_snapshot"
+# Time-series archive of per-entity Codex Score + Elo: one row per
+# entity/bracket/day, appended at the end of each snapshot rebuild. Powers the
+# entity-page score/elo trend charts. TTL-pruned, and it only accumulates going
+# forward (no backfill) because the live snapshot is overwritten each rebuild.
+HISTORY_COLLECTION_NAME = "entity_metric_history"
+_HISTORY_RETENTION_DAYS = 90
 # Bump whenever the snapshot shape changes (fields the readers depend on).
 # Guards against an out-of-date writer (e.g. a stale container sharing the
 # Mongo) clobbering the snapshot: loaders reject a mismatched version and
@@ -835,23 +841,12 @@ def _finalize_bracket(acc: dict[str, Any]) -> tuple[dict, dict]:
     return cache, baselines
 
 
-def _build_cache_data() -> tuple[dict, dict, dict, dict]:
-    """Walk every run JSON + DB row and return (cache, totals,
-    type_baselines, bracket_meta) WITHOUT mutating module globals. The heavy
-    100k-file walk lives here so the leader refresher can compute + persist a
-    snapshot, and the in-process fallback can reuse the same logic.
+def _accumulate(rows, official_chars, wr_map):
+    """Accumulate a chunk of run rows into the raw (pre-finalize) accumulators.
 
-    The all-runs aggregate lives in the top-level entity fields (what
-    scores/stats read). Each run ALSO feeds the brackets it matches
-    (solo/2p/3p/4p/a10/daily/custom); those land nested under each entity's
-    ``brackets`` key, and `bracket_meta` carries their baselines + totals.
+    Pure over its inputs (no module-global mutation) so N chunks can run in
+    parallel and have their raw accumulators merged.
     """
-    # Phase timing so a stalled rebuild is diagnosable from the logs (the walk is
-    # otherwise silent until it completes). Which phase the last log names tells
-    # us where a rebuild that never finishes is stuck.
-    _t0 = time.time()
-    logger.info("snapshot rebuild: starting (loading run rows from the DB)")
-
     new_cache: dict[tuple[str, str], dict[str, Any]] = {}
     new_totals = {"total_runs": 0, "total_wins": 0}
 
@@ -872,86 +867,6 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
     # Parallel lightweight accumulators, one per non-"all" bracket.
     bracket_accs: dict[str, dict[str, Any]] = {
         k: _new_bracket_acc() for k in _BRACKET_KEYS
-    }
-
-    # Source of truth depends on which DB the app is using. Either way we end
-    # up with rows carrying win/character/submission + the bracket fields
-    # (player_count / ascension / game_mode).
-    if _USING_MONGO:
-        from .runs_db_mongo import _get_collection
-
-        coll = _get_collection()
-        rows = list(
-            coll.find(
-                {},
-                {
-                    "_id": 1,
-                    "character": 1,
-                    "win": 1,
-                    "submitted_at": 1,
-                    "player_count": 1,
-                    "ascension": 1,
-                    "game_mode": 1,
-                    "killed_by": 1,
-                    # Owner key for the win-rate skill brackets (wr30/50/75).
-                    "username": 1,
-                },
-            )
-        )
-        # Normalise to a common dict-like shape so the loop below
-        # doesn't have to branch.
-        rows = [
-            {
-                "run_hash": d["_id"],
-                "character": d.get("character") or "",
-                "win": bool(d.get("win")),
-                "submitted_at": d.get("submitted_at"),
-                "player_count": d.get("player_count") or 1,
-                "ascension": d.get("ascension") or 0,
-                "game_mode": d.get("game_mode") or "standard",
-                "killed_by": d.get("killed_by"),
-                "username": d.get("username") or "",
-            }
-            for d in rows
-        ]
-    else:
-        with get_conn() as conn:
-            rows = conn.execute(
-                "SELECT run_hash, character, win, submitted_at, "
-                "player_count, ascension, game_mode, killed_by, username FROM runs"
-            ).fetchall()
-            rows = [dict(r) for r in rows]
-
-    logger.info(
-        "snapshot rebuild: loaded %d run rows in %.1fs, now walking blob files",
-        len(rows),
-        time.time() - _t0,
-    )
-
-    official_chars = _official_character_ids()
-
-    # Per-username overall win rate (fraction, 5-run floor) for the skill-bracket
-    # brackets. Computed from the loaded rows (username + win) so it's DB-agnostic
-    # (works on the SQLite fallback too) yet matches get_user_winrates exactly,
-    # the same definition the /api/runs/list winrate filter uses: every run
-    # counted, abandoned = loss, with a 5-run floor.
-    try:
-        from .runs_db_mongo import WINRATE_MIN_RUNS
-    except Exception:
-        WINRATE_MIN_RUNS = 5
-    _wr_counts: dict[str, list[int]] = {}
-    for row in rows:
-        uname = (row.get("username") or "").lower()
-        if not uname:
-            continue
-        c = _wr_counts.setdefault(uname, [0, 0])
-        c[0] += 1
-        if row.get("win"):
-            c[1] += 1
-    wr_map: dict[str, float] = {
-        u: (w / t)
-        for u, (t, w) in _wr_counts.items()
-        if t >= WINRATE_MIN_RUNS and t > 0
     }
 
     for row in rows:
@@ -1247,12 +1162,35 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
                     skipped_ids,
                 )
 
-    logger.info(
-        "snapshot rebuild: blob walk done in %.1fs (%d entities), finalizing "
-        "(Codex Elo fits + bracket serialization)",
-        time.time() - _t0,
-        len(new_cache),
-    )
+    return {
+        "new_cache": new_cache,
+        "new_totals": new_totals,
+        "pick_counts": pick_counts,
+        "pair_wins": pair_wins,
+        "upgrade_pair_wins": upgrade_pair_wins,
+        "bracket_accs": bracket_accs,
+        "community_acc": community_acc,
+        "charts_acc": charts_acc,
+        "encounter_acc": encounter_acc,
+    }
+
+
+def _finalize(
+    new_cache,
+    new_totals,
+    pick_counts,
+    pair_wins,
+    upgrade_pair_wins,
+    bracket_accs,
+    community_acc,
+    charts_acc,
+    encounter_acc,
+) -> tuple[dict, dict, dict, dict]:
+    """Fold the merged raw accumulators into the finalized snapshot payload.
+
+    Runs once, after accumulation (serial or parallel+merged).
+    """
+    from . import charts_stats, community_stats, encounter_stats
 
     # Fold the card-reward pick stats + fitted Codex Elo into the cache.
     # Cards that were offered but never decked still get an entry (picks=0
@@ -1347,6 +1285,273 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
     return new_cache, new_totals, new_type_baselines, bracket_meta
 
 
+# ── Parallel rebuild (map-reduce over run chunks) ────────────────────────────
+# The walk is CPU-bound in the pure-Python accumulation, so it parallelizes
+# across cores: split the rows into chunks, accumulate each in its own process
+# (reusing _accumulate verbatim), merge the raw accumulators, finalize once.
+# Every accumulator is a plain sum (or min/max for the three records), so the
+# merge is lossless. OFF by default; ENTITY_STATS_REBUILD_WORKERS=N (N>1) enables
+# it, with an automatic fall back to serial on any error.
+_PARALLEL_MIN_RUNS = 5000
+
+
+def _rebuild_workers() -> int:
+    try:
+        n = int(os.environ.get("ENTITY_STATS_REBUILD_WORKERS", "1"))
+    except ValueError:
+        n = 1
+    return max(1, min(n, os.cpu_count() or 1))
+
+
+def _merge_cache_entry(dst: dict, src: dict) -> None:
+    """Merge one entity aggregate `src` into `dst` (pre-finalize shape: picks/
+    wins plus optional by_character / base / upg / act_picks / act_wins /
+    last-submission)."""
+    dst["picks"] += src["picks"]
+    dst["wins"] += src["wins"]
+    sbc = src.get("by_character")
+    if sbc:
+        dbc = dst.setdefault("by_character", {})
+        for ch, cs in sbc.items():
+            dc = dbc.setdefault(ch, {"picks": 0, "wins": 0})
+            dc["picks"] += cs["picks"]
+            dc["wins"] += cs["wins"]
+    for k in ("base", "upg"):
+        sk = src.get(k)
+        if sk:
+            dk = dst.setdefault(k, {"picks": 0, "wins": 0})
+            dk["picks"] += sk["picks"]
+            dk["wins"] += sk["wins"]
+    # Per-act relic pickup arrays (relics only): element-wise add.
+    for k in ("act_picks", "act_wins"):
+        sk = src.get(k)
+        if sk:
+            dk = dst.get(k)
+            if dk is None:
+                dst[k] = list(sk)
+            else:
+                for i, x in enumerate(sk):
+                    dk[i] += x
+    # last submission: keep the later; the earlier chunk (already in dst) wins a
+    # tie, matching the serial walk's first-seen-on-tie (chunks merge in order).
+    sla = src.get("last_submitted_at")
+    if sla and (not dst.get("last_submitted_at") or sla > dst["last_submitted_at"]):
+        dst["last_submitted_at"] = sla
+        dst["last_run_hash"] = src.get("last_run_hash")
+
+
+def _merge_pick_counts(dst: dict, src: dict) -> None:
+    for cid, pc in src.items():
+        dp = dst.get(cid)
+        if dp is None:
+            dst[cid] = pc
+            continue
+        dp["offered"] += pc["offered"]
+        dp["picked"] += pc["picked"]
+        for i, x in enumerate(pc["off_act"]):
+            dp["off_act"][i] += x
+        for i, x in enumerate(pc["pick_act"]):
+            dp["pick_act"][i] += x
+
+
+def _merge_counter(dst: dict, src: dict) -> None:
+    for k, v in src.items():
+        dst[k] = dst.get(k, 0) + v
+
+
+def _merge_raw(dst: dict, src: dict) -> None:
+    """Merge one chunk's raw accumulators `src` into `dst` in place."""
+    from . import charts_stats, community_stats, encounter_stats
+
+    for ent, se in src["new_cache"].items():
+        de = dst["new_cache"].get(ent)
+        if de is None:
+            dst["new_cache"][ent] = se
+        else:
+            _merge_cache_entry(de, se)
+    dst["new_totals"]["total_runs"] += src["new_totals"]["total_runs"]
+    dst["new_totals"]["total_wins"] += src["new_totals"]["total_wins"]
+    _merge_pick_counts(dst["pick_counts"], src["pick_counts"])
+    _merge_counter(dst["pair_wins"], src["pair_wins"])
+    _merge_counter(dst["upgrade_pair_wins"], src["upgrade_pair_wins"])
+    for ck, sacc in src["bracket_accs"].items():
+        dacc = dst["bracket_accs"][ck]
+        for ent, se in sacc["cache"].items():
+            de = dacc["cache"].get(ent)
+            if de is None:
+                dacc["cache"][ent] = se
+            else:
+                _merge_cache_entry(de, se)
+        _merge_pick_counts(dacc["pick_counts"], sacc["pick_counts"])
+        _merge_counter(dacc["pair_wins"], sacc["pair_wins"])
+        dacc["totals"]["total_runs"] += sacc["totals"]["total_runs"]
+        dacc["totals"]["total_wins"] += sacc["totals"]["total_wins"]
+    community_stats.merge(dst["community_acc"], src["community_acc"])
+    charts_stats.merge(dst["charts_acc"], src["charts_acc"])
+    encounter_stats.merge(dst["encounter_acc"], src["encounter_acc"])
+
+
+def _accumulate_worker(args):
+    """Top-level (picklable) entry point for a parallel chunk."""
+    rows, official_chars, wr_map = args
+    return _accumulate(rows, official_chars, wr_map)
+
+
+def _accumulate_parallel(rows, official_chars, wr_map, workers):
+    """Map-reduce _accumulate across processes. Contiguous chunks keep record
+    tie-breaks aligned with the serial order."""
+    import concurrent.futures
+    import math
+    import multiprocessing
+
+    n = len(rows)
+    size = math.ceil(n / workers)
+    chunks = [rows[i : i + size] for i in range(0, n, size)]
+    # Use "spawn": this runs inside the leader's refresher thread, and forking a
+    # multithreaded process can deadlock the child (a lock held by another thread
+    # at fork stays locked) — which would hang the refresher and stop all
+    # rebuilds. Spawn re-imports cleanly instead. Workers need only the run files
+    # + the args, so the ~1s startup is negligible against the walk.
+    try:
+        ctx = multiprocessing.get_context("spawn")
+    except ValueError:
+        ctx = None
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=len(chunks), mp_context=ctx
+    ) as ex:
+        partials = list(
+            ex.map(
+                _accumulate_worker,
+                [(c, official_chars, wr_map) for c in chunks],
+            )
+        )
+    raw = partials[0]
+    for p in partials[1:]:
+        _merge_raw(raw, p)
+    return raw
+
+
+def _build_cache_data() -> tuple[dict, dict, dict, dict]:
+    """Walk every run JSON + DB row and return (cache, totals,
+    type_baselines, bracket_meta) WITHOUT mutating module globals. The heavy
+    100k-file walk lives here so the leader refresher can compute + persist a
+    snapshot, and the in-process fallback can reuse the same logic.
+
+    The all-runs aggregate lives in the top-level entity fields (what
+    scores/stats read). Each run ALSO feeds the brackets it matches
+    (solo/2p/3p/4p/a10/daily/custom); those land nested under each entity's
+    ``brackets`` key, and `bracket_meta` carries their baselines + totals.
+    """
+    # Phase timing so a stalled rebuild is diagnosable from the logs (the walk is
+    # otherwise silent until it completes). Which phase the last log names tells
+    # us where a rebuild that never finishes is stuck.
+    _t0 = time.time()
+    logger.info("snapshot rebuild: starting (loading run rows from the DB)")
+
+    # Source of truth depends on which DB the app is using. Either way we end
+    # up with rows carrying win/character/submission + the bracket fields
+    # (player_count / ascension / game_mode).
+    if _USING_MONGO:
+        from .runs_db_mongo import _get_collection
+
+        coll = _get_collection()
+        rows = list(
+            coll.find(
+                {},
+                {
+                    "_id": 1,
+                    "character": 1,
+                    "win": 1,
+                    "submitted_at": 1,
+                    "player_count": 1,
+                    "ascension": 1,
+                    "game_mode": 1,
+                    "killed_by": 1,
+                    # Owner key for the win-rate skill brackets (wr30/50/75).
+                    "username": 1,
+                },
+            )
+        )
+        # Normalise to a common dict-like shape so the loop below
+        # doesn't have to branch.
+        rows = [
+            {
+                "run_hash": d["_id"],
+                "character": d.get("character") or "",
+                "win": bool(d.get("win")),
+                "submitted_at": d.get("submitted_at"),
+                "player_count": d.get("player_count") or 1,
+                "ascension": d.get("ascension") or 0,
+                "game_mode": d.get("game_mode") or "standard",
+                "killed_by": d.get("killed_by"),
+                "username": d.get("username") or "",
+            }
+            for d in rows
+        ]
+    else:
+        with get_conn() as conn:
+            rows = conn.execute(
+                "SELECT run_hash, character, win, submitted_at, "
+                "player_count, ascension, game_mode, killed_by, username FROM runs"
+            ).fetchall()
+            rows = [dict(r) for r in rows]
+
+    logger.info(
+        "snapshot rebuild: loaded %d run rows in %.1fs, now walking blob files",
+        len(rows),
+        time.time() - _t0,
+    )
+
+    official_chars = _official_character_ids()
+
+    # Per-username overall win rate (fraction, 5-run floor) for the skill-bracket
+    # brackets. Computed from the loaded rows (username + win) so it's DB-agnostic
+    # (works on the SQLite fallback too) yet matches get_user_winrates exactly,
+    # the same definition the /api/runs/list winrate filter uses: every run
+    # counted, abandoned = loss, with a 5-run floor.
+    try:
+        from .runs_db_mongo import WINRATE_MIN_RUNS
+    except Exception:
+        WINRATE_MIN_RUNS = 5
+    _wr_counts: dict[str, list[int]] = {}
+    for row in rows:
+        uname = (row.get("username") or "").lower()
+        if not uname:
+            continue
+        c = _wr_counts.setdefault(uname, [0, 0])
+        c[0] += 1
+        if row.get("win"):
+            c[1] += 1
+    wr_map: dict[str, float] = {
+        u: (w / t)
+        for u, (t, w) in _wr_counts.items()
+        if t >= WINRATE_MIN_RUNS and t > 0
+    }
+
+    workers = _rebuild_workers()
+    if workers > 1 and len(rows) >= _PARALLEL_MIN_RUNS:
+        logger.info(
+            "snapshot rebuild: accumulating in parallel across %d workers", workers
+        )
+        try:
+            raw = _accumulate_parallel(rows, official_chars, wr_map, workers)
+        except Exception:
+            logger.warning(
+                "parallel rebuild failed; falling back to serial", exc_info=True
+            )
+            raw = _accumulate(rows, official_chars, wr_map)
+    else:
+        raw = _accumulate(rows, official_chars, wr_map)
+    logger.info(
+        "snapshot rebuild: blob walk done in %.1fs (%d entities), finalizing "
+        "(Codex Elo fits + bracket serialization)",
+        time.time() - _t0,
+        len(raw["new_cache"]),
+    )
+
+    return _finalize(**raw)
+
+
 def _apply_cache(
     cache: dict, totals: dict, baselines: dict, bracket_meta: dict | None = None
 ) -> None:
@@ -1389,6 +1594,111 @@ def _snapshot_coll():
     from .runs_db_mongo import _get_collection
 
     return _get_collection().database[SNAPSHOT_COLLECTION_NAME]
+
+
+_history_indexes_ready = False
+
+
+def _history_coll():
+    """The per-entity Score/Elo time-series collection, with its indexes
+    created once per process on first access."""
+    from .runs_db_mongo import _get_collection
+
+    global _history_indexes_ready
+    coll = _get_collection().database[HISTORY_COLLECTION_NAME]
+    if not _history_indexes_ready:
+        try:
+            # TTL prune of old points (single-field, required for a TTL index).
+            coll.create_index(
+                "date", expireAfterSeconds=_HISTORY_RETENTION_DAYS * 86400
+            )
+            # Serves the per-entity/bracket history query, already date-ordered.
+            coll.create_index(
+                [("entity_type", 1), ("entity_id", 1), ("bracket", 1), ("date", 1)]
+            )
+            _history_indexes_ready = True
+        except Exception as e:  # noqa: BLE001
+            logger.warning("could not create entity_metric_history indexes: %s", e)
+    return coll
+
+
+def _archive_metric_history() -> None:
+    """Append today's Codex Score + Elo for every entity/bracket to the history
+    collection: one row per entity/bracket/day, so several rebuilds in a day
+    overwrite rather than pile up. Reuses get_entity_stats so the archived
+    numbers are exactly what the detail page shows. Best-effort — any failure is
+    logged and swallowed so it can never fail the rebuild that just finished."""
+    try:
+        from pymongo import UpdateOne
+
+        day = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        day_key = day.strftime("%Y-%m-%d")
+        ops = []
+        for etype, eid in list(_cache.keys()):
+            stats = get_entity_stats(etype, eid)
+            if not stats:
+                continue
+            for bkey, bd in (stats.get("brackets") or {}).items():
+                score = bd.get("score")
+                elo = bd.get("elo")
+                if score is None and elo is None:
+                    continue
+                ops.append(
+                    UpdateOne(
+                        {"_id": f"{etype}:{eid}:{bkey}:{day_key}"},
+                        {
+                            "$set": {
+                                "entity_type": etype,
+                                "entity_id": eid,
+                                "bracket": bkey,
+                                "date": day,
+                                "score": score,
+                                "elo": elo,
+                            }
+                        },
+                        upsert=True,
+                    )
+                )
+        if ops:
+            _history_coll().bulk_write(ops, ordered=False)
+        logger.info("archived entity metric history: %d rows", len(ops))
+    except Exception as e:  # noqa: BLE001
+        logger.warning("entity metric history archive failed: %s", e)
+
+
+def get_entity_metric_history(
+    entity_type: str, entity_id: str, bracket: str = "all"
+) -> list[dict]:
+    """Daily Codex Score + Elo points for one entity/bracket, oldest first.
+    Empty until the archive has accumulated (it only grows going forward)."""
+    try:
+        rows = (
+            _history_coll()
+            .find(
+                {
+                    "entity_type": entity_type,
+                    "entity_id": entity_id.upper(),
+                    "bracket": bracket,
+                },
+                {"_id": 0, "date": 1, "score": 1, "elo": 1},
+            )
+            .sort("date", 1)
+        )
+        out = []
+        for r in rows:
+            d = r.get("date")
+            out.append(
+                {
+                    "date": d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else d,
+                    "score": r.get("score"),
+                    "elo": r.get("elo"),
+                }
+            )
+        return out
+    except Exception:  # noqa: BLE001
+        return []
 
 
 def _persist_snapshot(
@@ -1598,6 +1908,9 @@ def refresh_entity_stats_snapshot() -> int:
     _persist_snapshot(cache, totals, baselines, bracket_meta)
     _apply_cache(cache, totals, baselines, bracket_meta)
     _cache_snapshot_version = SNAPSHOT_VERSION
+    # Best-effort: the snapshot + cache are already committed above; this only
+    # appends the daily Score/Elo history and never raises into the rebuild.
+    _archive_metric_history()
     logger.info(
         "entity-stats snapshot rebuilt: %d entities across %d runs",
         len(cache),

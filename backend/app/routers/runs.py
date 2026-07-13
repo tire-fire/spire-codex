@@ -15,6 +15,7 @@ from ..services.run_entity_stats import (
     _BRACKET_KEYS,
     get_all_entity_scores,
     get_community_stats as get_community_fun_stats,
+    get_entity_metric_history,
     get_entity_metrics_table,
     get_entity_stats,
     get_top_entities_for_character,
@@ -895,6 +896,31 @@ def get_entity_run_stats(request: Request, entity_type: str, entity_id: str):
     return stats
 
 
+@router.get("/stats/{entity_type}/{entity_id}/history", tags=["Runs"])
+@limiter.limit("120/minute")
+def get_entity_metric_history_endpoint(
+    request: Request,
+    entity_type: str,
+    entity_id: str,
+    bracket: str = "all",
+):
+    """Daily Codex Score + Elo history for one entity, for the trend charts.
+    Empty until the archive accumulates (it only grows going forward)."""
+    if entity_type not in _ENTITY_STATS_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"entity_type must be one of {sorted(_ENTITY_STATS_TYPES)}",
+        )
+    if bracket not in ("all", "a10", "wr30", "wr50", "wr75"):
+        raise HTTPException(status_code=400, detail="bad bracket")
+    return {
+        "entity_type": entity_type,
+        "entity_id": entity_id.upper(),
+        "bracket": bracket,
+        "points": get_entity_metric_history(entity_type, entity_id, bracket),
+    }
+
+
 @router.get("/scores/{entity_type}", tags=["Runs"])
 @limiter.limit("60/minute")
 def get_entity_scores(
@@ -1186,20 +1212,12 @@ def start_stats_refresher() -> None:
         _cyc0 = time.time()
         logger.info("refresh cycle: starting (leader)")
 
-        # Warm the /charts page FIRST so the default no-filter view of each chart
-        # is in Redis within seconds of a deploy, instead of waiting behind the
-        # entity-stats snapshot walk below (which can run for minutes). Frame
-        # charts warm immediately; blob charts that still need the snapshot come
-        # back "building" and re-warm on the next cycle. One worker, shared cache.
-        try:
-            if app_cache.enabled():
-                from .charts import prewarm_charts
-
-                prewarm_charts()
-        except Exception:
-            logger.warning("charts prewarm failed", exc_info=True)
-        logger.info("refresh cycle: charts prewarm done at %.1fs", time.time() - _cyc0)
-
+        # The entity-stats snapshot rebuild below is the critical product data
+        # (tier list / Codex Score / metrics), so it runs FIRST and nothing may
+        # starve it. Charts prewarm — which loads the full ~740k-run frame from
+        # Mongo and can run long under DB load — is deferred to the END of the
+        # cycle. This reverses PR #567's ordering: putting prewarm first let it
+        # block the snapshot rebuild indefinitely, so the snapshot never advanced.
         try:
             refresh_stats_summary()
         except Exception:
@@ -1249,6 +1267,19 @@ def start_stats_refresher() -> None:
                     )
         except Exception:
             logger.warning("entity-scores cache warm failed", exc_info=True)
+
+        # Charts prewarm LAST — it loads the full run frame from Mongo and can run
+        # for a while under load, so it must never delay the snapshot rebuild
+        # above. Trade-off: /charts warms a bit later after a deploy; the snapshot
+        # actually completing is the priority.
+        try:
+            if app_cache.enabled():
+                from .charts import prewarm_charts
+
+                prewarm_charts()
+        except Exception:
+            logger.warning("charts prewarm failed", exc_info=True)
+        logger.info("refresh cycle: charts prewarm done at %.1fs", time.time() - _cyc0)
 
     threading.Thread(target=_loop, daemon=True, name="stats-refresher").start()
 

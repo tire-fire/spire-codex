@@ -526,6 +526,10 @@ app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(CORSStaticMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 _cors_origins = os.environ.get("CORS_ORIGINS", "").strip()
+# Response headers a browser client is allowed to read; wildcard allow_headers
+# only covers the *request* side. X-Next-Cursor carries the run-export keyset
+# token (GET /api/exports/runs).
+_cors_expose_headers = ["X-Next-Cursor"]
 if _cors_origins:
     app.add_middleware(
         CORSMiddleware,
@@ -533,6 +537,7 @@ if _cors_origins:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=_cors_expose_headers,
     )
 else:
     app.add_middleware(
@@ -540,6 +545,7 @@ else:
         allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=_cors_expose_headers,
     )
 
 # ── Prometheus metrics ────────────────────────────────────────
@@ -568,9 +574,10 @@ app.include_router(epochs.router)
 app.include_router(stories.router)
 app.include_router(images.router)
 app.include_router(changelogs.router)
-app.include_router(feedback.router)
-app.include_router(uninstall.router)
-app.include_router(qa_feedback.router)
+# Hidden from the OpenAPI schema (/docs): feedback intake endpoints.
+app.include_router(feedback.router, include_in_schema=False)
+app.include_router(uninstall.router, include_in_schema=False)
+app.include_router(qa_feedback.router, include_in_schema=False)
 app.include_router(acts.router)
 app.include_router(ascensions.router)
 app.include_router(names.router)
@@ -580,7 +587,8 @@ app.include_router(ancient_pools.router)
 app.include_router(runs.router)
 app.include_router(charts.router)
 app.include_router(beta.router)
-app.include_router(admin.router)
+# Hidden from the OpenAPI schema (/docs): internal admin surface.
+app.include_router(admin.router, include_in_schema=False)
 app.include_router(glossary.router)
 app.include_router(guides.router)
 app.include_router(versions.router)
@@ -588,10 +596,11 @@ app.include_router(unlocks.router)
 app.include_router(news.router)
 app.include_router(merchant.router)
 app.include_router(mechanics.router)
-app.include_router(auth_steam.router)
-app.include_router(auth_discord.router)
-app.include_router(auth_twitch.router)
-app.include_router(auth.router)
+# Hidden from the OpenAPI schema (/docs): auth and OAuth callback routes.
+app.include_router(auth_steam.router, include_in_schema=False)
+app.include_router(auth_discord.router, include_in_schema=False)
+app.include_router(auth_twitch.router, include_in_schema=False)
+app.include_router(auth.router, include_in_schema=False)
 app.include_router(tierlists.router)
 app.include_router(mod_meta.router)
 app.include_router(presence.router)
