@@ -72,10 +72,19 @@ def _merge_starter(cid: str | None) -> str | None:
 
 
 COMMUNITY_VERSION = 1
-# Brackets the blob is accumulated per (matches encounter_stats): "all", the
-# exact player-count buckets (solo/2p/3p/4p), and the A10-gated win-rate ladder,
-# so the community datasets can re-slice by co-op size and by skill.
-_BLOB_BRACKETS = ["all", "solo", "2p", "3p", "4p", "a10", "wr30", "wr50", "wr75"]
+# Brackets the blob is accumulated per: "all", the exact player-count buckets
+# (solo/2p/3p/4p), the A10-gated win-rate ladder, AND their player x skill
+# composites (solo:wr50, ...) so the community page can combine co-op size and
+# skill at once (like the tier list). Keep the composite keys in sync with
+# _COMPOSITE_BRACKETS in run_entity_stats.py.
+_PLAYER_BRACKETS = ("solo", "2p", "3p", "4p")
+_SKILL_BRACKETS = ("a10", "wr30", "wr50", "wr75")
+_BLOB_BRACKETS = (
+    ["all"]
+    + list(_PLAYER_BRACKETS)
+    + list(_SKILL_BRACKETS)
+    + [f"{p}:{c}" for p in _PLAYER_BRACKETS for c in _SKILL_BRACKETS]
+)
 
 
 def _new_acc_one() -> dict[str, Any]:

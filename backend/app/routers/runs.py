@@ -1032,16 +1032,15 @@ def community_stats(request: Request, response: Response, bracket: str | None = 
 
     `bracket` slices to a content bracket (`a10`, `wr30`, `wr50`, `wr75`);
     omit for all runs."""
-    if bracket is not None and bracket not in (
-        "solo",
-        "2p",
-        "3p",
-        "4p",
-        "a10",
-        "wr30",
-        "wr50",
-        "wr75",
-    ):
+    # Accept the player-count buckets, the skill tiers, and their player:skill
+    # composites (solo:wr50, ...) — the last let the page combine both axes.
+    _players = ("solo", "2p", "3p", "4p")
+    _skills = ("a10", "wr30", "wr50", "wr75")
+    _ok = bracket is None or bracket in _players or bracket in _skills
+    if not _ok and ":" in (bracket or ""):
+        _p, _, _s = bracket.partition(":")
+        _ok = _p in _players and _s in _skills
+    if not _ok:
         raise HTTPException(status_code=400, detail="bad bracket")
     # An empty shell during a post-deploy rebuild must not stick in the
     # edge cache for 5 minutes on top of the rebuild itself.
