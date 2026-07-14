@@ -50,6 +50,7 @@ from .routers import (
     charts,
     beta,
     admin,
+    admin_searches,
     glossary,
     guides,
     versions,
@@ -593,6 +594,7 @@ app.include_router(charts.router)
 app.include_router(beta.router)
 # Hidden from the OpenAPI schema (/docs): internal admin surface.
 app.include_router(admin.router, include_in_schema=False)
+app.include_router(admin_searches.router, include_in_schema=False)
 app.include_router(glossary.router)
 app.include_router(guides.router)
 app.include_router(versions.router)
