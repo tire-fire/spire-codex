@@ -302,12 +302,12 @@ export default async function HomeLeaderboardSection({
               {recent.length === 0 ? (
                 <p className="lb-empty">{t("No runs submitted yet.", lang)}</p>
               ) : (
-                <div className="overflow-x-auto"><table className="dtable">
+                <table className="dtable dtable-fixed">
                   <thead>
                     <tr>
                       <th>Character</th>
-                      <th className="num">Result</th>
-                      <th className="num">When</th>
+                      <th className="num" style={{ width: "2.75rem" }}>Result</th>
+                      <th className="num" style={{ width: "5rem" }}>When</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -318,6 +318,12 @@ export default async function HomeLeaderboardSection({
                           ? "abandoned"
                           : "loss";
                       const killer = killedByLabel(r.killed_by);
+                      // Keep the boss name short so the row never widens the
+                      // panel into a horizontal scroll.
+                      const killerShort =
+                        killer && killer.length > 10
+                          ? killer.slice(0, 10).trimEnd() + "…"
+                          : killer;
                       return (
                         <tr key={r.run_hash}>
                           <td>
@@ -330,21 +336,22 @@ export default async function HomeLeaderboardSection({
                                 </span>
                                 <span className="lb-sub">
                                   fl{r.floors_reached} · {formatRunTime(r.run_time)}
-                                  {killer && result === "loss" ? ` · died to ${killer}` : ""}
+                                  {killerShort && result === "loss" ? ` · died to ${killerShort}` : ""}
                                 </span>
                               </span>
                             </Link>
                           </td>
                           <td className="num">
-                            {result === "win" && <span className="wr-sg">Win</span>}
-                            {result === "abandoned" && <span className="dim">Abandoned</span>}
+                            {result === "win" && <span className="wr-sg" title="Win">W</span>}
+                            {result === "loss" && <span className="wr-loss" title="Loss">R</span>}
+                            {result === "abandoned" && <span className="dim" title="Abandoned">A</span>}
                           </td>
                           <td className="num dim">{formatRelativeDate(r.submitted_at)}</td>
                         </tr>
                       );
                     })}
                   </tbody>
-                </table></div>
+                </table>
               )}
             </section>
           </div>
