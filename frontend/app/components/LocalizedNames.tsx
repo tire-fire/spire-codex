@@ -56,11 +56,11 @@ export default function LocalizedNames({
   const { lang } = useLanguage();
   const [names, setNames] = useState<Record<string, string> | null>(null);
 
-  // Fetch once on mount. We render the links in the DOM up-front (inside
-  // a collapsed <details>) because Googlebot needs a crawl path between
-  // the localized variants, without DOM-resident links here, Sozu's
-  // /ptb/, /deu/, /jpn/, etc. variants stay orphaned and end up in
-  // GSC's "Crawled - currently not indexed" bucket.
+  // Fetch once on mount and render the links directly (no drawer) so the
+  // crawl path between the localized variants is always in the DOM.
+  // Googlebot needs it, without DOM-resident links here, an entity's
+  // /ptb/, /deu/, /jpn/, etc. variants stay orphaned and end up in GSC's
+  // "Crawled - currently not indexed" bucket.
   useEffect(() => {
     cachedFetch<Record<string, string>>(
       `${API}/api/names/${entityType}/${entityId}`
@@ -70,9 +70,6 @@ export default function LocalizedNames({
   const route = ENTITY_ROUTE[entityType] ?? entityType;
   const idSlug = entityId.toLowerCase();
 
-  // Build link entries up-front so the markup is the same whether the
-  // names fetch has resolved or not (we render placeholder rows that
-  // the crawler can still parse).
   const rows = names
     ? Object.entries(names)
         // Skip the row matching the user's current language, they're
@@ -96,54 +93,44 @@ export default function LocalizedNames({
         })
     : [];
 
+  // Once loaded, hide the whole box if there's nothing to link to (entity
+  // exists only in the current language).
+  if (names !== null && rows.length === 0) return null;
+
   return (
-    <details className="mt-4 group">
-      <summary
-        className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors flex items-center gap-1 cursor-pointer list-none"
-      >
-        <svg
-          aria-hidden
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          className="w-3.5 h-3.5 transition-transform -rotate-90 group-open:rotate-0"
-        >
-          <path
-            fillRule="evenodd"
-            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06z"
-            clipRule="evenodd"
-          />
-        </svg>
-        {t("Other languages", lang)}
-      </summary>
-      {rows.length > 0 ? (
-        <ul className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs list-none p-0">
-          {rows.map(({ apiName, name, href, hrefLang }) => (
-            <li key={apiName} className="contents">
-              {href ? (
-                <Link
-                  href={href}
-                  hrefLang={hrefLang}
-                  className="flex justify-between gap-2 hover:bg-[var(--bg-card)] rounded px-1 -mx-1 py-0.5 transition-colors"
-                >
-                  <span className="text-[var(--text-muted)]">{apiName}</span>
-                  <span className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-right">
-                    {name}
-                  </span>
-                </Link>
-              ) : (
-                <div className="flex justify-between gap-2">
-                  <span className="text-[var(--text-muted)]">{apiName}</span>
-                  <span className="text-[var(--text-secondary)] text-right">
-                    {name}
-                  </span>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-xs text-[var(--text-muted)] mt-2">Loading...</p>
-      )}
-    </details>
+    <section id="other-languages">
+      <h2>{t("Other languages", lang)}</h2>
+      <div className="info-card">
+        {rows.length > 0 ? (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm list-none p-0 m-0">
+            {rows.map(({ apiName, name, href, hrefLang }) => (
+              <li key={apiName}>
+                {href ? (
+                  <Link
+                    href={href}
+                    hrefLang={hrefLang}
+                    className="flex justify-between gap-3 rounded px-1.5 -mx-1.5 py-1 hover:bg-[var(--bg-card)] transition-colors"
+                  >
+                    <span className="text-[var(--text-secondary)]">{apiName}</span>
+                    <span className="text-[var(--text-primary)] text-right">
+                      {name}
+                    </span>
+                  </Link>
+                ) : (
+                  <div className="flex justify-between gap-3 px-1.5 py-1">
+                    <span className="text-[var(--text-secondary)]">{apiName}</span>
+                    <span className="text-[var(--text-primary)] text-right">
+                      {name}
+                    </span>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-[var(--text-muted)] m-0">Loading…</p>
+        )}
+      </div>
+    </section>
   );
 }

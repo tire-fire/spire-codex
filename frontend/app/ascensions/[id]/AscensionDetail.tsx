@@ -166,11 +166,8 @@ export default function AscensionDetail({ initialAscension }: { initialAscension
           )}
 
           {/* Version history + localized names */}
-          <section id="history">
-            <h2>Version history</h2>
-            <LocalizedNames entityType="ascensions" entityId={id} />
-            <EntityHistory entityType="ascensions" entityId={id} />
-          </section>
+          <LocalizedNames entityType="ascensions" entityId={id} />
+          <EntityHistory entityType="ascensions" entityId={id} />
         </main>
       </div>
     </div>

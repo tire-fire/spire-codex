@@ -252,11 +252,8 @@ export default function PotionDetail({
           <EntityPairings kind="potions" id={id} name={potion.name} lang={lang} lp={lp} />
 
           {/* Version history + localized names */}
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="potions" entityId={id} />
-            <EntityHistory entityType="potions" entityId={id} />
-          </section>
+          <LocalizedNames entityType="potions" entityId={id} />
+          <EntityHistory entityType="potions" entityId={id} />
         </main>
 
         {/* ===== INFOBOX column (sticky) ===== */}

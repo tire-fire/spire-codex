@@ -202,11 +202,8 @@ export default function EncounterDetail({ initialEncounter, encounterStat }: { i
           )}
 
           {/* Version history + localized names */}
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="encounters" entityId={id} />
-            <EntityHistory entityType="encounters" entityId={id} />
-          </section>
+          <LocalizedNames entityType="encounters" entityId={id} />
+          <EntityHistory entityType="encounters" entityId={id} />
         </main>
 
         {/* ===== INFOBOX column (sticky) ===== */}

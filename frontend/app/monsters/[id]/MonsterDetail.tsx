@@ -642,11 +642,8 @@ export default function MonsterDetail({
           )}
 
           {/* Version history + localized names */}
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="monsters" entityId={id} />
-            <EntityHistory entityType="monsters" entityId={id} />
-          </section>
+          <LocalizedNames entityType="monsters" entityId={id} />
+          <EntityHistory entityType="monsters" entityId={id} />
         </main>
 
         {/* ===== INFOBOX column (sticky) ===== */}

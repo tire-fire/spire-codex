@@ -156,7 +156,7 @@ export default function EventDetail({
     ...(hasChoices ? [{ id: "choices", label: "Choices" }] : []),
     ...(hasRelics ? [{ id: "relics", label: t("Relics", lang) }] : []),
     ...(hasDialogue ? [{ id: "dialogue", label: "Dialogue" }] : []),
-    { id: "info", label: t("Info", lang) },
+    { id: "other-languages", label: t("Other languages", lang) },
   ];
 
   return (
@@ -372,11 +372,7 @@ export default function EventDetail({
             </section>
           )}
 
-          {/* Localized names */}
-          <section id="info">
-            <h2>{t("Info", lang)}</h2>
-            <LocalizedNames entityType="events" entityId={id} />
-          </section>
+          <LocalizedNames entityType="events" entityId={id} />
         </main>
 
         {/* ===== INFOBOX column (sticky) ===== */}

@@ -101,7 +101,7 @@ export default function EnchantmentDetail({
   const tocItems: { id: string; label: string }[] = [
     { id: "description", label: t("Description", lang) },
     ...(cardIds.length > 0 ? [{ id: "cards", label: t("Cards", lang) }] : []),
-    { id: "info", label: t("Info", lang) },
+    { id: "history", label: t("Version history", lang) },
   ];
 
   return (
@@ -198,12 +198,8 @@ export default function EnchantmentDetail({
             </section>
           )}
 
-          {/* Localized names + version history */}
-          <section id="info">
-            <h2>{t("Info", lang)}</h2>
-            <LocalizedNames entityType="enchantments" entityId={id} />
-            <EntityHistory entityType="enchantments" entityId={id} />
-          </section>
+          <LocalizedNames entityType="enchantments" entityId={id} />
+          <EntityHistory entityType="enchantments" entityId={id} />
         </main>
 
         {/* ===== INFOBOX column (sticky) ===== */}

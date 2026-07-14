@@ -80,11 +80,8 @@ export default function IntentDetail({ initialIntent }: { initialIntent?: Intent
             </div>
           </section>
 
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="intents" entityId={id} />
-            <EntityHistory entityType="intents" entityId={id} />
-          </section>
+          <LocalizedNames entityType="intents" entityId={id} />
+          <EntityHistory entityType="intents" entityId={id} />
         </main>
 
         {intent.image_url && (

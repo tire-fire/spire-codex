@@ -225,11 +225,8 @@ export default function PowerDetail({ initialPower }: { initialPower?: Power | n
           )}
 
           {/* Version history + localized names */}
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="powers" entityId={id} />
-            <EntityHistory entityType="powers" entityId={id} />
-          </section>
+          <LocalizedNames entityType="powers" entityId={id} />
+          <EntityHistory entityType="powers" entityId={id} />
         </main>
 
         {/* ===== INFOBOX column (sticky) ===== */}

@@ -130,11 +130,8 @@ export default function AchievementDetail({ initialAchievement }: { initialAchie
           </section>
 
           {/* Version history + localized names */}
-          <section id="history">
-            <h2>Version history</h2>
-            <LocalizedNames entityType="achievements" entityId={id} />
-            <EntityHistory entityType="achievements" entityId={id} />
-          </section>
+          <LocalizedNames entityType="achievements" entityId={id} />
+          <EntityHistory entityType="achievements" entityId={id} />
         </main>
       </div>
     </div>

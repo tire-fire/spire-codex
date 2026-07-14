@@ -115,11 +115,8 @@ export default function OrbDetail({ initialOrb }: { initialOrb?: Orb | null } = 
             </section>
           )}
 
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="orbs" entityId={id} />
-            <EntityHistory entityType="orbs" entityId={id} />
-          </section>
+          <LocalizedNames entityType="orbs" entityId={id} />
+          <EntityHistory entityType="orbs" entityId={id} />
         </main>
 
         {orb.image_url && (
