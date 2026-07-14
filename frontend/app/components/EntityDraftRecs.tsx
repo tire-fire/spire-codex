@@ -77,20 +77,22 @@ export default function EntityDraftRecs({
       <ul className="pair-list">
         {recs.map((r) => (
           <li key={r.id} className="pair-row">
-            <CardHover cardId={r.id}>
-              <Link href={`${lp}/cards/${r.id.toLowerCase()}`} className="pair-name">
-                {r.name}
-              </Link>
-            </CardHover>
+            <div className="pair-head">
+              <CardHover cardId={r.id}>
+                <Link href={`${lp}/cards/${r.id.toLowerCase()}`} className="pair-name">
+                  {r.name}
+                </Link>
+              </CardHover>
+              <span className="pair-wr">
+                {pct(r.winrate)} {t("win rate", lang)}
+              </span>
+            </div>
             <span className="pair-stats">
               <span>
                 {t("picked", lang)} {pct(r.pref)} {t("of the time", lang)}
               </span>
               <span className="draft-lift">
                 {uplift(r.lift)} {t("vs usual", lang)}
-              </span>
-              <span className="pair-wr">
-                {pct(r.winrate)} {t("win rate", lang)}
               </span>
             </span>
           </li>
