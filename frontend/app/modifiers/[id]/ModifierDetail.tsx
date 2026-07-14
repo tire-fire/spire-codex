@@ -79,11 +79,8 @@ export default function ModifierDetail({ initialModifier }: { initialModifier?: 
             </div>
           </section>
 
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="modifiers" entityId={id} />
-            <EntityHistory entityType="modifiers" entityId={id} />
-          </section>
+          <LocalizedNames entityType="modifiers" entityId={id} />
+          <EntityHistory entityType="modifiers" entityId={id} />
         </main>
       </div>
     </div>

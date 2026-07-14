@@ -681,11 +681,8 @@ export default function CardDetail({ initialCard, initialEnchantments, initialSt
           <EntityDraftRecs kind="cards" id={id} name={card.name} lang={lang} lp={lp} />
 
           {/* Version history + localized names */}
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="cards" entityId={id} />
-            <EntityHistory entityType="cards" entityId={id} />
-          </section>
+          <LocalizedNames entityType="cards" entityId={id} />
+          <EntityHistory entityType="cards" entityId={id} />
         </main>
 
         {/* ===== INFOBOX column (sticky) ===== */}

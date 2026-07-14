@@ -94,11 +94,8 @@ export default function AfflictionDetail({ initialAffliction }: { initialAfflict
             </section>
           )}
 
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="afflictions" entityId={id} />
-            <EntityHistory entityType="afflictions" entityId={id} />
-          </section>
+          <LocalizedNames entityType="afflictions" entityId={id} />
+          <EntityHistory entityType="afflictions" entityId={id} />
         </main>
       </div>
     </div>

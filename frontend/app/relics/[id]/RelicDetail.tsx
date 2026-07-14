@@ -289,11 +289,8 @@ export default function RelicDetail({
           <EntityDraftRecs kind="relics" id={id} name={relic.name} lang={lang} lp={lp} />
 
           {/* Version history + localized names */}
-          <section id="history">
-            <h2>{t("Version history", lang)}</h2>
-            <LocalizedNames entityType="relics" entityId={id} />
-            <EntityHistory entityType="relics" entityId={id} />
-          </section>
+          <LocalizedNames entityType="relics" entityId={id} />
+          <EntityHistory entityType="relics" entityId={id} />
         </main>
 
         {/* ===== INFOBOX column (sticky) ===== */}

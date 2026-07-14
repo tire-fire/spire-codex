@@ -189,11 +189,8 @@ export default function ActDetail({ initialAct }: { initialAct?: Act | null } = 
           )}
 
           {/* Version history + localized names */}
-          <section id="history">
-            <h2>Version history</h2>
-            <LocalizedNames entityType="acts" entityId={id} />
-            <EntityHistory entityType="acts" entityId={id} />
-          </section>
+          <LocalizedNames entityType="acts" entityId={id} />
+          <EntityHistory entityType="acts" entityId={id} />
         </main>
       </div>
     </div>
