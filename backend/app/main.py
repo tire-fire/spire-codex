@@ -52,6 +52,7 @@ from .routers import (
     admin,
     admin_searches,
     admin_rate_limits,
+    api_keys,
     glossary,
     guides,
     versions,
@@ -77,7 +78,7 @@ from .services.data_service import (
     get_stats,
     load_translation_maps,
 )
-from .dependencies import client_ip, get_lang, VALID_LANGUAGES, LANGUAGE_NAMES
+from .dependencies import get_lang, VALID_LANGUAGES, LANGUAGE_NAMES
 from .services import rate_limit_config
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -133,11 +134,12 @@ IS_BETA_BACKEND = os.environ.get("DISABLE_RUN_SUBMISSIONS") == "1"
 # /api/* lookups per page, low enough to choke off scraping. Endpoints
 # that want a tighter cap (guide submission, auth, feedback) declare
 # `@limiter.limit(...)` at the router level and override this default.
-# The blanket cap is a callable so an operator can retune it at runtime via
-# /api/admin/rate-limits (default stays 300/minute). slowapi re-evaluates it
-# per request.
+# Tier-aware, runtime-tunable via /api/admin/rate-limits. rate_limit_key buckets
+# by API key (and carries its tier) or by IP; tier_limit_value reads that tier's
+# cap. slowapi re-evaluates both per request, so config changes need no restart.
 limiter = Limiter(
-    key_func=client_ip, default_limits=[rate_limit_config.default_limit_value]
+    key_func=rate_limit_config.rate_limit_key,
+    default_limits=[rate_limit_config.tier_limit_value],
 )
 
 app = FastAPI(
@@ -603,6 +605,7 @@ app.include_router(beta.router)
 app.include_router(admin.router, include_in_schema=False)
 app.include_router(admin_searches.router, include_in_schema=False)
 app.include_router(admin_rate_limits.router, include_in_schema=False)
+app.include_router(api_keys.router)
 app.include_router(glossary.router)
 app.include_router(guides.router)
 app.include_router(versions.router)
