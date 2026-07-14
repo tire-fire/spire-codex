@@ -105,7 +105,11 @@
 .rvmp .dtable .dim { color: var(--text-3); font-weight: 500; }
 .rvmp .dot2 { width: 9px; height: 9px; border-radius: 3px; flex: none; }
 .rvmp .wr-sg { color: #35c07a; }
+.rvmp .wr-loss { color: #e5484d; }
 .rvmp .wr-g { color: #6fae4f; }
+/* Recent runs: fixed layout so the long "died to …" subline truncates in its
+   cell instead of widening the table and forcing a horizontal scroll. */
+.rvmp .dtable-fixed { table-layout: fixed; }
 .rvmp .wr-n { color: var(--text); }
 .rvmp .wr-r { color: var(--warn); }
 .rvmp .lb-cta { display: inline-flex; align-items: center; gap: 6px; margin: 12px 4px 2px; font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--gold); }
