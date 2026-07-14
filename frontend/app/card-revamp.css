@@ -279,3 +279,4 @@ a.kw { text-decoration: none; }
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
+.card-rvmp .draft-lift { color: var(--accent-gold); font-weight: 600; }
