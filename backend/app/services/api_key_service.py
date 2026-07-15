@@ -130,6 +130,65 @@ def set_tier(key_id: str, tier: str) -> bool:
     return True
 
 
+def admin_revoke(key_id: str) -> bool:
+    """Revoke any key (no owner scoping — operator action). Cache-busted."""
+    if not os.environ.get("MONGO_URL", "").strip():
+        return False
+    doc = _coll().find_one({"_id": key_id})
+    if not doc:
+        return False
+    _coll().update_one({"_id": key_id}, {"$set": {"revoked": True}})
+    _resolve_cache.pop(doc.get("key_hash", ""), None)
+    return True
+
+
+def admin_list_keys(q: str | None = None, limit: int = 200) -> list[dict]:
+    """Every key, newest first, with the owner's username joined in. `q`
+    filters by username, label, or user/key id (substring, case-insensitive)."""
+    if not os.environ.get("MONGO_URL", "").strip():
+        return []
+    limit = max(1, min(limit, 500))
+    docs = list(_coll().find({}).sort("created_at", -1).limit(limit))
+
+    # Bulk-join usernames: keys store the user's ObjectId as a string.
+    from bson import ObjectId
+
+    from .users_db import _get_collection as _users
+
+    oids = []
+    for d in docs:
+        try:
+            oids.append(ObjectId(d.get("user_id")))
+        except Exception:
+            pass
+    names: dict[str, str] = {}
+    if oids:
+        try:
+            for u in _users().find({"_id": {"$in": oids}}, {"username": 1}):
+                names[str(u["_id"])] = u.get("username") or ""
+        except Exception:
+            logger.warning("api-key admin list: username join failed", exc_info=True)
+
+    out = []
+    for d in docs:
+        row = _public(d)
+        row["user_id"] = d.get("user_id")
+        row["username"] = names.get(d.get("user_id") or "", "")
+        out.append(row)
+
+    if q and q.strip():
+        term = q.strip().lower()
+        out = [
+            r
+            for r in out
+            if term in (r["username"] or "").lower()
+            or term in (r["label"] or "").lower()
+            or term in (r["user_id"] or "").lower()
+            or term in r["id"].lower()
+        ]
+    return out
+
+
 def resolve(raw_key: str) -> dict | None:
     """Resolve an ``X-API-Key`` to {tier, key_id, user_id}, cached. None when the
     key is missing, malformed, unknown, or revoked."""

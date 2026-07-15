@@ -52,6 +52,7 @@ from .routers import (
     admin,
     admin_searches,
     admin_rate_limits,
+    admin_api_keys,
     api_keys,
     glossary,
     guides,
@@ -610,6 +611,7 @@ app.include_router(beta.router)
 app.include_router(admin.router, include_in_schema=False)
 app.include_router(admin_searches.router, include_in_schema=False)
 app.include_router(admin_rate_limits.router, include_in_schema=False)
+app.include_router(admin_api_keys.router, include_in_schema=False)
 app.include_router(api_keys.router)
 app.include_router(glossary.router)
 app.include_router(guides.router)
