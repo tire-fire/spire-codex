@@ -144,9 +144,13 @@ def resolve(raw_key: str) -> dict | None:
         return cached[1]
     result: dict | None = None
     try:
-        doc = _coll().find_one(
+        # Stamp last_used_at in the same round trip. This only runs on a cache
+        # miss (at most once per TTL per key per worker), so the hot path never
+        # pays for it and the profile page still shows a truthful "last used".
+        doc = _coll().find_one_and_update(
             {"key_hash": kh, "revoked": {"$ne": True}},
-            {"tier": 1, "user_id": 1},
+            {"$set": {"last_used_at": datetime.now(timezone.utc)}},
+            projection={"tier": 1, "user_id": 1},
         )
         if doc:
             result = {
