@@ -1529,7 +1529,8 @@
     "upgrade_description": "Дает 17 [gold]защиты[/gold] ВСЕМ игрокам.",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 483
+    "compendium_order": 483,
+    "multiplayer_only": true
   },
   {
     "id": "BATTLE_TRANCE",
@@ -2335,7 +2336,8 @@
     "upgrade_description": "Добавляет в [gold]руку[/gold] другому игроку случайную [gold]улучшенную[/gold] бесцветную карту.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 222
+    "compendium_order": 222,
+    "multiplayer_only": true
   },
   {
     "id": "MASTER_OF_STRATEGY",
@@ -2416,7 +2418,8 @@
     "upgrade_description": "Дает [energy:3] другому игроку.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 444
+    "compendium_order": 444,
+    "multiplayer_only": true
   },
   {
     "id": "DEATHBRINGER",
@@ -3097,7 +3100,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 379
+    "compendium_order": 379,
+    "multiplayer_only": true
   },
   {
     "id": "SHATTER",
@@ -4421,7 +4425,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 25
+    "compendium_order": 25,
+    "multiplayer_only": true
   },
   {
     "id": "RIGHT_HAND_HAND",
@@ -6057,7 +6062,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "INVOKE",
@@ -6458,7 +6464,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 121
+    "compendium_order": 121,
+    "multiplayer_only": true
   },
   {
     "id": "PROTECTOR",
@@ -8193,7 +8200,8 @@
     "upgrade_description": "Наносит 15 урона.\nСледующая Атака другого игрока по врагу разыгрывается еще 1 раз.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "ONE_TWO_PUNCH",
@@ -8809,7 +8817,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 305
+    "compendium_order": 305,
+    "multiplayer_only": true
   },
   {
     "id": "BONE_SHARDS",
@@ -9096,7 +9105,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 212
+    "compendium_order": 212,
+    "multiplayer_only": true
   },
   {
     "id": "FLICK_FLACK",
@@ -9217,7 +9227,8 @@
     "upgrade_description": "Наносит 5 урона.\nНаносит еще 7 урона за каждую атаку другого игрока по врагу.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 459
+    "compendium_order": 459,
+    "multiplayer_only": true
   },
   {
     "id": "GLACIER",
@@ -9617,7 +9628,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "BEAM_CELL",
@@ -10719,7 +10731,8 @@
     "upgrade_description": "Дает другому игроку 16 [gold]защиты[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 469
+    "compendium_order": 469,
+    "multiplayer_only": true
   },
   {
     "id": "CRUSH_UNDER",
@@ -10929,7 +10942,8 @@
     "upgrade_description": "Наносит 14 урона.\nВ этом ходу враг получает тройной урон от других игроков.",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 468
+    "compendium_order": 468,
+    "multiplayer_only": true
   },
   {
     "id": "POUNCE",
@@ -14674,7 +14688,8 @@
     "upgrade_description": "Дает 13 [gold]защиты[/gold].\nПеренаправляет все атаки в этом ходу с другого игрока на вас.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "FURNACE",
@@ -15213,7 +15228,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 472
+    "compendium_order": 472,
+    "multiplayer_only": true
   },
   {
     "id": "LEG_SWEEP",
@@ -18970,7 +18986,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 159
+    "compendium_order": 159,
+    "multiplayer_only": true
   },
   {
     "id": "HIDDEN_DAGGERS",
@@ -19099,7 +19116,8 @@
     "upgrade_description": "Дает другому игроку 8 [gold]силы[/gold] на этот ход.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 448
+    "compendium_order": 448,
+    "multiplayer_only": true
   },
   {
     "id": "AFTERIMAGE",
@@ -19966,7 +19984,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 463
+    "compendium_order": 463,
+    "multiplayer_only": true
   },
   {
     "id": "SPORE_MIND",
@@ -20775,7 +20794,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 74
+    "compendium_order": 74,
+    "multiplayer_only": true
   },
   {
     "id": "HEADBUTT",
@@ -24041,6 +24061,7 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 298
+    "compendium_order": 298,
+    "multiplayer_only": true
   }
 ]

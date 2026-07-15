@@ -73,7 +73,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 212
+    "compendium_order": 212,
+    "multiplayer_only": true
   },
   {
     "id": "FISTICUFFS",
@@ -485,7 +486,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 463
+    "compendium_order": 463,
+    "multiplayer_only": true
   },
   {
     "id": "ADRENALINE",
@@ -1136,7 +1138,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 379
+    "compendium_order": 379,
+    "multiplayer_only": true
   },
   {
     "id": "FRIENDSHIP",
@@ -2489,7 +2492,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 298
+    "compendium_order": 298,
+    "multiplayer_only": true
   },
   {
     "id": "ENTRENCH",
@@ -4961,7 +4965,8 @@
     "upgrade_description": "Otro jugador gana [energy:3].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 444
+    "compendium_order": 444,
+    "multiplayer_only": true
   },
   {
     "id": "BIASED_COGNITION",
@@ -5178,7 +5183,8 @@
     "upgrade_description": "Otorga a otro jugador 8 de [gold]Fuerza[/gold] durante este turno.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 448
+    "compendium_order": 448,
+    "multiplayer_only": true
   },
   {
     "id": "DASH",
@@ -8405,7 +8411,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 25
+    "compendium_order": 25,
+    "multiplayer_only": true
   },
   {
     "id": "SQUASH",
@@ -9462,7 +9469,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 121
+    "compendium_order": 121,
+    "multiplayer_only": true
   },
   {
     "id": "BLOODLETTING",
@@ -10599,7 +10607,8 @@
     "upgrade_description": "Otro jugador añade 1 carta incolora [gold]Mejorada[/gold] a su [gold]Mano[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 222
+    "compendium_order": 222,
+    "multiplayer_only": true
   },
   {
     "id": "GLACIER",
@@ -12599,7 +12608,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "ENLIGHTENMENT",
@@ -13224,7 +13234,8 @@
     "upgrade_description": "Gana 13 de [gold]Bloqueo[/gold].\nRedirige todos los ataques que otro jugador fuera a recibir este turno hacia ti.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "UNTOUCHABLE",
@@ -13968,7 +13979,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 305
+    "compendium_order": 305,
+    "multiplayer_only": true
   },
   {
     "id": "INJURY",
@@ -14095,7 +14107,8 @@
     "upgrade_description": "Otorga 16 de [gold]Bloqueo[/gold] a otro jugador.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 469
+    "compendium_order": 469,
+    "multiplayer_only": true
   },
   {
     "id": "EXPECT_A_FIGHT",
@@ -14837,7 +14850,8 @@
     "upgrade_description": "Inflige 15 de daño.\nEl siguiente Ataque que otro jugador juegue contra el enemigo se juega una vez más.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "HAND_OF_GREED",
@@ -15257,7 +15271,8 @@
     "upgrade_description": "Inflige 14 de daño.\nEl enemigo recibe el triple de daño de otros jugadores este turno.",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 468
+    "compendium_order": 468,
+    "multiplayer_only": true
   },
   {
     "id": "BULLY",
@@ -16035,7 +16050,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 472
+    "compendium_order": 472,
+    "multiplayer_only": true
   },
   {
     "id": "SHIV",
@@ -19864,7 +19880,8 @@
     "upgrade_description": "TODOS los jugadores ganan 17 de [gold]Bloqueo[/gold].",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 483
+    "compendium_order": 483,
+    "multiplayer_only": true
   },
   {
     "id": "TORIC_TOUGHNESS",
@@ -20979,7 +20996,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 159
+    "compendium_order": 159,
+    "multiplayer_only": true
   },
   {
     "id": "WHISTLE",
@@ -21822,7 +21840,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 74
+    "compendium_order": 74,
+    "multiplayer_only": true
   },
   {
     "id": "TEMPEST",
@@ -22529,7 +22548,8 @@
     "upgrade_description": "Inflige 5 de daño.\nInflige 7 de daño adicional por cada vez que otro jugador haya atacado al enemigo este turno.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 459
+    "compendium_order": 459,
+    "multiplayer_only": true
   },
   {
     "id": "KNIFE_TRAP",
@@ -23967,7 +23987,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "ORBIT",

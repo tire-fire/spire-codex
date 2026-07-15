@@ -76,7 +76,8 @@
     "upgrade_description": "他のプレイヤー1人は[energy:3]を得る。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 444
+    "compendium_order": 444,
+    "multiplayer_only": true
   },
   {
     "id": "PYRE",
@@ -583,7 +584,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 472
+    "compendium_order": 472,
+    "multiplayer_only": true
   },
   {
     "id": "SIC_EM",
@@ -1040,7 +1042,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "INTERCEPT",
@@ -1078,7 +1081,8 @@
     "upgrade_description": "13[gold]ブロック[/gold]を得る。\nこのターン、他のプレイヤーが受けるすべての攻撃を自分が代わりに受ける。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "INFERNO",
@@ -1292,7 +1296,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 379
+    "compendium_order": 379,
+    "multiplayer_only": true
   },
   {
     "id": "ENTROPY",
@@ -3673,7 +3678,8 @@
     "upgrade_description": "15ダメージを与える。\n他のプレイヤー1人が対象の敵にプレイする次のアタックは、もう1回プレイされる。",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "TANK",
@@ -3709,7 +3715,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 74
+    "compendium_order": 74,
+    "multiplayer_only": true
   },
   {
     "id": "DAGGER_THROW",
@@ -4712,7 +4719,8 @@
     "upgrade_description": "14ダメージを与える。\nこのターン、敵は他の全プレイヤーから3倍のダメージを受ける。",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 468
+    "compendium_order": 468,
+    "multiplayer_only": true
   },
   {
     "id": "HIGH_FIVE",
@@ -4880,7 +4888,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 212
+    "compendium_order": 212,
+    "multiplayer_only": true
   },
   {
     "id": "BOUNCING_FLASK",
@@ -8824,7 +8833,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 463
+    "compendium_order": 463,
+    "multiplayer_only": true
   },
   {
     "id": "OFFERING",
@@ -12031,7 +12041,8 @@
     "upgrade_description": "他のプレイヤー1人は、ランダムな[gold]アップグレード[/gold]済みの無色カードを1枚[gold]手札[/gold]に加える。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 222
+    "compendium_order": 222,
+    "multiplayer_only": true
   },
   {
     "id": "POOR_SLEEP",
@@ -12434,7 +12445,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "APPARITION",
@@ -13026,7 +13038,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 298
+    "compendium_order": 298,
+    "multiplayer_only": true
   },
   {
     "id": "CONQUEROR",
@@ -13595,7 +13608,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 25
+    "compendium_order": 25,
+    "multiplayer_only": true
   },
   {
     "id": "DEMON_FORM",
@@ -14182,7 +14196,8 @@
     "upgrade_description": "他のプレイヤー1人が16[gold]ブロック[/gold]を得る。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 469
+    "compendium_order": 469,
+    "multiplayer_only": true
   },
   {
     "id": "HAND_TRICK",
@@ -14432,7 +14447,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 121
+    "compendium_order": 121,
+    "multiplayer_only": true
   },
   {
     "id": "FEED",
@@ -19281,7 +19297,8 @@
     "upgrade_description": "すべてのプレイヤーは17[gold]ブロック[/gold]を得る。",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 483
+    "compendium_order": 483,
+    "multiplayer_only": true
   },
   {
     "id": "STRANGLE",
@@ -19446,7 +19463,8 @@
     "upgrade_description": "5ダメージを与える。\nこのターン、味方がアタックした回数1回につき、追加で7ダメージを与える。",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 459
+    "compendium_order": 459,
+    "multiplayer_only": true
   },
   {
     "id": "FASTEN",
@@ -22255,7 +22273,8 @@
     "upgrade_description": "ターン終了時まで、他のプレイヤー1人に[gold]筋力[/gold]8を付与する。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 448
+    "compendium_order": 448,
+    "multiplayer_only": true
   },
   {
     "id": "SHARED_FATE",
@@ -23246,7 +23265,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 159
+    "compendium_order": 159,
+    "multiplayer_only": true
   },
   {
     "id": "BARRAGE",
@@ -23827,7 +23847,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 305
+    "compendium_order": 305,
+    "multiplayer_only": true
   },
   {
     "id": "CALCIFY",

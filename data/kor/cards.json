@@ -159,7 +159,8 @@
     "upgrade_description": "[gold]방어도[/gold]를 13 얻습니다.\n이번 턴 동안\n다른 플레이어가 받아야 하는\n모든 공격의 목표를\n자신으로 변경합니다.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "BOOST_AWAY",
@@ -1085,7 +1086,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 298
+    "compendium_order": 298,
+    "multiplayer_only": true
   },
   {
     "id": "SENTRY_MODE",
@@ -3847,7 +3849,8 @@
     "upgrade_description": "다른 플레이어가 [energy:3]를 얻습니다.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 444
+    "compendium_order": 444,
+    "multiplayer_only": true
   },
   {
     "id": "SNAP",
@@ -4395,7 +4398,8 @@
     "upgrade_description": "모든 플레이어가\n[gold]방어도[/gold]를 17 얻습니다.",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 483
+    "compendium_order": 483,
+    "multiplayer_only": true
   },
   {
     "id": "SHIV",
@@ -5753,7 +5757,8 @@
     "upgrade_description": "피해를 14 줍니다.\n대상 적이 이번 턴에\n다른 플레이어에게서 받는\n피해량이 3배가 됩니다.",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 468
+    "compendium_order": 468,
+    "multiplayer_only": true
   },
   {
     "id": "TREMBLE",
@@ -5846,7 +5851,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 463
+    "compendium_order": 463,
+    "multiplayer_only": true
   },
   {
     "id": "LANTERN_KEY",
@@ -6259,7 +6265,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 212
+    "compendium_order": 212,
+    "multiplayer_only": true
   },
   {
     "id": "CLOAK_AND_DAGGER",
@@ -9064,7 +9071,8 @@
     "upgrade_description": "다른 플레이어에게\n[gold]방어도[/gold]를 16 줍니다.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 469
+    "compendium_order": 469,
+    "multiplayer_only": true
   },
   {
     "id": "BOOT_SEQUENCE",
@@ -10116,7 +10124,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 159
+    "compendium_order": 159,
+    "multiplayer_only": true
   },
   {
     "id": "MISERY",
@@ -13006,7 +13015,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 25
+    "compendium_order": 25,
+    "multiplayer_only": true
   },
   {
     "id": "DEMON_FORM",
@@ -13780,7 +13790,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 379
+    "compendium_order": 379,
+    "multiplayer_only": true
   },
   {
     "id": "ENTROPY",
@@ -17212,7 +17223,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "ALIGNMENT",
@@ -18833,7 +18845,8 @@
     "upgrade_description": "피해를 5 줍니다.\n이번 턴에 다른 플레이어가\n대상 적을 공격한 횟수당\n피해량이 7 증가합니다.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 459
+    "compendium_order": 459,
+    "multiplayer_only": true
   },
   {
     "id": "SALVO",
@@ -20237,7 +20250,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 121
+    "compendium_order": 121,
+    "multiplayer_only": true
   },
   {
     "id": "LETHALITY",
@@ -21068,7 +21082,8 @@
     "upgrade_description": "피해를 15 줍니다.\n다른 플레이어가 다음에\n대상 적에게 사용하는\n공격 카드가\n1번 추가로 사용됩니다.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "SOLAR_STRIKE",
@@ -21146,7 +21161,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 74
+    "compendium_order": 74,
+    "multiplayer_only": true
   },
   {
     "id": "TURBO",
@@ -22521,7 +22537,8 @@
     "upgrade_description": "다른 플레이어가 무작위\n[gold]강화[/gold]된 무색 카드를 1장\n[gold]손[/gold]으로 가져옵니다.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 222
+    "compendium_order": 222,
+    "multiplayer_only": true
   },
   {
     "id": "MINION_STRIKE",
@@ -22879,7 +22896,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 305
+    "compendium_order": 305,
+    "multiplayer_only": true
   },
   {
     "id": "DISMANTLE",
@@ -23075,7 +23093,8 @@
     "upgrade_description": "이번 턴 동안\n다른 플레이어에게\n[gold]힘[/gold]을 8 줍니다.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 448
+    "compendium_order": 448,
+    "multiplayer_only": true
   },
   {
     "id": "BULLY",
@@ -23844,7 +23863,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 472
+    "compendium_order": 472,
+    "multiplayer_only": true
   },
   {
     "id": "BLUR",
@@ -23958,7 +23978,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "GLIMMER",

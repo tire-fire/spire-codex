@@ -602,7 +602,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 364
+    "compendium_order": 364,
+    "multiplayer_only": true
   },
   {
     "id": "DUAL_WIELD",
@@ -1521,7 +1522,8 @@
     "upgrade_description": "Octroyez 16 d'[gold]Armure[/gold] à un autre joueur.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 481
+    "compendium_order": 481,
+    "multiplayer_only": true
   },
   {
     "id": "ENTHRALLED",
@@ -1919,7 +1921,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 441
+    "compendium_order": 441,
+    "multiplayer_only": true
   },
   {
     "id": "BARRAGE",
@@ -2492,7 +2495,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 43
+    "compendium_order": 43,
+    "multiplayer_only": true
   },
   {
     "id": "SHADOW_SHIELD",
@@ -4285,7 +4289,8 @@
     "upgrade_description": "Un autre joueur gagne [energy:3].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "CLASH",
@@ -4484,7 +4489,8 @@
     "upgrade_description": "Donnez à un autre joueur 8 de [gold]Force[/gold] jusqu'à la fin du tour.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 467
+    "compendium_order": 467,
+    "multiplayer_only": true
   },
   {
     "id": "HOTFIX",
@@ -7247,7 +7253,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 135
+    "compendium_order": 135,
+    "multiplayer_only": true
   },
   {
     "id": "GUNK_UP",
@@ -8345,7 +8352,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "ASCENDERS_BANE",
@@ -10061,7 +10069,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 108
+    "compendium_order": 108,
+    "multiplayer_only": true
   },
   {
     "id": "FUSION",
@@ -10579,7 +10588,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 477
+    "compendium_order": 477,
+    "multiplayer_only": true
   },
   {
     "id": "BEGONE",
@@ -11470,7 +11480,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 454
+    "compendium_order": 454,
+    "multiplayer_only": true
   },
   {
     "id": "IMPATIENCE",
@@ -11843,7 +11854,8 @@
     "upgrade_description": "Gagnez 13 d'[gold]Armure[/gold].\nInterceptez toutes les attaques qui ciblent un autre joueur.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 479
+    "compendium_order": 479,
+    "multiplayer_only": true
   },
   {
     "id": "TREMBLE",
@@ -12418,7 +12430,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 187
+    "compendium_order": 187,
+    "multiplayer_only": true
   },
   {
     "id": "TIMES_UP",
@@ -13070,7 +13083,8 @@
     "upgrade_description": "Un autre joueur ajoute 1 carte Incolore [gold]Améliorée[/gold] à sa [gold]Main[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 232
+    "compendium_order": 232,
+    "multiplayer_only": true
   },
   {
     "id": "THE_SMITH",
@@ -13385,7 +13399,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 322
+    "compendium_order": 322,
+    "multiplayer_only": true
   },
   {
     "id": "LETHALITY",
@@ -14170,7 +14185,8 @@
     "upgrade_description": "Infligez 5 dégâts.\nInflige 7 dégâts supplémentaires pour chaque fois qu'un autre joueur a attaqué l'ennemi durant ce tour.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 476
+    "compendium_order": 476,
+    "multiplayer_only": true
   },
   {
     "id": "MIRAGE",
@@ -18120,7 +18136,8 @@
     "upgrade_description": "TOUS les joueurs gagnent 17 d'[gold]Armure[/gold].",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 456
+    "compendium_order": 456,
+    "multiplayer_only": true
   },
   {
     "id": "SPITE",
@@ -18559,7 +18576,8 @@
     "upgrade_description": "Infligez 15 dégâts.\nLa prochaine Attaque jouée par un autre joueur sur l'ennemi est jouée une fois supplémentaire.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 496
+    "compendium_order": 496,
+    "multiplayer_only": true
   },
   {
     "id": "RELAX",
@@ -18693,7 +18711,8 @@
     "upgrade_description": "Infligez 14 dégâts.\nL'ennemi subit le triple des dégâts infligés par les autres joueurs jusqu'à la fin du tour.",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 451
+    "compendium_order": 451,
+    "multiplayer_only": true
   },
   {
     "id": "FEEDING_FRENZY",
@@ -21232,7 +21251,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 22
+    "compendium_order": 22,
+    "multiplayer_only": true
   },
   {
     "id": "SECRET_TECHNIQUE",
@@ -22955,7 +22975,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 270
+    "compendium_order": 270,
+    "multiplayer_only": true
   },
   {
     "id": "BLUR",

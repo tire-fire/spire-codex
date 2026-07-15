@@ -437,6 +437,29 @@ _NON_REWARD_CARD_COLORS = frozenset({"curse", "status", "event", "quest", "token
 _excluded_card_ids_cache: frozenset[str] | None = None
 
 
+_multiplayer_card_ids_cache: frozenset[str] | None = None
+
+
+def _multiplayer_card_ids() -> frozenset[str]:
+    """Co-op-only card ids (multiplayer_only in the catalog). Solo bracket
+    views drop these rows: the card can't legitimately be in a solo deck, so
+    any solo run carrying one is console-tampered data."""
+    global _multiplayer_card_ids_cache
+    if _multiplayer_card_ids_cache is None:
+        try:
+            from .data_service import load_cards
+
+            _multiplayer_card_ids_cache = frozenset(
+                c["id"]
+                for c in load_cards()
+                if c.get("id") and c.get("multiplayer_only")
+            )
+        except Exception:
+            logger.warning("multiplayer card ids load failed", exc_info=True)
+            _multiplayer_card_ids_cache = frozenset()
+    return _multiplayer_card_ids_cache
+
+
 def _excluded_card_ids() -> frozenset[str]:
     """Card ids (bare, e.g. "DOUBT") excluded from card metrics. Loaded once
     from the game card data by color; empty if the data can't be read."""
@@ -2425,6 +2448,11 @@ def get_entity_metrics_table(entity_type: str, bracket: str = "all") -> dict[str
 
     rows: list[dict[str, Any]] = []
     excluded_cards = _excluded_card_ids() if entity_type == "cards" else frozenset()
+    solo_excluded_cards = (
+        _multiplayer_card_ids()
+        if entity_type == "cards" and (bracket == "solo" or bracket.startswith("solo:"))
+        else frozenset()
+    )
     official = _official_entity_ids(entity_type)
     for (etype, eid), agg in _cache.items():
         if etype != entity_type:
@@ -2432,6 +2460,11 @@ def get_entity_metrics_table(entity_type: str, bracket: str = "all") -> dict[str
         # Drop curses/status/event/token cards (not reward-pickable) and
         # fully-modded ids (in no official catalog) of any type.
         if eid in excluded_cards or (official and eid not in official):
+            continue
+        # Solo views drop co-op-only cards: a Demonic Shield in a "solo" run is
+        # console-tampered data, not a legitimate solo pick (issue reported on
+        # the zhs metrics page).
+        if eid in solo_excluded_cards:
             continue
         if use_bracket:
             # Bracket views stay merged (no base/upg split is tracked per bracket).
@@ -2621,7 +2654,10 @@ def get_entity_stats(entity_type: str, entity_id: str) -> dict[str, Any] | None:
             "by_character": by_character,
         }
     }
-    for ck in ("a10", "wr30", "wr50", "wr75"):
+    # Skill tiers first (they carry per-character splits), then the player
+    # counts and player x skill composites (picks/wins only) so the detail
+    # page can filter by co-op size like the metrics table does.
+    for ck in ("a10", "wr30", "wr50", "wr75", *_PLAYER_BRACKETS, *_COMPOSITE_BRACKETS):
         cd = agg_brackets.get(ck)
         if not cd:
             continue
@@ -2637,7 +2673,7 @@ def get_entity_stats(entity_type: str, entity_id: str) -> dict[str, Any] | None:
             "score": _compute_score(cw, cp, cbase),
             "total_runs": ctot,
             "pick_rate": round(cp / ctot * 100, 1) if ctot else 0.0,
-            "by_character": _shape_chars(cd.get("by_character")),
+            "by_character": _shape_chars(cd.get("by_character") or {}),
         }
     return {
         "entity_type": entity_type,

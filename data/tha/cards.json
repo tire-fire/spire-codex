@@ -1119,7 +1119,8 @@
     "upgrade_description": "ผู้เล่นคนอื่น 1 คนได้รับ 8 [gold]ความแข็งแรง[/gold]ในเทิร์นนี้",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 448
+    "compendium_order": 448,
+    "multiplayer_only": true
   },
   {
     "id": "CORROSIVE_WAVE",
@@ -1637,7 +1638,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 25
+    "compendium_order": 25,
+    "multiplayer_only": true
   },
   {
     "id": "DEVASTATE",
@@ -2108,7 +2110,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 379
+    "compendium_order": 379,
+    "multiplayer_only": true
   },
   {
     "id": "ENFEEBLING_TOUCH",
@@ -3075,7 +3078,8 @@
     "upgrade_description": "สร้างความเสียหาย 5\nสร้างความเสียหายเพิ่ม 7 ตามจำนวนครั้งที่ผู้เล่นคนอื่นเคยโจมตีศัตรูในเทิร์นนี้",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 459
+    "compendium_order": 459,
+    "multiplayer_only": true
   },
   {
     "id": "GATHER_LIGHT",
@@ -3236,7 +3240,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 298
+    "compendium_order": 298,
+    "multiplayer_only": true
   },
   {
     "id": "GLITTERSTREAM",
@@ -3601,7 +3606,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 212
+    "compendium_order": 212,
+    "multiplayer_only": true
   },
   {
     "id": "HAUNT",
@@ -4180,7 +4186,8 @@
     "upgrade_description": "สร้างความเสียหาย 14\nในเทิร์นนี้ ศัตรูจะได้รับความเสียหายจากผู้เล่นคนอื่นเป็น 3 เท่า",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 468
+    "compendium_order": 468,
+    "multiplayer_only": true
   },
   {
     "id": "KNOCKOUT_BLOW",
@@ -4312,7 +4319,8 @@
     "upgrade_description": "ผู้เล่นคนอื่น 1 คนเพิ่มการ์ดไร้สี[gold]แบบพัฒนาแล้ว[/gold] 1 ใบแบบสุ่มใส่[gold]มือ[/gold]",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 222
+    "compendium_order": 222,
+    "multiplayer_only": true
   },
   {
     "id": "LEADING_STRIKE",
@@ -4398,7 +4406,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 305
+    "compendium_order": 305,
+    "multiplayer_only": true
   },
   {
     "id": "LETHALITY",
@@ -4486,7 +4495,8 @@
     "upgrade_description": "ให้ 16 [gold]บล็อก[/gold]แก่ผู้เล่นคนอื่น 1 คน",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 469
+    "compendium_order": 469,
+    "multiplayer_only": true
   },
   {
     "id": "LUMINESCE",
@@ -6704,7 +6714,8 @@
     "upgrade_description": "ผู้เล่นทั้งหมดได้รับ 17 [gold]บล็อก[/gold]",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 483
+    "compendium_order": 483,
+    "multiplayer_only": true
   },
   {
     "id": "RATTLE",
@@ -8281,7 +8292,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 159
+    "compendium_order": 159,
+    "multiplayer_only": true
   },
   {
     "id": "SOW",
@@ -9399,7 +9411,8 @@
     "upgrade_description": "สร้างความเสียหาย 15\nการ์ดโจมตีใบถัดไปของผู้เล่นคนอื่น 1 คนที่เล่นใส่ศัตรูตัวนี้จะถูกเล่นซ้ำอีกครั้ง",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "TANK",
@@ -9435,7 +9448,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 74
+    "compendium_order": 74,
+    "multiplayer_only": true
   },
   {
     "id": "TAUNT",
@@ -11504,7 +11518,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "ACROBATICS",
@@ -13811,7 +13826,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 463
+    "compendium_order": 463,
+    "multiplayer_only": true
   },
   {
     "id": "DUAL_WIELD",
@@ -14834,7 +14850,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "REBOUND",
@@ -19968,7 +19985,8 @@
     "upgrade_description": "ได้รับ 13 [gold]บล็อก[/gold]\nดึงการโจมตีทั้งหมดในเทิร์นนี้ที่เล็งผู้เล่นอื่นมาที่คุณแทน",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "FEEL_NO_PAIN",
@@ -21932,7 +21950,8 @@
     "upgrade_description": "ผู้เล่นคนอื่น 1 คนได้รับ [energy:3]",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 444
+    "compendium_order": 444,
+    "multiplayer_only": true
   },
   {
     "id": "FUEL",
@@ -22912,7 +22931,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 472
+    "compendium_order": 472,
+    "multiplayer_only": true
   },
   {
     "id": "SPECTRUM_SHIFT",
@@ -23727,7 +23747,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 121
+    "compendium_order": 121,
+    "multiplayer_only": true
   },
   {
     "id": "FINISHER",

@@ -1460,7 +1460,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 480
+    "compendium_order": 480,
+    "multiplayer_only": true
   },
   {
     "id": "BEAM_CELL",
@@ -1661,7 +1662,8 @@
     "upgrade_description": "Another player gains [energy:3].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 440
+    "compendium_order": 440,
+    "multiplayer_only": true
   },
   {
     "id": "BIASED_COGNITION",
@@ -4586,7 +4588,8 @@
     "upgrade_description": "Give another player 8 [gold]Strength[/gold] this turn.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "CORROSIVE_WAVE",
@@ -6311,7 +6314,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 29
+    "compendium_order": 29,
+    "multiplayer_only": true
   },
   {
     "id": "DEVASTATE",
@@ -7277,7 +7281,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 383
+    "compendium_order": 383,
+    "multiplayer_only": true
   },
   {
     "id": "ENFEEBLING_TOUCH",
@@ -8689,7 +8694,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 123
+    "compendium_order": 123,
+    "multiplayer_only": true
   },
   {
     "id": "FLASH_OF_STEEL",
@@ -9453,7 +9459,8 @@
     "upgrade_description": "Deal 5 damage.\nDeals 7 additional damage for each time another player has attacked the enemy this turn.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 451
+    "compendium_order": 451,
+    "multiplayer_only": true
   },
   {
     "id": "GATHER_LIGHT",
@@ -9772,7 +9779,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 330
+    "compendium_order": 330,
+    "multiplayer_only": true
   },
   {
     "id": "GLITTERSTREAM",
@@ -10306,7 +10314,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 247
+    "compendium_order": 247,
+    "multiplayer_only": true
   },
   {
     "id": "HAND_TRICK",
@@ -11205,7 +11214,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 452
+    "compendium_order": 452,
+    "multiplayer_only": true
   },
   {
     "id": "HYPERBEAM",
@@ -11369,7 +11379,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 424
+    "compendium_order": 424,
+    "multiplayer_only": true
   },
   {
     "id": "IMPATIENCE",
@@ -11749,7 +11760,8 @@
     "upgrade_description": "Gain 13 [gold]Block[/gold].\nRedirect all incoming attacks that would be dealt to another player this turn to you.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 454
+    "compendium_order": 454,
+    "multiplayer_only": true
   },
   {
     "id": "INVOKE",
@@ -12205,7 +12217,8 @@
     "upgrade_description": "Deal 14 damage.\nThe enemy takes triple damage from other players this turn.",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 490
+    "compendium_order": 490,
+    "multiplayer_only": true
   },
   {
     "id": "KNOCKOUT_BLOW",
@@ -12378,7 +12391,8 @@
     "upgrade_description": "Another player adds 1 random [gold]Upgraded[/gold] Colorless card to their [gold]Hand[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 214
+    "compendium_order": 214,
+    "multiplayer_only": true
   },
   {
     "id": "LEADING_STRIKE",
@@ -12549,7 +12563,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 307
+    "compendium_order": 307,
+    "multiplayer_only": true
   },
   {
     "id": "LETHALITY",
@@ -12637,7 +12652,8 @@
     "upgrade_description": "Give another player 16 [gold]Block[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 456
+    "compendium_order": 456,
+    "multiplayer_only": true
   },
   {
     "id": "LIGHTNING_ROD",
@@ -13535,7 +13551,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 493
+    "compendium_order": 493,
+    "multiplayer_only": true
   },
   {
     "id": "MIND_BLAST",
@@ -16768,7 +16785,8 @@
     "upgrade_description": "ALL players gain 17 [gold]Block[/gold].",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "RAMPAGE",
@@ -19597,7 +19615,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 168
+    "compendium_order": 168,
+    "multiplayer_only": true
   },
   {
     "id": "SOLAR_STRIKE",
@@ -21659,7 +21678,8 @@
     "upgrade_description": "Deal 15 damage.\nThe next Attack another player plays on the enemy is played an extra time.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 471
+    "compendium_order": 471,
+    "multiplayer_only": true
   },
   {
     "id": "TANK",
@@ -21695,7 +21715,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 81
+    "compendium_order": 81,
+    "multiplayer_only": true
   },
   {
     "id": "TAUNT",

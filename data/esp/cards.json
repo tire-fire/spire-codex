@@ -71,7 +71,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 212
+    "compendium_order": 212,
+    "multiplayer_only": true
   },
   {
     "id": "BACKSTAB",
@@ -1325,7 +1326,8 @@
     "upgrade_description": "Le das 16 de [gold]bloqueo[/gold] a otra persona.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 469
+    "compendium_order": 469,
+    "multiplayer_only": true
   },
   {
     "id": "JACK_OF_ALL_TRADES",
@@ -1794,7 +1796,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "REGRET",
@@ -2297,7 +2300,8 @@
     "upgrade_description": "Infliges 15 de daño.\nLa próxima carta de ataque que juegue otra persona contra un enemigo se jugará otra vez.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "FOCUSED_STRIKE",
@@ -5089,7 +5093,8 @@
     "upgrade_description": "Le das 8 de [gold]fuerza[/gold] a otra persona durante este turno.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 448
+    "compendium_order": 448,
+    "multiplayer_only": true
   },
   {
     "id": "CORRUPTION",
@@ -5327,7 +5332,8 @@
     "upgrade_description": "Otra persona obtiene [energy:3].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 444
+    "compendium_order": 444,
+    "multiplayer_only": true
   },
   {
     "id": "CRUELTY",
@@ -8797,7 +8803,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 25
+    "compendium_order": 25,
+    "multiplayer_only": true
   },
   {
     "id": "SWORD_BOOMERANG",
@@ -9812,7 +9819,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "ENTHRALLED",
@@ -10150,7 +10158,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 121
+    "compendium_order": 121,
+    "multiplayer_only": true
   },
   {
     "id": "WROUGHT_IN_WAR",
@@ -10794,7 +10803,8 @@
     "upgrade_description": "Infliges 14 de daño.\nEl enemigo recibe el triple de daño de otras personas durante este turno.",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 468
+    "compendium_order": 468,
+    "multiplayer_only": true
   },
   {
     "id": "RAGE",
@@ -10927,7 +10937,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 159
+    "compendium_order": 159,
+    "multiplayer_only": true
   },
   {
     "id": "FUSION",
@@ -13530,7 +13541,8 @@
     "upgrade_description": "Obtienes 13 de [gold]bloqueo[/gold].\nDesvías hacia ti todos los ataques que hubieran herido a tu camarada en este turno.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "UNTOUCHABLE",
@@ -14081,7 +14093,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 305
+    "compendium_order": 305,
+    "multiplayer_only": true
   },
   {
     "id": "INJURY",
@@ -14637,7 +14650,8 @@
     "upgrade_description": "Otra persona agrega 1 carta incolora [gold]mejorada[/gold] al azar a su [gold]mano[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 222
+    "compendium_order": 222,
+    "multiplayer_only": true
   },
   {
     "id": "EVIL_EYE",
@@ -15508,7 +15522,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 472
+    "compendium_order": 472,
+    "multiplayer_only": true
   },
   {
     "id": "SWEEPING_GAZE",
@@ -15715,7 +15730,8 @@
     "upgrade_description": "TODAS las personas obtienen 17 de [gold]bloqueo[/gold].",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 483
+    "compendium_order": 483,
+    "multiplayer_only": true
   },
   {
     "id": "MODDED",
@@ -16909,7 +16925,8 @@
     "upgrade_description": "Infliges 5 de daño.\nInfliges 7 de daño adicional por cada vez que otra persona ataque al enemigo durante este turno.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 459
+    "compendium_order": 459,
+    "multiplayer_only": true
   },
   {
     "id": "LIGHTNING_ROD",
@@ -19971,7 +19988,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 463
+    "compendium_order": 463,
+    "multiplayer_only": true
   },
   {
     "id": "REFRACT",
@@ -21130,7 +21148,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 379
+    "compendium_order": 379,
+    "multiplayer_only": true
   },
   {
     "id": "NEUROSURGE",
@@ -21868,7 +21887,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 74
+    "compendium_order": 74,
+    "multiplayer_only": true
   },
   {
     "id": "TREMBLE",
@@ -23407,7 +23427,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 298
+    "compendium_order": 298,
+    "multiplayer_only": true
   },
   {
     "id": "SHAME",
