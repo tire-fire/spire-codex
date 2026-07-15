@@ -51,8 +51,9 @@ class CreateKeyRequest(BaseModel):
 def create_key(body: CreateKeyRequest, user: dict = Depends(require_user)):
     """Create a key (registered tier). The ``raw_key`` in the response is shown
     only here — store it now, it can't be recovered later."""
+    tier = "paid" if user.get("is_paid") else "registered"
     try:
-        return api_key_service.create_key(_uid(user), body.label)
+        return api_key_service.create_key(_uid(user), body.label, tier)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

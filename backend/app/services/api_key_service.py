@@ -142,6 +142,21 @@ def set_tier(key_id: str, tier: str) -> bool:
     return True
 
 
+def sync_paid_tier(user_id: str, paid: bool) -> int:
+    """Flip a user's active keys between registered<->paid when their supporter
+    status changes. general/academia grants are left alone. Returns the number
+    of keys moved; resolve cache busted per key so it's live in seconds."""
+    if not os.environ.get("MONGO_URL", "").strip():
+        return 0
+    src, dst = ("registered", "paid") if paid else ("paid", "registered")
+    moved = 0
+    for d in _coll().find({"user_id": user_id, "revoked": {"$ne": True}, "tier": src}):
+        _coll().update_one({"_id": d["_id"]}, {"$set": {"tier": dst}})
+        _resolve_cache.pop(d.get("key_hash", ""), None)
+        moved += 1
+    return moved
+
+
 def admin_revoke(key_id: str) -> bool:
     """Revoke any key (no owner scoping — operator action). Cache-busted."""
     if not os.environ.get("MONGO_URL", "").strip():

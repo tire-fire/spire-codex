@@ -372,6 +372,66 @@ def update_email(user_id: str, email: str) -> dict:
     return {"success": True, "email": clean}
 
 
+def get_user_by_patreon_id(patreon_id: str) -> dict | None:
+    """Look up a user by Patreon ID without creating one (webhook path)."""
+    if not patreon_id:
+        return None
+    coll = _get_collection()
+    existing = coll.find_one({"patreon_id": patreon_id})
+    if existing:
+        existing["_id"] = str(existing["_id"])
+        return existing
+    return None
+
+
+def link_patreon(user_id: str, patreon_id: str) -> dict:
+    coll = _get_collection()
+    conflict = coll.find_one(
+        {"patreon_id": patreon_id, "_id": {"$ne": ObjectId(user_id)}}
+    )
+    if conflict:
+        return {"error": "This Patreon account is already linked to another user"}
+    result = coll.update_one(
+        {"_id": ObjectId(user_id)},
+        {
+            "$set": {
+                "patreon_id": patreon_id,
+                "updated_at": datetime.now(timezone.utc),
+            }
+        },
+    )
+    if result.matched_count == 0:
+        return {"error": "User not found"}
+    return {"success": True}
+
+
+def unlink_patreon(user_id: str) -> dict:
+    """Disconnect Patreon, clearing the paid flag with it (the flag's only
+    source of truth is the Patreon membership)."""
+    return _unlink_identity(
+        user_id,
+        present="patreon_id",
+        fields=["patreon_id", "is_paid"],
+        label="Patreon",
+    )
+
+
+def set_paid(user_id: str, is_paid: bool) -> dict:
+    """Supporter flag, driven by the Patreon link/webhook (never set by hand)."""
+    coll = _get_collection()
+    try:
+        oid = ObjectId(user_id)
+    except Exception:
+        return {"error": "Invalid user id"}
+    result = coll.update_one(
+        {"_id": oid},
+        {"$set": {"is_paid": bool(is_paid), "updated_at": datetime.now(timezone.utc)}},
+    )
+    if result.matched_count == 0:
+        return {"error": "User not found"}
+    return {"success": True}
+
+
 def link_steam(user_id: str, steam_id: str) -> dict:
     coll = _get_collection()
     conflict = coll.find_one({"steam_id": steam_id, "_id": {"$ne": ObjectId(user_id)}})

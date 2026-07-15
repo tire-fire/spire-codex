@@ -42,6 +42,8 @@ def me(request: Request):
         "twitch_id": user.get("twitch_id"),
         "twitch_login": user.get("twitch_login"),
         "is_partner": bool(user.get("is_partner")),
+        "patreon_id": user.get("patreon_id"),
+        "is_paid": bool(user.get("is_paid")),
         "created_at": user.get("created_at"),
         "needs_email": not user.get("email"),
         "is_admin": is_admin(user),
