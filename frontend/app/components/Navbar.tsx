@@ -14,7 +14,7 @@ import ThemeToggle from "./ThemeToggle";
 import { recordRecent, getRecent, isRecentType, ENTITY_SINGULAR, prettyRecentName, type RecentEntity } from "@/lib/recent-entities";
 import { t } from "@/lib/ui-translations";
 import { cachedFetch } from "@/lib/fetch-cache";
-import { IS_BETA } from "@/lib/seo";
+import { IS_BETA, SITE_URL } from "@/lib/seo";
 
 const LANG_CODES = new Set(["deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs"]);
 
@@ -104,7 +104,10 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/showcase", label: "Showcase" },
       { href: "/knowledge-demon", label: "Knowledge Demon", badge: "discord-bot" },
       { href: "/developers", label: "Developers" },
-      { href: `${API_BASE}/docs`, label: "API" },
+      // Absolute URL on purpose: bare "/docs" reads as an internal route and
+      // gets the language prefix, but the FastAPI docs only exist at the
+      // root (every /<lang>/docs was a crawled 404).
+      { href: `${API_BASE || SITE_URL}/docs`, label: "API" },
     ],
   },
   {
