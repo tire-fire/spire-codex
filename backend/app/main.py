@@ -136,10 +136,15 @@ IS_BETA_BACKEND = os.environ.get("DISABLE_RUN_SUBMISSIONS") == "1"
 # `@limiter.limit(...)` at the router level and override this default.
 # Tier-aware, runtime-tunable via /api/admin/rate-limits. rate_limit_key buckets
 # by API key (and carries its tier) or by IP; tier_limit_value reads that tier's
-# cap. slowapi re-evaluates both per request, so config changes need no restart.
+# cap, with per-path endpoint overrides beating the tier cap. slowapi
+# re-evaluates both per request, so config changes need no restart.
+# key_style="endpoint" scopes each counter by ROUTE, not URL — slowapi's default
+# "url" gave every distinct path its own counter, so a scraper enumerating
+# /api/cards/{id} across hundreds of ids got the full cap on each one.
 limiter = Limiter(
     key_func=rate_limit_config.rate_limit_key,
     default_limits=[rate_limit_config.tier_limit_value],
+    key_style="endpoint",
 )
 
 app = FastAPI(

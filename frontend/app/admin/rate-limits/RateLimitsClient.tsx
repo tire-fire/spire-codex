@@ -8,9 +8,15 @@
 import { useEffect, useState } from "react";
 import { AdminShell, adminFetch } from "../shared";
 
+interface Override {
+  path: string;
+  limit: string;
+}
+
 interface Config {
   default_limit: string;
   tiers: Record<string, string>;
+  overrides: Override[];
   enabled: boolean;
 }
 
@@ -28,6 +34,7 @@ export default function RateLimitsClient() {
   const [limit, setLimit] = useState("");
   const [enabled, setEnabled] = useState(true);
   const [tiers, setTiers] = useState<Record<string, string>>({});
+  const [overrides, setOverrides] = useState<Override[]>([]);
   const [note, setNote] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -36,6 +43,7 @@ export default function RateLimitsClient() {
     setLimit(c.default_limit);
     setEnabled(c.enabled);
     setTiers(c.tiers || {});
+    setOverrides(c.overrides || []);
   };
 
   useEffect(() => {
@@ -187,6 +195,77 @@ export default function RateLimitsClient() {
               Format <span className="font-mono">count/period</span> — e.g. 300/minute,
               5/second, 10000/hour.
             </p>
+          </div>
+
+          <div className={card}>
+            <label className="block text-sm font-semibold text-[var(--text-primary)]">
+              Endpoint clamps
+            </label>
+            <div className="text-xs text-[var(--text-muted)] mb-3">
+              Clamp a path prefix when it&apos;s being abused. Longest matching prefix
+              wins and applies to everyone, keyed or not. <span className="font-mono">/api/admin</span>{" "}
+              can&apos;t be clamped.
+            </div>
+            <div className="space-y-2">
+              {overrides.map((o, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={o.path}
+                    onChange={(e) => {
+                      const next = [...overrides];
+                      next[i] = { ...o, path: e.target.value };
+                      setOverrides(next);
+                    }}
+                    placeholder="/api/runs"
+                    className={`flex-1 ${input}`}
+                  />
+                  <input
+                    type="text"
+                    value={o.limit}
+                    onChange={(e) => {
+                      const next = [...overrides];
+                      next[i] = { ...o, limit: e.target.value };
+                      setOverrides(next);
+                    }}
+                    placeholder="30/minute"
+                    className={`w-36 ${input}`}
+                  />
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => setOverrides(overrides.filter((_, j) => j !== i))}
+                    className="px-2.5 py-2 rounded-lg text-sm border border-red-500/40 bg-red-500/10 text-red-400 disabled:opacity-50"
+                    aria-label="Remove clamp"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {overrides.length === 0 && (
+                <p className="text-xs text-[var(--text-muted)]">
+                  No clamps active. Everything uses the browse cap / tier caps.
+                </p>
+              )}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setOverrides([...overrides, { path: "", limit: "" }])}
+                className="px-4 py-2 rounded-lg text-sm border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50"
+              >
+                Add clamp
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => save({ overrides: overrides.filter((o) => o.path.trim() && o.limit.trim()) })}
+                className={goldBtn}
+              >
+                Save clamps
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -11,11 +11,18 @@ counts live.
 
 Endpoints with their own tighter ``@limiter.limit(...)`` (auth, feedback, guide
 submission) keep those — those stay per-IP so a key can't buy past them.
+
+Endpoint overrides: the config also carries a list of {path, limit} entries so
+an operator can clamp a specific path prefix live when it's being abused (e.g.
+``/api/runs`` -> ``30/minute``). Longest matching prefix wins, the override
+applies to every tier (a clamp during an attack should clamp everyone), and
+``/api/admin`` is never overridable so the controls can't lock themselves out.
 """
 
 import logging
 import os
 import time
+from contextvars import ContextVar
 
 logger = logging.getLogger("spire-codex")
 
@@ -34,8 +41,17 @@ _DEFAULT_TIERS = {
 # (per-endpoint limits still apply).
 _DISABLED_LIMIT = "1000000/minute"
 _CACHE_TTL_SECONDS = 15.0
+_MAX_OVERRIDES = 50
+# Paths an override may never clamp (so an aggressive override can't lock the
+# operator out of the very controls that would undo it).
+_OVERRIDE_EXEMPT_PREFIX = "/api/admin"
 
 _cache: dict = {"at": 0.0, "cfg": None}
+
+# The request path, stashed by rate_limit_key (slowapi calls the key_func right
+# before the limit callable, in the same context) so tier_limit_value can apply
+# endpoint overrides without access to the request object.
+_current_path: ContextVar[str] = ContextVar("rl_current_path", default="")
 
 
 def _coll():
@@ -48,6 +64,7 @@ def _fallback() -> dict:
     return {
         "default_limit": _DEFAULT_LIMIT,
         "tiers": dict(_DEFAULT_TIERS),
+        "overrides": [],
         "enabled": True,
     }
 
@@ -70,9 +87,15 @@ def get_config() -> dict:
             tiers.update(
                 {k: v for k, v in (doc.get("tiers") or {}).items() if k in tiers}
             )
+            overrides = [
+                {"path": o.get("path", ""), "limit": o.get("limit", "")}
+                for o in (doc.get("overrides") or [])
+                if o.get("path") and o.get("limit")
+            ]
             cfg = {
                 "default_limit": doc.get("default_limit") or _DEFAULT_LIMIT,
                 "tiers": tiers,
+                "overrides": overrides,
                 "enabled": bool(doc.get("enabled", True)),
             }
     except Exception:
@@ -87,6 +110,12 @@ def rate_limit_key(request) -> str:
     carries the tier as a ``tier|domain`` prefix. A valid X-API-Key buckets by
     the key ("<tier>|k:<id>"); everything else buckets by IP ("browse|<ip>").
     Memoized on request.state since slowapi calls this more than once."""
+    # Always refresh the path contextvar (even on the memoized fast path) so
+    # tier_limit_value sees the path of THIS request when applying overrides.
+    try:
+        _current_path.set(request.url.path)
+    except Exception:
+        pass
     cached = getattr(request.state, "_rl_bucket", None)
     if cached is not None:
         return cached
@@ -116,14 +145,32 @@ def _limit_for_tier(tier: str, cfg: dict) -> str:
     return tiers.get(tier) or cfg.get("default_limit") or _DEFAULT_LIMIT
 
 
+def _match_override(path: str, overrides: list[dict]) -> str | None:
+    """Longest matching path-prefix override for this request, if any. Admin
+    endpoints are exempt so a clamp can't lock the operator out."""
+    if not path or not overrides or path.startswith(_OVERRIDE_EXEMPT_PREFIX):
+        return None
+    best: tuple[int, str] | None = None
+    for o in overrides:
+        prefix = o.get("path") or ""
+        if prefix and path.startswith(prefix):
+            if best is None or len(prefix) > best[0]:
+                best = (len(prefix), o.get("limit") or "")
+    return best[1] if best and best[1] else None
+
+
 def tier_limit_value(key: str = "browse") -> str:
     """slowapi ``default_limits`` callable. slowapi passes it ``rate_limit_key``'s
-    output, whose ``tier|...`` prefix selects the cap. Re-read (cached) per
-    request so admin changes take effect within the cache window. Effectively
-    unlimited when limiting is toggled off."""
+    output, whose ``tier|...`` prefix selects the cap; an endpoint override for
+    the current path (stashed by rate_limit_key) beats the tier cap. Re-read
+    (cached) per request so admin changes take effect within the cache window.
+    Effectively unlimited when limiting is toggled off."""
     cfg = get_config()
     if not cfg.get("enabled", True):
         return _DISABLED_LIMIT
+    override = _match_override(_current_path.get(), cfg.get("overrides") or [])
+    if override:
+        return override
     tier = (key or "browse").split("|", 1)[0]
     return _limit_for_tier(tier, cfg)
 
@@ -154,16 +201,19 @@ def set_config(
     default_limit: str | None = None,
     enabled: bool | None = None,
     tiers: dict | None = None,
+    overrides: list[dict] | None = None,
 ) -> dict:
     """Update the config. Validates every limit string and raises ValueError on a
-    bad one. Busts the local cache immediately; other workers pick it up within
-    the cache window."""
+    bad one. ``overrides`` replaces the whole list (the admin page edits it as a
+    set). Busts the local cache immediately; other workers pick it up within the
+    cache window."""
     if not os.environ.get("MONGO_URL", "").strip():
         raise ValueError("rate-limit config needs MONGO_URL")
     current = get_config()
     new = {
         "default_limit": current["default_limit"],
         "tiers": dict(current["tiers"]),
+        "overrides": list(current.get("overrides") or []),
         "enabled": current["enabled"],
     }
     if default_limit is not None:
@@ -173,6 +223,23 @@ def set_config(
             if name not in _DEFAULT_TIERS:
                 raise ValueError(f"unknown tier '{name}'")
             new["tiers"][name] = _validate_limit(value, name)
+    if overrides is not None:
+        if len(overrides) > _MAX_OVERRIDES:
+            raise ValueError(f"too many overrides (max {_MAX_OVERRIDES})")
+        cleaned = []
+        for o in overrides:
+            path = (o.get("path") or "").strip()
+            if not path.startswith("/"):
+                raise ValueError(f"override path '{path}' must start with /")
+            if path.startswith(_OVERRIDE_EXEMPT_PREFIX):
+                raise ValueError("admin endpoints can't be overridden")
+            cleaned.append(
+                {
+                    "path": path.rstrip("/") or "/",
+                    "limit": _validate_limit(o.get("limit") or "", path),
+                }
+            )
+        new["overrides"] = cleaned
     if enabled is not None:
         new["enabled"] = bool(enabled)
     _coll().replace_one({"_id": _DOC_ID}, {"_id": _DOC_ID, **new}, upsert=True)
