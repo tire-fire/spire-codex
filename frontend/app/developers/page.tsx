@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import JsonLd from "@/app/components/JsonLd";
 import { buildSoftwareApplicationJsonLd, buildBreadcrumbJsonLd } from "@/lib/jsonld";
 import { SITE_NAME, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
@@ -142,7 +143,11 @@ export default function DevelopersPage() {
           REST API
         </h2>
         <p className="text-[var(--text-secondary)] mb-4">
-          Full game database accessible via a public REST API. No authentication required. Rate limited to 60 requests/minute.
+          Full game database accessible via a public REST API. No authentication required for
+          casual use (rate limited per IP). For scripts and tools, create an API key on your{" "}
+          <Link href="/profile" className="text-[var(--accent-gold)] hover:underline">profile page</Link>{" "}
+          and send it as the <code className="text-xs bg-[var(--bg-card)] px-1.5 py-0.5 rounded">X-API-Key</code>{" "}
+          header to get your own dedicated rate limit instead of sharing the per-IP cap.
         </p>
 
         <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] p-5 mb-4">

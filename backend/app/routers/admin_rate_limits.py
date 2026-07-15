@@ -20,26 +20,49 @@ router = APIRouter(
 
 @router.get("")
 def get_rate_limits():
-    """Current blanket cap + whether limiting is on."""
+    """Current browse cap, per-tier caps, and whether limiting is on."""
     return rate_limit_config.get_config()
+
+
+class OverrideItem(BaseModel):
+    path: str = Field(description="Path prefix to clamp, e.g. '/api/runs'.")
+    limit: str = Field(description="Cap for that prefix, e.g. '30/minute'.")
 
 
 class RateLimitUpdate(BaseModel):
     default_limit: str | None = Field(
         default=None,
-        description="Blanket per-IP cap, e.g. '300/minute' or '5/second'.",
+        description="Un-keyed browse cap (per IP), e.g. '300/minute'.",
+    )
+    tiers: dict[str, str] | None = Field(
+        default=None,
+        description="Per API-key tier caps, e.g. {'general': '15/minute', ...}.",
+    )
+    overrides: list[OverrideItem] | None = Field(
+        default=None,
+        description=(
+            "Endpoint clamps (replaces the whole list). Longest matching prefix "
+            "wins and applies to every tier; /api/admin can't be clamped."
+        ),
     )
     enabled: bool | None = Field(
         default=None,
-        description="False turns the blanket cap off (per-endpoint limits stay).",
+        description="False turns limiting off (per-endpoint limits stay).",
     )
 
 
 @router.put("")
 def set_rate_limits(body: RateLimitUpdate):
-    """Change the blanket cap and/or toggle it. Takes effect across workers
-    within the config cache window (~15s)."""
+    """Change the browse cap, tier caps, endpoint clamps, and/or toggle limiting.
+    Takes effect across workers within the config cache window (~15s)."""
     try:
-        return rate_limit_config.set_config(body.default_limit, body.enabled)
+        return rate_limit_config.set_config(
+            body.default_limit,
+            body.enabled,
+            body.tiers,
+            [o.model_dump() for o in body.overrides]
+            if body.overrides is not None
+            else None,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
