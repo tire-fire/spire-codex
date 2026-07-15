@@ -13,6 +13,8 @@ interface User {
   twitch_id: string | null;
   twitch_login: string | null;
   is_partner?: boolean;
+  patreon_id?: string | null;
+  is_paid?: boolean;
   needs_email: boolean;
   is_admin?: boolean;
 }
@@ -23,6 +25,7 @@ interface AuthContextType {
   loginSteam: () => void;
   loginDiscord: () => void;
   loginTwitch: () => void;
+  loginPatreon: () => void;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -33,6 +36,7 @@ const AuthContext = createContext<AuthContextType>({
   loginSteam: () => {},
   loginDiscord: () => {},
   loginTwitch: () => {},
+  loginPatreon: () => {},
   logout: async () => {},
   refresh: async () => {},
 });
@@ -114,6 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = `${API_BASE}/api/auth/twitch/start`;
   }, []);
 
+  const loginPatreon = useCallback(() => {
+    window.location.href = `${API_BASE}/api/auth/patreon/start`;
+  }, []);
+
   const logout = useCallback(async () => {
     localStorage.removeItem("spire_token");
     try {
@@ -129,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, loginSteam, loginDiscord, loginTwitch, logout, refresh: fetchMe }}
+      value={{ user, loading, loginSteam, loginDiscord, loginTwitch, loginPatreon, logout, refresh: fetchMe }}
     >
       {children}
     </AuthContext.Provider>

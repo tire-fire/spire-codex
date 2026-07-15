@@ -1,6 +1,7 @@
 "use client";
 
-// API keys manager for the profile page. Create a key (the raw key is shown
+// API key manager (settings page, "API Key" tab). One key per account:
+// create it (the raw key is shown
 // exactly once, with a copy button), list your keys, revoke them. Keys are sent
 // as the X-API-Key header and carry a rate-limit tier; new keys get the
 // registered tier.
@@ -104,7 +105,7 @@ export default function ApiKeysSection() {
   return (
     <section>
       <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
-        {t("API Keys", lang)}
+        {t("API Key", lang)}
       </h2>
       <p className="text-sm text-[var(--text-secondary)] mb-3 max-w-2xl">
         {t(
@@ -187,13 +188,15 @@ export default function ApiKeysSection() {
             </div>
           ))}
         </div>
-      ) : (
-        <p className="text-sm text-[var(--text-muted)] mb-4">
-          {t("No keys yet.", lang)}
+      ) : null}
+
+      {/* One key per account: only offer creation when there is none. */}
+      {keys !== null && active.length > 0 && (
+        <p className="text-xs text-[var(--text-muted)]">
+          {t("One key per account. Revoke it to create a new one.", lang)}
         </p>
       )}
-
-      {/* Create */}
+      {keys !== null && active.length === 0 && (
       <div className="flex gap-2 max-w-md">
         <input
           type="text"
@@ -212,6 +215,7 @@ export default function ApiKeysSection() {
           {t("Create key", lang)}
         </button>
       </div>
+      )}
     </section>
   );
 }

@@ -25,7 +25,8 @@ KEY_PREFIX = "sk-codex-"
 # floor tier an admin can drop a key to; 'academia'/'paid' are promotions.
 TIERS = ("general", "registered", "academia", "paid")
 _DEFAULT_TIER = "registered"
-_MAX_KEYS_PER_USER = 10
+# One key per account: simpler mental model, simpler abuse story.
+_MAX_KEYS_PER_USER = 1
 
 # hash -> (expires_monotonic, {tier, key_id, user_id} | None). Keeps the hot
 # rate-limit path off Mongo; revocation busts the entry immediately. Bounded:
@@ -78,7 +79,9 @@ def create_key(user_id: str, label: str = "", tier: str = _DEFAULT_TIER) -> dict
     tier = tier if tier in TIERS else _DEFAULT_TIER
     active = _coll().count_documents({"user_id": user_id, "revoked": {"$ne": True}})
     if active >= _MAX_KEYS_PER_USER:
-        raise ValueError(f"key limit reached ({_MAX_KEYS_PER_USER}); revoke one first")
+        raise ValueError(
+            "You already have an API key. Revoke it first to create a new one."
+        )
     raw = KEY_PREFIX + secrets.token_urlsafe(32)
     key_id = secrets.token_hex(8)
     clean_label = (label or "").strip()[:80]
@@ -140,6 +143,21 @@ def set_tier(key_id: str, tier: str) -> bool:
     _coll().update_one({"_id": key_id}, {"$set": {"tier": tier}})
     _resolve_cache.pop(doc.get("key_hash", ""), None)
     return True
+
+
+def sync_paid_tier(user_id: str, paid: bool) -> int:
+    """Flip a user's active keys between registered<->paid when their supporter
+    status changes. general/academia grants are left alone. Returns the number
+    of keys moved; resolve cache busted per key so it's live in seconds."""
+    if not os.environ.get("MONGO_URL", "").strip():
+        return 0
+    src, dst = ("registered", "paid") if paid else ("paid", "registered")
+    moved = 0
+    for d in _coll().find({"user_id": user_id, "revoked": {"$ne": True}, "tier": src}):
+        _coll().update_one({"_id": d["_id"]}, {"$set": {"tier": dst}})
+        _resolve_cache.pop(d.get("key_hash", ""), None)
+        moved += 1
+    return moved
 
 
 def admin_revoke(key_id: str) -> bool:

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/app/contexts/AuthContext";
+import ApiKeysSection from "@/app/components/ApiKeysSection";
 import { useLanguage } from "@/app/contexts/LanguageContext";
 import { t } from "@/lib/ui-translations";
 import { useToast } from "@/app/components/Toast";
@@ -11,13 +12,14 @@ import TwitchIcon from "@/app/components/TwitchIcon";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function SettingsClient() {
-  const { user, loading, refresh, loginSteam, loginDiscord, loginTwitch } = useAuth();
+  const { user, loading, refresh, loginSteam, loginDiscord, loginTwitch, loginPatreon } = useAuth();
+  const [tab, setTab] = useState<"account" | "api">("account");
   const { lang } = useLanguage();
   const { toast } = useToast();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [disconnecting, setDisconnecting] = useState<"steam" | "discord" | "twitch" | null>(
+  const [disconnecting, setDisconnecting] = useState<"steam" | "discord" | "twitch" | "patreon" | null>(
     null,
   );
   const [changesRemaining, setChangesRemaining] = useState(3);
@@ -108,7 +110,7 @@ export default function SettingsClient() {
     }
   };
 
-  const disconnect = async (provider: "steam" | "discord" | "twitch") => {
+  const disconnect = async (provider: "steam" | "discord" | "twitch" | "patreon") => {
     const label = provider.charAt(0).toUpperCase() + provider.slice(1);
     setDisconnecting(provider);
     try {
@@ -154,6 +156,33 @@ export default function SettingsClient() {
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
       <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t("Settings", lang)}</h1>
 
+      {/* Sub menu: account settings vs the API key manager */}
+      <nav className="flex gap-1.5">
+        {(
+          [
+            { key: "account", label: t("Account", lang) },
+            { key: "api", label: t("API Key", lang) },
+          ] as const
+        ).map((s_) => (
+          <button
+            key={s_.key}
+            type="button"
+            onClick={() => setTab(s_.key)}
+            className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+              tab === s_.key
+                ? "bg-[var(--accent-gold)]/10 border-[var(--accent-gold)]/40 text-[var(--accent-gold)]"
+                : "border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            {s_.label}
+          </button>
+        ))}
+      </nav>
+
+      {tab === "api" && <ApiKeysSection />}
+
+      {tab === "account" && (
+        <>
       {/* Display name */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("Display Name", lang)}</h2>
@@ -322,11 +351,47 @@ export default function SettingsClient() {
               <span className="text-xs text-[var(--text-secondary)]">{t("Connect", lang)}</span>
             </button>
           )}
+          {user.patreon_id ? (
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)]">
+              <div className="flex items-center gap-2 min-w-0">
+                <svg className="w-4 h-4 text-[#FF424D]" viewBox="0 0 24 24" fill="currentColor" aria-hidden><circle cx="14.5" cy="9.5" r="7.5" /><rect x="2" y="2" width="4" height="20" /></svg>
+                <span className="text-sm text-[var(--text-primary)] shrink-0">Patreon</span>
+                {user.is_paid && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[var(--accent-gold)]/15 text-[var(--accent-gold)] border border-[var(--accent-gold)]/30 shrink-0">
+                    {t("Supporter", lang)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-xs text-[var(--text-muted)]">{t("Connected", lang)}</span>
+                <button
+                  onClick={() => disconnect("patreon")}
+                  disabled={disconnecting === "patreon"}
+                  className="text-xs text-[var(--text-secondary)] hover:text-red-400 disabled:opacity-40"
+                >
+                  {disconnecting === "patreon" ? "..." : t("Disconnect", lang)}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={loginPatreon}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-[var(--text-secondary)]" viewBox="0 0 24 24" fill="currentColor" aria-hidden><circle cx="14.5" cy="9.5" r="7.5" /><rect x="2" y="2" width="4" height="20" /></svg>
+                <span className="text-sm text-[var(--text-primary)]">Patreon</span>
+              </div>
+              <span className="text-xs text-[var(--text-secondary)]">{t("Connect", lang)}</span>
+            </button>
+          )}
         </div>
         <p className="text-xs text-[var(--text-tertiary)]">
           {t("Connect Twitch to show a “Watch on Twitch” link on your live run when you are streaming.", lang)}
         </p>
       </section>
+        </>
+      )}
     </div>
   );
 }
