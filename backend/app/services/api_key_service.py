@@ -28,9 +28,23 @@ _DEFAULT_TIER = "registered"
 _MAX_KEYS_PER_USER = 10
 
 # hash -> (expires_monotonic, {tier, key_id, user_id} | None). Keeps the hot
-# rate-limit path off Mongo; revocation busts the entry immediately.
+# rate-limit path off Mongo; revocation busts the entry immediately. Bounded:
+# unknown sk_-prefixed garbage also lands here (cached None), so without a cap
+# an attacker spraying random keys would grow it forever.
 _RESOLVE_TTL_SECONDS = 30.0
+_RESOLVE_CACHE_MAX = 5000
 _resolve_cache: dict[str, tuple[float, dict | None]] = {}
+
+
+def _prune_resolve_cache(now: float) -> None:
+    """Drop expired entries once the cache is oversized; hard-clear if live
+    entries alone still exceed the cap (pathological, but bounded either way)."""
+    if len(_resolve_cache) <= _RESOLVE_CACHE_MAX:
+        return
+    for k in [k for k, (exp, _) in _resolve_cache.items() if exp <= now]:
+        _resolve_cache.pop(k, None)
+    if len(_resolve_cache) > _RESOLVE_CACHE_MAX:
+        _resolve_cache.clear()
 
 
 def _coll():
@@ -142,5 +156,6 @@ def resolve(raw_key: str) -> dict | None:
             }
     except Exception:
         logger.warning("api-key resolve failed", exc_info=True)
+    _prune_resolve_cache(now)
     _resolve_cache[kh] = (now + _RESOLVE_TTL_SECONDS, result)
     return result
