@@ -114,6 +114,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/changelog", label: "Changelog" },
       { href: "/news", label: "News" },
       { href: "/thank-you", label: "Thank You" },
+      { href: "https://www.patreon.com/cw/SpireCodex", label: "Patreon" },
       { href: "https://ko-fi.com/yitsy", label: "Ko-fi" },
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },
@@ -172,7 +173,7 @@ const NAV_COLUMNS: Record<string, { title: string; labels: string[] }[]> = {
   ],
   About: [
     { title: "Project", labels: ["Spire Codex", "Changelog", "News", "Thank You"] },
-    { title: "Support", labels: ["Ko-fi", "Feedback", "Email"] },
+    { title: "Support", labels: ["Patreon", "Ko-fi", "Feedback", "Email"] },
     { title: "Elsewhere", labels: ["Discord", "GitHub", "Privacy", "Terms"] },
   ],
 };
