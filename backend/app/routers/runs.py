@@ -1101,6 +1101,7 @@ def get_entity_metrics(
     response: Response,
     entity_type: str,
     bracket: str = "all",
+    character: str | None = None,
     cohort: str | None = None,
 ):
     """Dense metrics table for one entity type, powers /leaderboards/metrics.
@@ -1117,6 +1118,10 @@ def get_entity_metrics(
     win-rate skill tiers `wr30`/`wr50`/`wr75`. Every bracket is materialized
     in the same snapshot, so this stays a single cached read. `cohort` is a
     deprecated alias for `bracket` (the param was renamed).
+
+    `character` (e.g. IRONCLAD) combines with any bracket, including the
+    player x skill composites: `?bracket=solo:a10&character=IRONCLAD` is
+    Ironclad's solo A10 table. Character rows carry Score and Win% only.
     """
     # Back-compat: ?cohort= was renamed to ?bracket=; honor the old name.
     if cohort is not None and bracket == "all":
@@ -1134,7 +1139,7 @@ def get_entity_metrics(
         if snapshot_loaded()
         else "no-store"
     )
-    return get_entity_metrics_table(entity_type, bracket)
+    return get_entity_metrics_table(entity_type, bracket, character)
 
 
 @router.get("/top/{entity_type}/{character}", tags=["Runs"])

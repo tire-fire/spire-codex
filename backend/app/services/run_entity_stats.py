@@ -235,7 +235,11 @@ _HISTORY_RETENTION_DAYS = 90
 # (v13 had cut it as too heavy) so solo:a10, 2p:wr50, ... carry a real Elo, not a
 # blank. Requires the parallel rebuild — it's the heaviest bracket set. The
 # metrics table's player=All rows average the per-player Elos at read time.
-SNAPSHOT_VERSION = 16
+# Version 17: every bracket block carries a by_character split (previously only
+# the skill tiers), so ?character= combines with any bracket on the metrics
+# endpoint — e.g. bracket=solo:a10&character=IRONCLAD (additive; the bump
+# forces the rebuild).
+SNAPSHOT_VERSION = 17
 # The oldest snapshot version readers can still serve. Bump SNAPSHOT_VERSION
 # on every shape change; bump this floor ONLY when a change actually breaks
 # readers (a removed/retyped field). Everything in between is additive, and
@@ -1093,9 +1097,10 @@ def _accumulate(rows, official_chars, wr_map, recent_versions=()):
                 agg["last_submitted_at"] = submitted
                 agg["last_run_hash"] = run_hash
 
-            # Deck membership for each matched bracket (lighter: picks/wins).
-            # For the win-rate / A10 tiers the detail page shows, also keep a
-            # per-character split so its character table can re-slice by bracket.
+            # Deck membership for each matched bracket (lighter: picks/wins),
+            # plus a per-character split on every bracket (v17) so the metrics
+            # table and detail pages can combine character with player count,
+            # skill tier, mode, and the player x skill composites.
             for ck in extra_brackets:
                 cagg = bracket_accs[ck]["cache"].setdefault(
                     entity, {"picks": 0, "wins": 0}
@@ -1103,13 +1108,12 @@ def _accumulate(rows, official_chars, wr_map, recent_versions=()):
                 cagg["picks"] += 1
                 if is_win:
                     cagg["wins"] += 1
-                if ck in _CHAR_BRACKETS:
-                    cch = cagg.setdefault("by_character", {}).setdefault(
-                        character, {"picks": 0, "wins": 0}
-                    )
-                    cch["picks"] += 1
-                    if is_win:
-                        cch["wins"] += 1
+                cch = cagg.setdefault("by_character", {}).setdefault(
+                    character, {"picks": 0, "wins": 0}
+                )
+                cch["picks"] += 1
+                if is_win:
+                    cch["wins"] += 1
 
         # Base vs upgraded deck membership, so the metrics table can split
         # each card into its base and "+" rows. The merged picks/wins above
@@ -2373,7 +2377,9 @@ def _entity_scores_for_act(entity_type: str, act: int) -> dict[str, dict[str, An
     return out
 
 
-def get_entity_metrics_table(entity_type: str, bracket: str = "all") -> dict[str, Any]:
+def get_entity_metrics_table(
+    entity_type: str, bracket: str = "all", character: str | None = None
+) -> dict[str, Any]:
     """Dense per-entity metrics for the /leaderboards/metrics table.
 
     One row per entity carrying both the win-outcome metrics (Codex Score,
@@ -2386,8 +2392,15 @@ def get_entity_metrics_table(entity_type: str, bracket: str = "all") -> dict[str
     entity fields; any of _BRACKET_KEYS reads the nested per-bracket block
     (its own picks/wins/offered/picked/elo + baseline). Unknown brackets
     fall back to "all".
+
+    `character` re-scopes every row to that character's runs within the
+    bracket (the v17 by_character splits), so bracket=solo:a10 +
+    character=IRONCLAD is Ironclad's solo A10 table. Character rows carry
+    Score and Win% only: the reward-preference metrics (Elo, Pick%, per-act)
+    aren't tracked per character. Scores use the bracket's overall baseline.
     """
     _maybe_rebuild()
+    character = (character or "").strip().upper() or None
     use_bracket = bracket in _BRACKET_KEYS
     if use_bracket:
         baseline = _bracket_baselines.get(bracket, {}).get(
@@ -2466,6 +2479,28 @@ def get_entity_metrics_table(entity_type: str, bracket: str = "all") -> dict[str
         # the zhs metrics page).
         if eid in solo_excluded_cards:
             continue
+        # Character view: one merged row per entity from the bracket's (or the
+        # top-level) by_character split. Score + Win% only — Elo/Pick%/per-act
+        # aren't tracked per character — and no base/upg split either.
+        if character:
+            src = (agg.get("brackets") or {}).get(bracket) if use_bracket else agg
+            cb = ((src or {}).get("by_character") or {}).get(character)
+            if not cb or not cb.get("picks"):
+                continue
+            rows.append(
+                _row(
+                    eid,
+                    cb.get("picks", 0),
+                    cb.get("wins", 0),
+                    elo=None,
+                    offered=0,
+                    picked=0,
+                    off_act=z3,
+                    pick_act=z3,
+                    upgraded=False,
+                )
+            )
+            continue
         if use_bracket:
             # Bracket views stay merged (no base/upg split is tracked per bracket).
             data = (agg.get("brackets") or {}).get(bracket)
@@ -2539,6 +2574,7 @@ def get_entity_metrics_table(entity_type: str, bracket: str = "all") -> dict[str
     return {
         "entity_type": entity_type,
         "bracket": bracket,
+        "character": character,
         "baseline_win_rate": round(baseline * 100, 1),
         "total_runs": total_runs,
         "rows": rows,
