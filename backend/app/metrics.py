@@ -29,6 +29,17 @@ api_errors = Counter(
     ["status_code", "method", "path"],
 )
 
+# ── API-key tier usage ───────────────────────────────────────
+requests_by_tier = Counter(
+    "spire_codex_requests_by_tier_total",
+    "API requests by rate-limit tier (browse = no key) and status class, "
+    "so per-tier volume and 429 pressure are graphable",
+    [
+        "tier",
+        "status",
+    ],  # tier: browse/general/registered/academia/paid; status: 2xx..5xx
+)
+
 # ── Entity views ─────────────────────────────────────────────
 entity_views = Counter(
     "spire_codex_entity_views_total",

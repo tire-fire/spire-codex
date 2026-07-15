@@ -15,6 +15,8 @@ interface AdminKey {
   label: string;
   created_at: string | null;
   last_used_at: string | null;
+  requests_today: number;
+  requests_week: number;
   revoked: boolean;
 }
 
@@ -141,6 +143,15 @@ export default function KeysClient() {
                 </div>
                 <div className="text-xs text-[var(--text-muted)] font-mono">
                   {k.id} · created {fmt(k.created_at)} · last used {fmt(k.last_used_at)}
+                </div>
+              </div>
+              <div className="shrink-0 text-right tabular-nums">
+                <div className="text-sm text-[var(--text-primary)]">
+                  {(k.requests_today ?? 0).toLocaleString()}
+                  <span className="text-xs text-[var(--text-muted)]"> today</span>
+                </div>
+                <div className="text-xs text-[var(--text-muted)]">
+                  {(k.requests_week ?? 0).toLocaleString()} / 7d
                 </div>
               </div>
               {k.revoked ? (

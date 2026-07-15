@@ -169,11 +169,19 @@ def admin_list_keys(q: str | None = None, limit: int = 200) -> list[dict]:
         except Exception:
             logger.warning("api-key admin list: username join failed", exc_info=True)
 
+    # Usage join: requests today / last 7 days per key, one aggregation.
+    from . import api_key_usage
+
+    usage = api_key_usage.usage_for_keys([d["_id"] for d in docs])
+
     out = []
     for d in docs:
         row = _public(d)
         row["user_id"] = d.get("user_id")
         row["username"] = names.get(d.get("user_id") or "", "")
+        u = usage.get(d["_id"]) or {}
+        row["requests_today"] = u.get("today", 0)
+        row["requests_week"] = u.get("week", 0)
         out.append(row)
 
     if q and q.strip():

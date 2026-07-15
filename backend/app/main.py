@@ -86,6 +86,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from .metrics import (
     api_errors,
     requests_in_flight,
+    requests_by_tier,
     response_size,
     entity_views,
     entity_list_views,
@@ -478,8 +479,23 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             # check is deterministic regardless of proxy layer.
             version_usage.labels(version="latest").inc()
 
-        # Track entity views and searches from API paths
+        # Track usage by rate-limit tier. The limiter's key_func already
+        # classified this request (memoized on request.state as "tier|domain");
+        # read it back so per-tier volume and 429 pressure are graphable, and
+        # keyed traffic bumps its per-key daily counter.
         path = request.url.path
+        if path.startswith("/api/"):
+            bucket = getattr(request.state, "_rl_bucket", None) or "browse|"
+            tier, _, domain = bucket.partition("|")
+            requests_by_tier.labels(
+                tier=tier, status=f"{response.status_code // 100}xx"
+            ).inc()
+            if domain.startswith("k:"):
+                from .services import api_key_usage
+
+                api_key_usage.record(domain[2:])
+
+        # Track entity views and searches from API paths
         if path.startswith("/api/") and request.method == "GET":
             parts = path.strip("/").split("/")
             if len(parts) >= 2 and parts[1] in _ENTITY_TYPES:
