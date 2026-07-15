@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cachedFetch } from "@/lib/fetch-cache";
 import ScoreBadge, { scoreToTier } from "@/app/components/ScoreBadge";
 import EntityTrends from "./EntityTrends";
-import { CONTENT_BRACKETS } from "@/lib/content-brackets";
+import { CONTENT_BRACKETS, PLAYER_BRACKETS, combineBracket, splitBracket } from "@/lib/content-brackets";
 import { useLanguage } from "@/app/contexts/LanguageContext";
 import { t } from "@/lib/ui-translations";
 
@@ -151,6 +151,14 @@ export default function EntityRunStats({ entityType, entityId, entityName, varia
   // one re-scopes the headline stats AND the per-character table below.
   const brackets = stats.brackets ?? {};
   const availableBrackets = CONTENT_BRACKETS.filter((b) => brackets[b.key]);
+  // Player counts are a second axis (like the metrics page): picking Solo with
+  // A10 selected reads the "solo:a10" composite block. Only offered when the
+  // API response carries player-count brackets (post-update snapshots).
+  const availablePlayers = PLAYER_BRACKETS.filter((b) => brackets[b.key]);
+  const { player: selPlayer, skill: selSkill } = splitBracket(selectedBracket);
+  const pickPlayer = (p: string) => setSelectedBracket(combineBracket(p, selSkill));
+  const pickSkill = (sk: string) =>
+    setSelectedBracket(combineBracket(selPlayer, sk === "all" ? "" : sk));
   const sel = brackets[selectedBracket] ?? brackets["all"];
   // Everything below scopes to the selected bracket, with a fall back to the
   // global figures for a pre-update API response that lacks the per-bracket data.
@@ -161,7 +169,12 @@ export default function EntityRunStats({ entityType, entityId, entityName, varia
   const maxCharPicks = top?.picks ?? 0;
   const isAll = selectedBracket === "all";
   const selLabel =
-    CONTENT_BRACKETS.find((b) => b.key === selectedBracket)?.label ?? "All";
+    [
+      availablePlayers.find((b) => b.key === selPlayer)?.label,
+      CONTENT_BRACKETS.find((b) => b.key === (selSkill || "all"))?.label,
+    ]
+      .filter(Boolean)
+      .join(" · ") || "All";
 
   // ── Wiki layout: stat tiles + bracket pills + by-character bars. Same data,
   // same bracket handling as the default tabbed view above; only styling
@@ -189,8 +202,29 @@ export default function EntityRunStats({ entityType, entityId, entityName, varia
                   <button
                     key={b.key}
                     type="button"
-                    className={`brkt-pill${selectedBracket === b.key ? " on" : ""}`}
-                    onClick={() => setSelectedBracket(b.key)}
+                    className={`brkt-pill${(selSkill || "all") === b.key ? " on" : ""}`}
+                    onClick={() => pickSkill(b.key)}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {availablePlayers.length > 0 && (
+              <div className="brkt" role="group" aria-label="Player count">
+                <button
+                  type="button"
+                  className={`brkt-pill${selPlayer === "" ? " on" : ""}`}
+                  onClick={() => pickPlayer("")}
+                >
+                  {t("All players", lang)}
+                </button>
+                {availablePlayers.map((b) => (
+                  <button
+                    key={b.key}
+                    type="button"
+                    className={`brkt-pill${selPlayer === b.key ? " on" : ""}`}
+                    onClick={() => pickPlayer(b.key)}
                   >
                     {b.label}
                   </button>

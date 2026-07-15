@@ -451,6 +451,13 @@ def parse_single_card(
     if re.search(r"override\s+bool\s+CanBeGeneratedInCombat\s*=>\s*false\b", content):
         can_be_generated_in_combat = False
 
+    # Co-op-only cards (CardMultiplayerConstraint.MultiplayerOnly) can never be
+    # in a solo deck; the stats views use this to keep console-tampered solo
+    # runs from ranking them. Only surfaced when set, like the flag above.
+    multiplayer_only = None
+    if re.search(r"CardMultiplayerConstraint\.MultiplayerOnly\b", content):
+        multiplayer_only = True
+
     card = {
         "id": card_id,
         "name": title,
@@ -504,6 +511,9 @@ def parse_single_card(
         "can_be_generated_in_combat": can_be_generated_in_combat,
         "upgrade_description": upgrade_description,
     }
+
+    if multiplayer_only:
+        card["multiplayer_only"] = True
 
     if upgrade_damage:
         card["upgrade"]["damage"] = f"+{upgrade_damage}"

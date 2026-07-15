@@ -2694,7 +2694,8 @@
     "upgrade_description": "造成14点伤害。\n该敌人在本回合受到的来自其他玩家的伤害变为三倍。",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 468
+    "compendium_order": 468,
+    "multiplayer_only": true
   },
   {
     "id": "HIGH_FIVE",
@@ -3681,7 +3682,8 @@
     "upgrade_description": "在本回合给予其他玩家8点[gold]力量[/gold]。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 448
+    "compendium_order": 448,
+    "multiplayer_only": true
   },
   {
     "id": "SHROUD",
@@ -4021,7 +4023,8 @@
     "upgrade_description": "造成15点伤害。\n其他玩家的下一张攻击牌将在该名敌人身上额外生效一次。",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "DUAL_WIELD",
@@ -6133,7 +6136,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 121
+    "compendium_order": 121,
+    "multiplayer_only": true
   },
   {
     "id": "PACTS_END",
@@ -7122,7 +7126,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "POISONED_STAB",
@@ -7552,7 +7557,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "LIGHTNING_ROD",
@@ -7945,7 +7951,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 298
+    "compendium_order": 298,
+    "multiplayer_only": true
   },
   {
     "id": "HOWL_FROM_BEYOND",
@@ -8804,7 +8811,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 25
+    "compendium_order": 25,
+    "multiplayer_only": true
   },
   {
     "id": "REGRET",
@@ -9094,7 +9102,8 @@
     "upgrade_description": "将一张随机的[gold]升级过的[/gold]无色牌添加至一位其他玩家的[gold]手牌[/gold]中。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 222
+    "compendium_order": 222,
+    "multiplayer_only": true
   },
   {
     "id": "SLOTH",
@@ -9822,7 +9831,8 @@
     "upgrade_description": "给另一名玩家16点[gold]格挡[/gold]。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 469
+    "compendium_order": 469,
+    "multiplayer_only": true
   },
   {
     "id": "ENTHRALLED",
@@ -10358,7 +10368,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 463
+    "compendium_order": 463,
+    "multiplayer_only": true
   },
   {
     "id": "DISMANTLE",
@@ -10527,7 +10538,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 472
+    "compendium_order": 472,
+    "multiplayer_only": true
   },
   {
     "id": "INTERCEPT",
@@ -10565,7 +10577,8 @@
     "upgrade_description": "获得13点[gold]格挡[/gold]。\n将本回合所有要对另一名玩家发起的攻击转移到你的身上。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "FISTICUFFS",
@@ -16734,7 +16747,8 @@
     "upgrade_description": "另一名玩家获得[energy:3]。",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 444
+    "compendium_order": 444,
+    "multiplayer_only": true
   },
   {
     "id": "GO_FOR_THE_EYES",
@@ -18429,7 +18443,8 @@
     "upgrade_description": "造成5点伤害。\n本回合其他玩家每攻击过一次该敌人，该牌造成的伤害就额外增加7点。",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 459
+    "compendium_order": 459,
+    "multiplayer_only": true
   },
   {
     "id": "METAMORPHOSIS",
@@ -18631,7 +18646,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 74
+    "compendium_order": 74,
+    "multiplayer_only": true
   },
   {
     "id": "ADRENALINE",
@@ -18847,7 +18863,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 379
+    "compendium_order": 379,
+    "multiplayer_only": true
   },
   {
     "id": "CORRUPTION",
@@ -22189,7 +22206,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 212
+    "compendium_order": 212,
+    "multiplayer_only": true
   },
   {
     "id": "BEAT_INTO_SHAPE",
@@ -22873,7 +22891,8 @@
     "upgrade_description": "所有玩家获得17点[gold]格挡[/gold]。",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 483
+    "compendium_order": 483,
+    "multiplayer_only": true
   },
   {
     "id": "SCULPTING_STRIKE",
@@ -23721,7 +23740,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 305
+    "compendium_order": 305,
+    "multiplayer_only": true
   },
   {
     "id": "BOOST_AWAY",
@@ -23854,7 +23874,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 159
+    "compendium_order": 159,
+    "multiplayer_only": true
   },
   {
     "id": "SLIMED",

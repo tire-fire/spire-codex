@@ -2267,7 +2267,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 159
+    "compendium_order": 159,
+    "multiplayer_only": true
   },
   {
     "id": "BLACK_HOLE",
@@ -2439,7 +2440,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 472
+    "compendium_order": 472,
+    "multiplayer_only": true
   },
   {
     "id": "DECISIONS_DECISIONS",
@@ -2619,7 +2621,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 25
+    "compendium_order": 25,
+    "multiplayer_only": true
   },
   {
     "id": "FIEND_FIRE",
@@ -2841,7 +2844,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 463
+    "compendium_order": 463,
+    "multiplayer_only": true
   },
   {
     "id": "DOMINATE",
@@ -5130,7 +5134,8 @@
     "upgrade_description": "Inny gracz dodaje losową  [gold]Ulepszoną[/gold] bezbarwną kartę do [gold]ręki[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 222
+    "compendium_order": 222,
+    "multiplayer_only": true
   },
   {
     "id": "HOLOGRAM",
@@ -5379,7 +5384,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 74
+    "compendium_order": 74,
+    "multiplayer_only": true
   },
   {
     "id": "BYRDONIS_EGG",
@@ -6371,7 +6377,8 @@
     "upgrade_description": "Daj innemu graczowi 8 pkt. [gold]Siły[/gold] w tej turze.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 448
+    "compendium_order": 448,
+    "multiplayer_only": true
   },
   {
     "id": "ANOINTED",
@@ -7062,7 +7069,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 305
+    "compendium_order": 305,
+    "multiplayer_only": true
   },
   {
     "id": "SLOTH",
@@ -8998,7 +9006,8 @@
     "upgrade_description": "Zadaj 14 pkt. obrażeń.\nW tej turze przeciwnik otrzymuje potrójne obrażenia od innych graczy.",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 468
+    "compendium_order": 468,
+    "multiplayer_only": true
   },
   {
     "id": "NORMALITY",
@@ -10718,7 +10727,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 121
+    "compendium_order": 121,
+    "multiplayer_only": true
   },
   {
     "id": "FINISHER",
@@ -12457,7 +12467,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 298
+    "compendium_order": 298,
+    "multiplayer_only": true
   },
   {
     "id": "SUPPRESS",
@@ -13378,7 +13389,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "TAUNT",
@@ -13618,7 +13630,8 @@
     "upgrade_description": "Zadaj 15 pkt. obrażeń.\nNastępny Atak innego gracza zostanie zagrany dodatkowy raz.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "BLIGHT_STRIKE",
@@ -14419,7 +14432,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 379
+    "compendium_order": 379,
+    "multiplayer_only": true
   },
   {
     "id": "ACCELERANT",
@@ -16404,7 +16418,8 @@
     "upgrade_description": "Zyskaj 13 pkt. [gold]Bloku[/gold].\nW tej turze zablokuj wszystkie ataki skierowane na innego gracza.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "SEANCE",
@@ -18465,7 +18480,8 @@
     "upgrade_description": "Daj innemu graczowi 16 pkt. [gold]Bloku[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 469
+    "compendium_order": 469,
+    "multiplayer_only": true
   },
   {
     "id": "STOMP",
@@ -20413,7 +20429,8 @@
     "upgrade_description": "Inny gracz zyskuje [energy:3].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 444
+    "compendium_order": 444,
+    "multiplayer_only": true
   },
   {
     "id": "LEADING_STRIKE",
@@ -20568,7 +20585,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 212
+    "compendium_order": 212,
+    "multiplayer_only": true
   },
   {
     "id": "SHARED_FATE",
@@ -21743,7 +21761,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "SPORE_MIND",
@@ -21991,7 +22010,8 @@
     "upgrade_description": "WSZYSCY gracze otrzymują 17 pkt. [gold]Bloku[/gold].",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 483
+    "compendium_order": 483,
+    "multiplayer_only": true
   },
   {
     "id": "CONQUEROR",
@@ -22435,7 +22455,8 @@
     "upgrade_description": "Zadaj 5 pkt. obrażeń.\nZadaje dodatkowo 7 pkt. obrażeń za każdy raz, gdy inny gracz zaatakował przeciwnika w tej turze.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 459
+    "compendium_order": 459,
+    "multiplayer_only": true
   },
   {
     "id": "ERADICATE",

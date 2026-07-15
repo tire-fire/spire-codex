@@ -37,12 +37,13 @@ export const metadata: Metadata = {
 export default async function MetricsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bracket?: string }>;
+  searchParams: Promise<{ bracket?: string; character?: string }>;
 }) {
   const sp = await searchParams;
-  const { rows, baselineWinRate, totalRuns, bracket } = await loadMetrics(
+  const { rows, baselineWinRate, totalRuns, bracket, character } = await loadMetrics(
     "eng",
-    sp.bracket || "all"
+    sp.bracket || "all",
+    sp.character || ""
   );
 
   const jsonLd = [
@@ -66,6 +67,7 @@ export default async function MetricsPage({
         baselineWinRate={baselineWinRate}
         totalRuns={totalRuns}
         bracket={bracket}
+        character={character}
       />
     </>
   );

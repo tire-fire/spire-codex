@@ -79,20 +79,25 @@ function isValidBracket(b: string): boolean {
 // /leaderboards/metrics page and the localized /[lang] variant so both render
 // server-side (one in-memory join, no client round trips). `lang` only affects
 // card names; the metrics themselves are language-agnostic.
+const CHARACTERS = ["IRONCLAD", "SILENT", "DEFECT", "NECROBINDER", "REGENT"];
+
 export async function loadMetrics(
   lang = "eng",
-  bracket = "all"
+  bracket = "all",
+  character = ""
 ): Promise<{
   rows: MetricRow[];
   baselineWinRate: number;
   totalRuns: number;
   bracket: string;
+  character: string;
 }> {
   const valid = isValidBracket(bracket) ? bracket : "all";
+  const char = CHARACTERS.includes(character.toUpperCase()) ? character.toUpperCase() : "";
   const [cards, metrics] = await Promise.all([
     fetchJson<ApiCard[]>(`${API_INTERNAL}/api/cards?lang=${lang}`),
     fetchJson<MetricsResponse>(
-      `${API_INTERNAL}/api/runs/metrics/cards?bracket=${valid}`
+      `${API_INTERNAL}/api/runs/metrics/cards?bracket=${valid}${char ? `&character=${char}` : ""}`
     ),
   ]);
 
@@ -130,5 +135,6 @@ export async function loadMetrics(
     baselineWinRate: metrics?.baseline_win_rate ?? 0,
     totalRuns: metrics?.total_runs ?? 0,
     bracket: valid,
+    character: char,
   };
 }

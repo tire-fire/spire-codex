@@ -122,7 +122,8 @@
     "upgrade_description": "Infliggi 14 di danno.\nIn questo turno, il nemico subisce danno triplo dagli altri giocatori.",
     "type_key": "Attack",
     "rarity_key": "Rare",
-    "compendium_order": 468
+    "compendium_order": 468,
+    "multiplayer_only": true
   },
   {
     "id": "DARK_EMBRACE",
@@ -237,7 +238,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 397
+    "compendium_order": 397,
+    "multiplayer_only": true
   },
   {
     "id": "THRUMMING_HATCHET",
@@ -1681,7 +1683,8 @@
     "upgrade_description": "Infliggi 15 di danno.\nLa prossima carta Attacco che un altro giocatore gioca sul nemico viene giocata una volta in più.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 495
+    "compendium_order": 495,
+    "multiplayer_only": true
   },
   {
     "id": "FINISHER",
@@ -3725,7 +3728,8 @@
     "upgrade_description": "Infliggi 5 di danno.\nIn questo turno, infliggi 7 di danno extra per ogni altro giocatore che ha attaccato il nemico.",
     "type_key": "Attack",
     "rarity_key": "Uncommon",
-    "compendium_order": 459
+    "compendium_order": 459,
+    "multiplayer_only": true
   },
   {
     "id": "RAGE",
@@ -5506,7 +5510,8 @@
     "upgrade_description": "In questo turno, dai a un altro giocatore 8 di [gold]Forza[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 448
+    "compendium_order": 448,
+    "multiplayer_only": true
   },
   {
     "id": "HOTFIX",
@@ -5671,7 +5676,8 @@
     "upgrade_description": "Un altro giocatore ottiene [energy:3].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 444
+    "compendium_order": 444,
+    "multiplayer_only": true
   },
   {
     "id": "RATTLE",
@@ -6359,7 +6365,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 212
+    "compendium_order": 212,
+    "multiplayer_only": true
   },
   {
     "id": "DEFEND_IRONCLAD",
@@ -7904,7 +7911,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 442
+    "compendium_order": 442,
+    "multiplayer_only": true
   },
   {
     "id": "ENTHRALLED",
@@ -8231,7 +8239,8 @@
     "upgrade_description": null,
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 121
+    "compendium_order": 121,
+    "multiplayer_only": true
   },
   {
     "id": "CHILD_OF_THE_STARS",
@@ -9402,7 +9411,8 @@
     "keywords_key": [
       "Sly"
     ],
-    "compendium_order": 159
+    "compendium_order": 159,
+    "multiplayer_only": true
   },
   {
     "id": "CAPTURE_SPIRIT",
@@ -9684,7 +9694,8 @@
     "upgrade_description": "Un altro giocatore aggiunge 1 carta incolore casuale [gold]potenziata[/gold] alla sua [gold]mano[/gold].",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 222
+    "compendium_order": 222,
+    "multiplayer_only": true
   },
   {
     "id": "GENESIS",
@@ -10238,7 +10249,8 @@
     "upgrade_description": null,
     "type_key": "Power",
     "rarity_key": "Rare",
-    "compendium_order": 74
+    "compendium_order": 74,
+    "multiplayer_only": true
   },
   {
     "id": "BURST",
@@ -10438,7 +10450,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 472
+    "compendium_order": 472,
+    "multiplayer_only": true
   },
   {
     "id": "AFTERIMAGE",
@@ -11209,7 +11222,8 @@
     "upgrade_description": "Ottieni 13 di [gold]Blocco[/gold].\nIn questo turno, subisci tutti gli attacchi che avevano come bersaglio un altro giocatore.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 465
+    "compendium_order": 465,
+    "multiplayer_only": true
   },
   {
     "id": "UNTOUCHABLE",
@@ -12431,7 +12445,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 305
+    "compendium_order": 305,
+    "multiplayer_only": true
   },
   {
     "id": "INJURY",
@@ -17306,7 +17321,8 @@
     "upgrade_description": "TUTTI i giocatori ottengono 17 di [gold]Blocco[/gold].",
     "type_key": "Skill",
     "rarity_key": "Rare",
-    "compendium_order": 483
+    "compendium_order": 483,
+    "multiplayer_only": true
   },
   {
     "id": "VOLLEY",
@@ -17434,7 +17450,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 463
+    "compendium_order": 463,
+    "multiplayer_only": true
   },
   {
     "id": "BLUDGEON",
@@ -19016,7 +19033,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 379
+    "compendium_order": 379,
+    "multiplayer_only": true
   },
   {
     "id": "DASH",
@@ -19741,7 +19759,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 25
+    "compendium_order": 25,
+    "multiplayer_only": true
   },
   {
     "id": "SIGNAL_BOOST",
@@ -20540,7 +20559,8 @@
     "upgrade_description": "Dona 16 di [gold]Blocco[/gold] a un altro giocatore.",
     "type_key": "Skill",
     "rarity_key": "Uncommon",
-    "compendium_order": 469
+    "compendium_order": 469,
+    "multiplayer_only": true
   },
   {
     "id": "I_AM_INVINCIBLE",
@@ -23960,7 +23980,8 @@
     "keywords_key": [
       "Exhaust"
     ],
-    "compendium_order": 298
+    "compendium_order": 298,
+    "multiplayer_only": true
   },
   {
     "id": "GLASSWORK",

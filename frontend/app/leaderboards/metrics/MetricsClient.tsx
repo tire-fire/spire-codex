@@ -161,11 +161,13 @@ export default function MetricsClient({
   baselineWinRate,
   totalRuns,
   bracket = "all",
+  character = "",
 }: {
   rows: MetricRow[];
   baselineWinRate: number;
   totalRuns: number;
   bracket?: string;
+  character?: string;
 }) {
   const lp = useLangPrefix();
   const { lang } = useLanguage();
@@ -185,14 +187,22 @@ export default function MetricsClient({
   } | null>(null);
 
   const sel = parseBracket(bracket);
-  const nav = (key: string) => {
+  const nav = (key: string, char: string = character) => {
     const base = `${lp}/leaderboards/metrics`;
-    router.push(key === "all" ? base : `${base}?bracket=${key}`);
+    const params = new URLSearchParams();
+    if (key !== "all") params.set("bracket", key);
+    if (char) params.set("character", char);
+    const qs = params.toString();
+    router.push(qs ? `${base}?${qs}` : base);
   };
   // Player and skill combine; picking either clears the exclusive mode axis.
   const pickPlayer = (p: string) => nav(combineBracket(p, sel.skill, ""));
   const pickSkill = (s: string) => nav(combineBracket(sel.player, s, ""));
   const pickMode = (m: string) => nav(m || "all");
+  // "Played by": server-side character re-scope (that character's runs), on top
+  // of any bracket. Distinct from the card-color filter below, which only
+  // narrows which cards are listed.
+  const pickCharacter = (c: string) => nav(bracket, c);
   const pillCls = (active: boolean) =>
     `rounded-full border px-3 py-1 text-xs transition-colors ${
       active
@@ -307,7 +317,7 @@ export default function MetricsClient({
           </button>
         ))}
       </div>
-      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
         <span className="mr-1 w-12 text-xs text-[var(--text-muted)]">{t("Mode", lang)}</span>
         {MODE_AXIS.map((c) => (
           <button
@@ -319,6 +329,35 @@ export default function MetricsClient({
           </button>
         ))}
       </div>
+      {/* Server-side re-scope to one character's runs (any bracket combines).
+          Not the card-color filter: this changes whose runs are counted. */}
+      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 w-12 text-xs text-[var(--text-muted)]">{t("Played by", lang)}</span>
+        {[
+          { key: "", label: "All" },
+          { key: "IRONCLAD", label: "Ironclad" },
+          { key: "SILENT", label: "Silent" },
+          { key: "DEFECT", label: "Defect" },
+          { key: "NECROBINDER", label: "Necrobinder" },
+          { key: "REGENT", label: "Regent" },
+        ].map((c) => (
+          <button
+            key={c.key || "all"}
+            onClick={() => pickCharacter(c.key)}
+            className={pillCls(character === c.key)}
+          >
+            {t(c.label, lang)}
+          </button>
+        ))}
+      </div>
+      {character && (
+        <p className="mb-3 text-xs text-[var(--text-muted)]">
+          {t(
+            "Character rows carry Codex Score and Win% only. Elo and Pick% aren't tracked per character.",
+            lang,
+          )}
+        </p>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <input
