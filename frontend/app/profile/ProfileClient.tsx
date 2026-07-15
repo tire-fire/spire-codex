@@ -8,7 +8,6 @@ import { t } from "@/lib/ui-translations";
 import { useToast } from "@/app/components/Toast";
 import RunDropZone from "@/app/components/RunDropZone";
 import ProfileStats from "@/app/components/ProfileStats";
-import ApiKeysSection from "@/app/components/ApiKeysSection";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -198,8 +197,6 @@ export default function ProfileClient() {
         )}
       </section>
 
-      {/* API keys */}
-      <ApiKeysSection />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/app/contexts/AuthContext";
+import ApiKeysSection from "@/app/components/ApiKeysSection";
 import { useLanguage } from "@/app/contexts/LanguageContext";
 import { t } from "@/lib/ui-translations";
 import { useToast } from "@/app/components/Toast";
@@ -12,6 +13,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function SettingsClient() {
   const { user, loading, refresh, loginSteam, loginDiscord, loginTwitch, loginPatreon } = useAuth();
+  const [tab, setTab] = useState<"account" | "api">("account");
   const { lang } = useLanguage();
   const { toast } = useToast();
 
@@ -154,6 +156,33 @@ export default function SettingsClient() {
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
       <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t("Settings", lang)}</h1>
 
+      {/* Sub menu: account settings vs the API key manager */}
+      <nav className="flex gap-1.5">
+        {(
+          [
+            { key: "account", label: t("Account", lang) },
+            { key: "api", label: t("API Key", lang) },
+          ] as const
+        ).map((s_) => (
+          <button
+            key={s_.key}
+            type="button"
+            onClick={() => setTab(s_.key)}
+            className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+              tab === s_.key
+                ? "bg-[var(--accent-gold)]/10 border-[var(--accent-gold)]/40 text-[var(--accent-gold)]"
+                : "border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            {s_.label}
+          </button>
+        ))}
+      </nav>
+
+      {tab === "api" && <ApiKeysSection />}
+
+      {tab === "account" && (
+        <>
       {/* Display name */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("Display Name", lang)}</h2>
@@ -361,6 +390,8 @@ export default function SettingsClient() {
           {t("Connect Twitch to show a “Watch on Twitch” link on your live run when you are streaming.", lang)}
         </p>
       </section>
+        </>
+      )}
     </div>
   );
 }

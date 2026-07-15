@@ -25,7 +25,8 @@ KEY_PREFIX = "sk-codex-"
 # floor tier an admin can drop a key to; 'academia'/'paid' are promotions.
 TIERS = ("general", "registered", "academia", "paid")
 _DEFAULT_TIER = "registered"
-_MAX_KEYS_PER_USER = 10
+# One key per account: simpler mental model, simpler abuse story.
+_MAX_KEYS_PER_USER = 1
 
 # hash -> (expires_monotonic, {tier, key_id, user_id} | None). Keeps the hot
 # rate-limit path off Mongo; revocation busts the entry immediately. Bounded:
@@ -78,7 +79,9 @@ def create_key(user_id: str, label: str = "", tier: str = _DEFAULT_TIER) -> dict
     tier = tier if tier in TIERS else _DEFAULT_TIER
     active = _coll().count_documents({"user_id": user_id, "revoked": {"$ne": True}})
     if active >= _MAX_KEYS_PER_USER:
-        raise ValueError(f"key limit reached ({_MAX_KEYS_PER_USER}); revoke one first")
+        raise ValueError(
+            "You already have an API key. Revoke it first to create a new one."
+        )
     raw = KEY_PREFIX + secrets.token_urlsafe(32)
     key_id = secrets.token_hex(8)
     clean_label = (label or "").strip()[:80]
