@@ -452,6 +452,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         if request.url.path in _SKIP_PATHS:
             return await call_next(request)
 
+        # Resolve the rate-limit tier BEFORE SlowAPIMiddleware runs (this
+        # middleware is outside it): slowapi parses the default limits, which
+        # read the tier/path contextvars, before it ever calls the key_func.
+        if request.url.path.startswith("/api/"):
+            rate_limit_config.prepare_request(request)
+
         requests_in_flight.inc()
         start = time.perf_counter()
         try:

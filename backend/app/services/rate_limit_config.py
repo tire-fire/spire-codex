@@ -62,6 +62,8 @@ _cache: dict = {"at": 0.0, "cfg": None}
 # before the limit callable, in the same context) so tier_limit_value can apply
 # endpoint overrides without access to the request object.
 _current_path: ContextVar[str] = ContextVar("rl_current_path", default="")
+# The tier prefix of the current bucket, same lifecycle as _current_path.
+_current_tier: ContextVar[str] = ContextVar("rl_current_tier", default="browse")
 
 
 def storage_kwargs() -> dict:
@@ -135,15 +137,17 @@ def rate_limit_key(request) -> str:
     """slowapi ``key_func``: the counter bucket for this request, which also
     carries the tier as a ``tier|domain`` prefix. A valid X-API-Key buckets by
     the key ("<tier>|k:<id>"); everything else buckets by IP ("browse|<ip>").
-    Memoized on request.state since slowapi calls this more than once."""
-    # Always refresh the path contextvar (even on the memoized fast path) so
-    # tier_limit_value sees the path of THIS request when applying overrides.
+    Memoized on request.state since it runs more than once per request, and
+    stashes the path + tier contextvars that tier_limit_value reads."""
+    # Always refresh the contextvars (even on the memoized fast path) so
+    # tier_limit_value sees THIS request's path and tier.
     try:
         _current_path.set(request.url.path)
     except Exception:
         pass
     cached = getattr(request.state, "_rl_bucket", None)
     if cached is not None:
+        _set_tier_var(cached)
         return cached
     bucket = None
     raw = request.headers.get("x-api-key")
@@ -161,7 +165,26 @@ def rate_limit_key(request) -> str:
         request.state._rl_bucket = bucket
     except Exception:
         pass
+    _set_tier_var(bucket)
     return bucket
+
+
+def _set_tier_var(bucket: str) -> None:
+    try:
+        _current_tier.set((bucket or "browse").split("|", 1)[0])
+    except Exception:
+        pass
+
+
+def prepare_request(request) -> None:
+    """Populate the tier/path contextvars for this request. MUST run in a
+    middleware OUTSIDE SlowAPIMiddleware: slowapi parses the default limits
+    (calling tier_limit_value) BEFORE it calls the key_func, so the contextvars
+    have to be set upstream or the first parse would see stale values."""
+    try:
+        rate_limit_key(request)
+    except Exception:
+        logger.warning("rate-limit prepare failed", exc_info=True)
 
 
 def _limit_for_tier(tier: str, cfg: dict) -> str:
@@ -185,20 +208,25 @@ def _match_override(path: str, overrides: list[dict]) -> str | None:
     return best[1] if best and best[1] else None
 
 
-def tier_limit_value(key: str = "browse") -> str:
-    """slowapi ``default_limits`` callable. slowapi passes it ``rate_limit_key``'s
-    output, whose ``tier|...`` prefix selects the cap; an endpoint override for
-    the current path (stashed by rate_limit_key) beats the tier cap. Re-read
-    (cached) per request so admin changes take effect within the cache window.
-    Effectively unlimited when limiting is toggled off."""
+def tier_limit_value() -> str:
+    """slowapi ``default_limits`` callable. Reads the tier and path from the
+    contextvars ``prepare_request``/``rate_limit_key`` stashed; an endpoint
+    override for the current path beats the tier cap. Re-read (cached) per
+    request so admin changes take effect within the cache window. Effectively
+    unlimited when limiting is toggled off.
+
+    MUST take no parameters: slowapi calls a limit callable that declares a
+    ``key`` parameter with ``key_func(request)`` for DECORATOR limits, but for
+    ``default_limits`` evaluated in middleware the group has no request attached
+    and raises "request object can't be None" on every request (this 500'd the
+    whole API in prod). No-arg callables are safe on both paths."""
     cfg = get_config()
     if not cfg.get("enabled", True):
         return _DISABLED_LIMIT
     override = _match_override(_current_path.get(), cfg.get("overrides") or [])
     if override:
         return override
-    tier = (key or "browse").split("|", 1)[0]
-    return _limit_for_tier(tier, cfg)
+    return _limit_for_tier(_current_tier.get() or "browse", cfg)
 
 
 # Back-compat: the browse cap on its own (a handy helper; the limiter uses
