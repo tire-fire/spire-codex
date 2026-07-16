@@ -11,6 +11,7 @@ const API_INTERNAL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API
 type Props = { params: Promise<{ hash: string }> };
 
 interface SharedRun {
+  primary_hash?: string;
   win?: boolean;
   was_abandoned?: boolean;
   username?: string | null;
@@ -63,8 +64,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // locale chrome), so localized variants /<lang>/runs/<hash> read to
     // Google as near-duplicates of the canonical /runs/<hash>. That was
     // generating ~5,000 "Duplicate without user-selected canonical"
-    // pages in GSC. Self-canonical only.
-    alternates: { canonical: `/runs/${hash}` },
+    // pages in GSC.
+    // Co-op sibling pages (one share hash per player, identical content)
+    // canonical to the player-0 hash the API reports, so crawlers stop
+    // counting each seat as a duplicate page.
+    alternates: { canonical: `/runs/${run.primary_hash || hash}` },
   };
 }
 

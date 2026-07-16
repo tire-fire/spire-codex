@@ -11,6 +11,7 @@ import HomeFAQ from "@/app/components/HomeFAQ";
 import JsonLd from "@/app/components/JsonLd";
 import SearchTrigger from "@/app/components/SearchTrigger";
 import { buildWebSiteJsonLd, buildVideoGameJsonLd } from "@/lib/jsonld";
+import { fetchSteamMeta } from "@/lib/steam-meta";
 import { t } from "@/lib/ui-translations";
 import { SITE_URL, SITE_NAME, IS_BETA, HOME_OG_IMAGE } from "@/lib/seo";
 import "@/app/home-revamp.css";
@@ -101,7 +102,7 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
 
   return (
     <div className="min-h-screen">
-      <JsonLd data={[buildWebSiteJsonLd(), buildVideoGameJsonLd()]} />
+      <JsonLd data={[buildWebSiteJsonLd(), buildVideoGameJsonLd(await fetchSteamMeta())]} />
       {/* Mirror `/page.tsx` exactly so switching languages keeps the revamp
           home layout instead of falling back to an unstyled hero. */}
       <div className="rvmp">

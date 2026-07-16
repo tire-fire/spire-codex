@@ -2276,6 +2276,29 @@ def get_user_picks(steam_id: str) -> dict[str, dict]:
 
 
 @_instrument("get_username_for_hash")
+def primary_share_hash(data: dict) -> str | None:
+    """The player-0 share hash recomputed from a submitted run blob.
+
+    Multiplayer runs get one share hash per player (the hash key ends in
+    player_idx), and every sibling page serves the same file, so crawlers
+    see N identical pages. The player-0 hash is the canonical one; it is
+    derivable from the blob alone with the same key _submit_player_run
+    uses. None for single-player blobs (the requested hash IS primary)
+    or anything malformed."""
+    try:
+        players = data.get("players") or []
+        if len(players) < 2:
+            return None
+        p0 = players[0]
+        key = (
+            f"{data.get('seed', '')}:{p0['character']}:{data.get('start_time', '')}:"
+            f"{data.get('run_time', 0)}:{len(p0.get('deck', []))}:0"
+        )
+        return hashlib.sha256(key.encode()).hexdigest()[:16]
+    except Exception:
+        return None
+
+
 def get_username_for_hash(run_hash: str) -> str | None:
     """Look up the username associated with a single run hash."""
     doc = _get_collection().find_one({"_id": run_hash}, {"username": 1})

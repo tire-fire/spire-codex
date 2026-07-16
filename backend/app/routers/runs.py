@@ -816,6 +816,13 @@ def get_shared_run(run_hash: str, request: Request):
         from ..services.runs_db_mongo import clean_damage
 
         blob["damage"] = clean_damage(blob.pop("_spirecodex_damage", None))
+        # Co-op sibling hashes all serve this same blob; tell the frontend
+        # which hash is canonical so sibling pages can canonical-link to it.
+        from ..services.runs_db_mongo import primary_share_hash
+
+        primary = primary_share_hash(blob)
+        if primary and primary != run_hash:
+            blob["primary_hash"] = primary
         if using_mongo:
             from ..services.runs_db_mongo import get_username_for_hash
 

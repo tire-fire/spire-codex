@@ -159,12 +159,21 @@ export function buildWebSiteJsonLd() {
   };
 }
 
-export function buildVideoGameJsonLd() {
-  // VideoGame is a SoftwareApplication subtype. We previously set
-  // `applicationCategory: "Game"` here but that field is for the
-  // SoftwareApplication category taxonomy (e.g. "GameApplication")
-  // and validators flag it as confusing when paired with VideoGame.
-  // Dropped, `@type: VideoGame` already conveys "this is a game".
+const STEAM_STORE_URL = "https://store.steampowered.com/app/2868840/Slay_the_Spire_2/";
+
+export function buildVideoGameJsonLd(steam?: {
+  ratingValue: number;
+  ratingCount: number;
+  price?: string;
+  priceCurrency?: string;
+} | null) {
+  // VideoGame is a SoftwareApplication subtype, so validators hold it to
+  // app rules: applicationCategory, offers, and aggregateRating. The
+  // rating and price come from Steam's public APIs (see lib/steam-meta),
+  // real numbers, refreshed daily — when the fetch fails the optional
+  // fields drop out rather than shipping stale hardcoded values.
+  // "GameApplication" is the correct category taxonomy value (an earlier
+  // attempt used "Game", which validators flagged).
   return {
     "@context": "https://schema.org",
     "@type": "VideoGame",
@@ -174,10 +183,29 @@ export function buildVideoGameJsonLd() {
     genre: ["Roguelike", "Deck-building", "Strategy"],
     gamePlatform: ["PC"],
     operatingSystem: "Windows",
+    applicationCategory: "GameApplication",
     image: DEFAULT_OG_IMAGE,
     publisher: { "@type": "Organization", name: "Mega Crit Games" },
     developer: { "@type": "Organization", name: "Mega Crit Games" },
-    url: "https://store.steampowered.com/app/2868840/Slay_the_Spire_2/",
+    url: STEAM_STORE_URL,
+    ...(steam && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: steam.ratingValue,
+        bestRating: 100,
+        worstRating: 0,
+        ratingCount: steam.ratingCount,
+      },
+    }),
+    ...(steam?.price && {
+      offers: {
+        "@type": "Offer",
+        price: steam.price,
+        priceCurrency: steam.priceCurrency,
+        url: STEAM_STORE_URL,
+        availability: "https://schema.org/InStock",
+      },
+    }),
   };
 }
 
