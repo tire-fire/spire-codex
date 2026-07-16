@@ -561,13 +561,16 @@ function BrowseRunsClientInner() {
 export default function BrowseRunsClient() {
   // The fallback carries the page header: it's what static prerendering
   // emits, so crawlers see the h1 even though the browse UI itself needs
-  // searchParams. /<lang>/runs permanently redirects here, so English-only
-  // text in the fallback is fine.
+  // searchParams. The URL is always /runs (the /<lang>/ variants redirect
+  // here), but the page still renders in the viewer's language via the
+  // language context, so the fallback h1 is translated too (prerender
+  // emits the English default; hydrated viewers see their language).
+  const { lang } = useLanguage();
   return (
     <Suspense
       fallback={
         <div className="mx-auto max-w-[1400px] px-3 sm:px-5 py-6">
-          <h1 className="text-3xl font-bold text-[var(--accent-gold)]">Browse Runs</h1>
+          <h1 className="text-3xl font-bold text-[var(--accent-gold)]">{t("Browse Runs", lang)}</h1>
         </div>
       }
     >
