@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLangPrefix } from "@/lib/use-lang-prefix";
@@ -165,7 +165,7 @@ function expandVersionRange(expr: string, versions: string[]): string[] {
   return versions.slice(lo, hi + 1);
 }
 
-export default function BrowseRunsClient() {
+function BrowseRunsClientInner() {
   const lp = useLangPrefix();
   const { lang } = useLanguage();
   const searchParams = useSearchParams();
@@ -551,5 +551,30 @@ export default function BrowseRunsClient() {
         </>
       )}
     </div>
+  );
+}
+
+// useSearchParams needs a Suspense boundary above it now that the root
+// layout no longer provides one (the app-wide boundary made every dynamic
+// page's body invisible to non-JS crawlers). The boundary lives here so
+// every page that renders this client, English and localized, gets it.
+export default function BrowseRunsClient() {
+  // The fallback carries the page header: it's what static prerendering
+  // emits, so crawlers see the h1 even though the browse UI itself needs
+  // searchParams. The URL is always /runs (the /<lang>/ variants redirect
+  // here), but the page still renders in the viewer's language via the
+  // language context, so the fallback h1 is translated too (prerender
+  // emits the English default; hydrated viewers see their language).
+  const { lang } = useLanguage();
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-[1400px] px-3 sm:px-5 py-6">
+          <h1 className="text-3xl font-bold text-[var(--accent-gold)]">{t("Browse Runs", lang)}</h1>
+        </div>
+      }
+    >
+      <BrowseRunsClientInner />
+    </Suspense>
   );
 }
