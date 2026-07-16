@@ -239,7 +239,7 @@ _HISTORY_RETENTION_DAYS = 90
 # the skill tiers), so ?character= combines with any bracket on the metrics
 # endpoint — e.g. bracket=solo:a10&character=IRONCLAD (additive; the bump
 # forces the rebuild).
-SNAPSHOT_VERSION = 17
+SNAPSHOT_VERSION = 18
 # The oldest snapshot version readers can still serve. Bump SNAPSHOT_VERSION
 # on every shape change; bump this floor ONLY when a change actually breaks
 # readers (a removed/retyped field). Everything in between is additive, and
@@ -914,7 +914,7 @@ def _accumulate(rows, official_chars, wr_map, recent_versions=()):
     # Community / fun stats, folded in from the same blob read (no 2nd walk).
     from . import charts_stats, community_stats, encounter_stats
 
-    community_acc = community_stats.new_accumulator()
+    community_acc = community_stats.new_accumulator(recent_versions)
     charts_acc = charts_stats.new_accumulator()
     # Seed one encounter bucket per recent version so per-version runs have a
     # bucket to fold into (accumulate() only fills buckets that already exist).
@@ -953,6 +953,14 @@ def _accumulate(rows, official_chars, wr_map, recent_versions=()):
         uname = (row.get("username") or "").lower()
         if uname:
             extra_brackets = extra_brackets + _winrate_brackets(_asc, wr_map.get(uname))
+        # Version brackets: a run's build_id (when it's one of the recent
+        # versions the snapshot keeps slices for) becomes one more bracket
+        # key, so metrics/scores/stats can filter to a single game version
+        # through the same ?bracket= machinery. Versions never pair into
+        # composites; the pairing below only looks at player/skill keys.
+        _bid = (row.get("build_id") or "").strip()
+        if _bid in _recent_versions_set:
+            extra_brackets = extra_brackets + [_bid]
         # Player-count x skill composites (solo:wr50, ...) so the metrics page can
         # slice by both at once. Cheap: the run already matched both sides. Only
         # the entity cache reads these; the blob-bracket lists below filter to
@@ -998,9 +1006,14 @@ def _accumulate(rows, official_chars, wr_map, recent_versions=()):
         # Community blob ALSO slices by the player x skill composites (solo:wr50,
         # ...) so its page can combine both axes like the tier list. These only
         # apply to A10 runs from qualifying players, so most runs add nothing.
-        community_blob_brackets = mp_blob_brackets + [
-            c for c in extra_brackets if c in _COMPOSITE_BRACKETS_SET
-        ]
+        community_blob_brackets = (
+            mp_blob_brackets
+            + [c for c in extra_brackets if c in _COMPOSITE_BRACKETS_SET]
+            # Version slice: the community blob keeps one accumulator per
+            # recent game version too, so /community-stats and the stats
+            # page overview can filter by version.
+            + ([_bid] if _bid in _recent_versions_set else [])
+        )
 
         # Community / fun stats, accumulated from the same blob. Guarded so
         # one malformed blob can't abort the whole snapshot rebuild.
@@ -2273,7 +2286,7 @@ def get_all_entity_scores(
     # counts, mirroring get_entity_metrics_table. character scoping isn't tracked
     # per bracket, so it's ignored here; act + bracket don't combine (act returns
     # above). Unknown bracket falls through to the all-runs path below.
-    if bracket and bracket in _BRACKET_KEYS:
+    if bracket and (bracket in _BRACKET_KEYS or bracket in _recent_stat_versions):
         c_baseline = _bracket_baselines.get(bracket, {}).get(
             entity_type, _baseline_win_rate()
         )
@@ -2401,7 +2414,7 @@ def get_entity_metrics_table(
     """
     _maybe_rebuild()
     character = (character or "").strip().upper() or None
-    use_bracket = bracket in _BRACKET_KEYS
+    use_bracket = bracket in _BRACKET_KEYS or bracket in _recent_stat_versions
     if use_bracket:
         baseline = _bracket_baselines.get(bracket, {}).get(
             entity_type, _baseline_win_rate()
