@@ -190,7 +190,8 @@ export default function AlertTicker() {
             className="w-7 h-7 sm:w-8 sm:h-8 object-contain flex-shrink-0 hidden sm:block"
           />
           <span className="flex-1 min-w-0 text-sm text-green-200 line-clamp-2">
-            <span className="mr-2 rounded bg-green-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            {/* green-700, not green-500: white on green-500 is 2.3:1 in every theme */}
+            <span className="mr-2 rounded bg-green-700 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
               {t("New", lang)}
             </span>
             {renderAnnouncement(a.message)}
