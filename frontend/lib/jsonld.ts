@@ -186,7 +186,10 @@ export function buildVideoGameJsonLd(steam?: {
     applicationCategory: "GameApplication",
     image: DEFAULT_OG_IMAGE,
     publisher: { "@type": "Organization", name: "Mega Crit Games" },
-    developer: { "@type": "Organization", name: "Mega Crit Games" },
+    // author, not developer: schema.org has no `developer` property on
+    // SoftwareApplication/VideoGame (validators flag it NOT_RECOGNIZED);
+    // author is the CreativeWork-sanctioned way to credit the studio.
+    author: { "@type": "Organization", name: "Mega Crit Games" },
     url: STEAM_STORE_URL,
     ...(steam && {
       aggregateRating: {
