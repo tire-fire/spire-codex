@@ -11,6 +11,7 @@ import HomeFAQ from "./components/HomeFAQ";
 import JsonLd from "./components/JsonLd";
 import SearchTrigger from "./components/SearchTrigger";
 import { buildWebSiteJsonLd, buildVideoGameJsonLd } from "@/lib/jsonld";
+import { fetchSteamMeta } from "@/lib/steam-meta";
 import { SITE_NAME, IS_BETA, buildLanguageAlternates, HOME_OG_IMAGE } from "@/lib/seo";
 import "./home-revamp.css";
 
@@ -84,7 +85,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen">
-      <JsonLd data={[buildWebSiteJsonLd(), buildVideoGameJsonLd()]} />
+      <JsonLd data={[buildWebSiteJsonLd(), buildVideoGameJsonLd(await fetchSteamMeta())]} />
       <div className="rvmp">
         <main className="home">
           <section className="hero">
