@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fullCardUrl, imageUrl } from "@/lib/image-url";
@@ -8,6 +8,8 @@ import { colorTextClass } from "@/lib/character-colors";
 import { useLangPrefix } from "@/lib/use-lang-prefix";
 import { useLanguage } from "@/app/contexts/LanguageContext";
 import { t } from "@/lib/ui-translations";
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 import StatsRebuildingNotice from "@/app/components/StatsRebuildingNotice";
 
 export interface MetricRow {
@@ -187,6 +189,17 @@ export default function MetricsClient({
   } | null>(null);
 
   const sel = parseBracket(bracket);
+  // Game versions the snapshot keeps per-version slices for. A version is
+  // its own exclusive bracket (it doesn't compose with player/skill), so
+  // selecting one clears the other axes, same as the mode pills.
+  const [statVersions, setStatVersions] = useState<string[]>([]);
+  useEffect(() => {
+    fetch(`${API}/api/runs/versions`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setStatVersions(d?.stat_versions || []))
+      .catch(() => {});
+  }, []);
+  const selVersion = statVersions.includes(bracket) ? bracket : "";
   const nav = (key: string, char: string = character) => {
     const base = `${lp}/leaderboards/metrics`;
     const params = new URLSearchParams();
@@ -329,6 +342,26 @@ export default function MetricsClient({
           </button>
         ))}
       </div>
+      {statVersions.length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 w-12 text-xs text-[var(--text-muted)]">{t("Version", lang)}</span>
+          <select
+            value={selVersion}
+            onChange={(e) => nav(e.target.value || "all")}
+            className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-gold)]"
+          >
+            <option value="">{t("All versions", lang)}</option>
+            {statVersions.map((v) => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+          {selVersion && (
+            <span className="text-xs text-[var(--text-muted)]">
+              {t("Version view: player, skill, and mode filters don't combine with it.", lang)}
+            </span>
+          )}
+        </div>
+      )}
       {/* Server-side re-scope to one character's runs (any bracket combines).
           Not the card-color filter: this changes whose runs are counted. */}
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
