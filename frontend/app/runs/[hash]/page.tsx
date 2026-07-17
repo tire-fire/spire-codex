@@ -48,9 +48,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   //   "{username} - {character} - Ascension N win/loss - Slay the Spire 2 (sts2) | Spire Codex"
   // Anonymous runs need a discriminator: two anonymous wins with the same
   // character and ascension otherwise share one title, and crawlers flag
-  // the collision. Run duration is unique enough and meaningful.
+  // the collision. Duration alone wasn't enough (two anon Ironclad wins
+  // collided at the same minute — co-op siblings share the exact duration),
+  // so the page's own share hash rides along: it's the only component
+  // guaranteed unique per URL.
   const mins = Math.round((run.run_time ?? 0) / 60);
-  const anonTag = username === "Anonymous" && mins > 0 ? ` in ${mins}m` : "";
+  const anonTag =
+    username === "Anonymous"
+      ? `${mins > 0 ? ` in ${mins}m` : ""} #${hash.slice(0, 8)}`
+      : "";
   const title = `${username} - ${char} - Ascension ${ascension} ${result}${anonTag} - Slay the Spire 2 (sts2) | Spire Codex`;
   const description = `${username}'s ${result === "win" ? "victorious" : result} ${char} run at Ascension ${ascension}. ${run.players?.[0]?.deck?.length || 0} cards, ${run.players?.[0]?.relics?.length || 0} relics.`;
   return {
