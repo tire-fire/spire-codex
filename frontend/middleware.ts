@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { LANG_PREFIXES } from "@/lib/languages";
 
 /** Canonicalise news article URLs.
  *
@@ -43,9 +44,7 @@ function gidFromEncoded(seg: string): string | null {
   return null;
 }
 
-const LANG_CODES = new Set([
-  "deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs",
-]);
+const LANG_CODES = LANG_PREFIXES;
 
 // Entity types with a real /beta/<type>/[id] detail route (force-dynamic
 // pages under app/beta/), exempt from the rewrite below.

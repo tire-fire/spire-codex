@@ -9,10 +9,11 @@ import { useLanguage } from "./contexts/LanguageContext";
 import { useAuth } from "./contexts/AuthContext";
 import { t } from "@/lib/ui-translations";
 
-const LANG_CODES = new Set(["deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs"]);
+const LANG_CODES = LANG_PREFIXES;
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 import { imageUrl } from "@/lib/image-url";
+import { LANG_PREFIXES } from "@/lib/languages";
 
 interface Translations {
   sections?: Record<string, string>;

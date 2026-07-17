@@ -4,6 +4,8 @@
  * Cache lives for the browser session (cleared on page reload).
  */
 
+import { LANG_PREFIXES } from "./languages";
+
 const cache = new Map<string, { data: unknown; timestamp: number }>();
 const inflight = new Map<string, Promise<unknown>>();
 const MAX_AGE = 5 * 60 * 1000; // 5 minutes
@@ -19,7 +21,7 @@ export function getBetaVersion(): string | null {
   return _betaVersion;
 }
 
-const LANG_CODES = new Set(["deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs"]);
+const LANG_CODES = LANG_PREFIXES;
 
 /** "beta" when the browser is on a /beta path (optionally language-prefixed,
  *  e.g. /jpn/beta/cards). Server-side rendering returns null; server pages
