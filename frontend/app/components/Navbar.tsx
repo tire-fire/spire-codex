@@ -15,8 +15,9 @@ import { recordRecent, getRecent, isRecentType, ENTITY_SINGULAR, prettyRecentNam
 import { t } from "@/lib/ui-translations";
 import { cachedFetch } from "@/lib/fetch-cache";
 import { IS_BETA, SITE_URL } from "@/lib/seo";
+import { LANG_PREFIXES } from "@/lib/languages";
 
-const LANG_CODES = new Set(["deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs"]);
+const LANG_CODES = LANG_PREFIXES;
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 

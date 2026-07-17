@@ -2,8 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/app/contexts/LanguageContext";
+import { LANG_PREFIXES } from "./languages";
 
-const LANG_CODES = new Set(["deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs"]);
+const LANG_CODES = LANG_PREFIXES;
 
 /** "beta" when the current path sits in the beta section
  *  (/beta/... or /<lang>/beta/...), else "stable". */

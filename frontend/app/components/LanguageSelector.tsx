@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useLanguage, LANGUAGES } from "../contexts/LanguageContext";
+import { LANG_PREFIXES } from "../../lib/languages";
 
-const LANG_CODES = new Set(["deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs"]);
+const LANG_CODES = LANG_PREFIXES;
 
 const CODE_TO_SHORT: Record<string, string> = {
   deu: "DE",
@@ -21,6 +22,7 @@ const CODE_TO_SHORT: Record<string, string> = {
   tha: "TH",
   tur: "TR",
   zhs: "CN",
+  zht: "TW",
 };
 
 /**
