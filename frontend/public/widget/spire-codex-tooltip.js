@@ -29,13 +29,19 @@
   // Full game-rendered card images live on the CDN (cards-full/<channel>/).
   var CDN = "https://cdn.spire-codex.com";
   var CARD_CHANNEL = "stable";
+  // Data channel: "stable" (default) or "beta". Beta fetches carry
+  // ?channel=beta and links point into the /beta section, so pages about
+  // beta-only content (patch recaps) resolve entities main doesn't have.
+  var CHANNEL = "stable";
 
   var tag = document.currentScript;
   if (tag) {
     API = tag.getAttribute("data-api") || API;
     SITE = tag.getAttribute("data-site") || SITE;
     CDN = tag.getAttribute("data-cdn") || CDN;
-    CARD_CHANNEL = tag.getAttribute("data-card-channel") || CARD_CHANNEL;
+    CHANNEL = tag.getAttribute("data-channel") || CHANNEL;
+    // Beta data implies beta card renders unless explicitly overridden.
+    CARD_CHANNEL = tag.getAttribute("data-card-channel") || (CHANNEL === "beta" ? "beta" : CARD_CHANNEL);
   }
 
   // --- Cache ---
@@ -80,9 +86,33 @@
   document.body.appendChild(tip);
   var hideTimer = null;
 
+  // "Neow's Sacrifice" -> neows_sacrifice: apostrophes vanish (they are
+  // not in entity ids), everything else non-alphanumeric collapses to _.
+  function nameSlug(name) {
+    return name.toLowerCase().replace(/['\u2019]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  }
+
+  // Entity page URL, routed into the /beta section on the beta channel.
+  // Reference pages stay unprefixed (their content barely varies by channel).
+  function entityUrl(urlType, slug) {
+    var base = SITE + (CHANNEL === "beta" && urlType !== "reference" ? "/beta" : "");
+    return base + "/" + urlType + "/" + encodeURIComponent(slug);
+  }
+
+  // Point the inline link at the entity's canonical id (the scan-time slug
+  // is a best-effort guess from the display name).
+  function upgradeHref(anchor, type, data) {
+    if (!data || !data.id) return;
+    var urlType = type + "s";
+    if (type === "keyword" || type === "orb" || type === "affliction" || type === "achievement") {
+      urlType = "reference";
+    }
+    anchor.href = entityUrl(urlType, data.id.toLowerCase());
+  }
+
   function showTip(anchor, type, name) {
     clearTimeout(hideTimer);
-    var key = type + ":" + name.toLowerCase();
+    var key = CHANNEL + ":" + type + ":" + name.toLowerCase();
     var data = cache[key];
     if (!data) {
       tip.innerHTML = '<div class="scx-tip-loading">Loading\u2026</div>';
@@ -90,12 +120,16 @@
       tip.classList.add("scx-visible");
       fetchEntity(type, name, function () {
         var d = cache[key];
-        if (d) renderTip(d, type);
+        if (d) {
+          renderTip(d, type);
+          upgradeHref(anchor, type, d);
+        }
         positionTip(anchor);
       });
       return;
     }
     renderTip(data, type);
+    upgradeHref(anchor, type, data);
     positionTip(anchor);
     tip.classList.add("scx-visible");
   }
@@ -189,7 +223,7 @@
     if (type === "keyword" || type === "orb" || type === "affliction" || type === "achievement") {
       urlType = "reference";
     }
-    html += '<div class="scx-tip-attr"><a href="' + SITE + "/" + urlType + "/" + encodeURIComponent(data.id.toLowerCase()) + '" target="_blank" rel="noopener">Spire Codex</a></div>';
+    html += '<div class="scx-tip-attr"><a href="' + entityUrl(urlType, data.id.toLowerCase()) + '" target="_blank" rel="noopener">Spire Codex</a></div>';
     tip.innerHTML = html;
   }
 
@@ -237,7 +271,7 @@
   function fetchEntity(type, name, cb) {
     var ep = TYPE_ENDPOINTS[type];
     if (!ep) return;
-    var fetchKey = type;
+    var fetchKey = CHANNEL + ":" + type;
     if (fetched[fetchKey]) {
       if (cb) cb();
       return;
@@ -247,13 +281,13 @@
       return;
     }
     fetched[fetchKey + ":pending"] = true;
-    fetch(API + ep)
+    fetch(API + ep + (CHANNEL === "beta" ? (ep.indexOf("?") >= 0 ? "&" : "?") + "channel=beta" : ""))
       .then(function (r) { return r.json(); })
       .then(function (items) {
         items.forEach(function (item) {
           var n = (item.name || item.title || "").toLowerCase();
-          if (n) cache[type + ":" + n] = item;
-          if (item.id) cache[type + ":" + item.id.toLowerCase()] = item;
+          if (n) cache[CHANNEL + ":" + type + ":" + n] = item;
+          if (item.id) cache[CHANNEL + ":" + type + ":" + item.id.toLowerCase()] = item;
         });
         fetched[fetchKey] = true;
         delete fetched[fetchKey + ":pending"];
@@ -302,7 +336,7 @@
 
         var a = document.createElement("a");
         a.className = "scx-link scx-" + type;
-        a.href = SITE + "/" + urlType + "/" + encodeURIComponent(name.toLowerCase().replace(/\s+/g, "_"));
+        a.href = entityUrl(urlType, nameSlug(name));
         a.target = "_blank";
         a.rel = "noopener";
         a.textContent = name;
@@ -329,7 +363,10 @@
   }
 
   // --- Public API ---
-  window.SpireCodex = { scan: scan };
+  window.SpireCodex = {
+    scan: scan,
+    setChannel: function (ch) { CHANNEL = ch === "beta" ? "beta" : "stable"; },
+  };
 
   // --- Auto-init ---
   if (document.readyState === "loading") {
