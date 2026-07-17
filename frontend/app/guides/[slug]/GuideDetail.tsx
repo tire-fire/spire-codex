@@ -13,7 +13,10 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 declare global {
   interface Window {
-    SpireCodex?: { scan: (root?: HTMLElement) => void };
+    SpireCodex?: {
+      scan: (root?: HTMLElement) => void;
+      setChannel?: (ch: string) => void;
+    };
   }
 }
 
@@ -47,10 +50,14 @@ export default function GuideDetail({ slug, initialGuide }: { slug: string; init
       .catch(() => setNotFound(true));
   }, [slug, initialGuide]);
 
-  // Load tooltip widget and scan for [[Card Name]] etc.
+  // Load tooltip widget and scan for [[Card Name]] etc. Beta-channel
+  // guides (patch recaps) point the widget at beta data so entities main
+  // doesn't have yet still resolve, and links route into /beta pages.
+  const guideChannel = guide?.channel === "beta" ? "beta" : "stable";
   const scanTooltips = useCallback(() => {
     if (!contentRef.current) return;
     if (window.SpireCodex) {
+      window.SpireCodex.setChannel?.(guideChannel);
       window.SpireCodex.scan(contentRef.current);
       return;
     }
@@ -58,13 +65,14 @@ export default function GuideDetail({ slug, initialGuide }: { slug: string; init
     script.src = "/widget/spire-codex-tooltip.js";
     script.setAttribute("data-api", API);
     script.setAttribute("data-site", window.location.origin);
+    script.setAttribute("data-channel", guideChannel);
     script.onload = () => {
       if (window.SpireCodex && contentRef.current) {
         window.SpireCodex.scan(contentRef.current);
       }
     };
     document.head.appendChild(script);
-  }, []);
+  }, [guideChannel]);
 
   useEffect(() => {
     if (guide) scanTooltips();

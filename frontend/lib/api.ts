@@ -433,6 +433,10 @@ export interface GuideSummary {
   bluesky: string | null;
   twitter: string | null;
   twitch: string | null;
+  /** "beta" routes the guide's hovertips + entity links to the beta
+   * channel — for guides about content main doesn't have yet (patch
+   * recaps). Absent/anything else = stable. */
+  channel?: string | null;
 }
 
 export interface Guide extends GuideSummary {
