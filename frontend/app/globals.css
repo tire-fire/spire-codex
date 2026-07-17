@@ -61,7 +61,10 @@
   --text-muted: #8c8fa1;        /* Overlay1 */
   --border-subtle: #ccd0da;     /* Surface0 */
   --border-accent: #bcc0cc;     /* Surface1 */
-  --color-silent: #40a02b;      /* Green    */
+  /* Darker than Latte Green (#40a02b): --color-silent doubles as text (the
+     nav Live button, Silent-colored labels) and #40a02b is only 3.0:1 on the
+     Base ground. #2e7d32 clears WCAG AA (4.5:1) while staying clearly green. */
+  --color-silent: #2e7d32;
   --accent-teal: #179299;       /* Teal     */
   --shadow-card: 0 1px 2px rgba(76, 79, 105, 0.10), 0 2px 6px rgba(76, 79, 105, 0.08);
 }
@@ -109,6 +112,61 @@
 :root[data-theme="light"] .card-rvmp .cardimg.render {
   background: color-mix(in srgb, var(--text-primary) 6%, transparent);
   filter: drop-shadow(0 10px 24px rgba(76, 79, 105, 0.20));
+}
+/* ── Light-mode contrast: colored chips, banners, filled buttons ──────────
+   Green/amber/red chips and the announcement ticker hardcode the dark-theme
+   palette (…-900/40 fills with …-200/400 text). On the light ground those
+   fills turn pastel and the bright text disappears into them. Centralized
+   fix instead of editing ~60 components: darken the text utilities to the
+   deep end of each hue and swap the translucent dark fills for solid
+   pastels (light mode only; the dark theme keeps its palette). */
+:root[data-theme="light"] :is(.text-green-100, .text-green-200, .text-green-300,
+  .text-green-400, .text-emerald-200, .text-emerald-300, .text-emerald-400) {
+  color: #14532d; /* green-900 */
+}
+:root[data-theme="light"] :is(.text-amber-300, .text-amber-400, .text-orange-300,
+  .text-orange-400, .text-yellow-300, .text-yellow-400) {
+  color: #92400e; /* amber-800 */
+}
+:root[data-theme="light"] :is(.text-red-300, .text-red-400) {
+  color: #b91c1c; /* red-700 */
+}
+:root[data-theme="light"] :is([class*="bg-green-900/"], [class*="bg-green-950/"],
+  [class*="bg-emerald-900/"], [class*="bg-emerald-950/"], [class*="bg-green-500/"],
+  [class*="bg-green-600/"], [class*="bg-emerald-500/"], [class*="bg-emerald-600/"]) {
+  background-color: #dcfce7; /* green-100 */
+}
+:root[data-theme="light"] :is([class*="bg-amber-900/"], [class*="bg-amber-950/"],
+  [class*="bg-orange-900/"], [class*="bg-orange-950/"]) {
+  background-color: #fef3c7; /* amber-100 */
+}
+:root[data-theme="light"] :is([class*="bg-red-900/"], [class*="bg-red-950/"]) {
+  background-color: #fee2e2; /* red-100 */
+}
+/* Solid green fills (giveaway toggles, status dots) keep their color but the
+   label flips dark: they pair with text-[var(--bg-primary)], which is
+   near-white in light mode (2.1:1 on emerald-500). */
+:root[data-theme="light"] :is([class*="bg-emerald-500"], [class*="bg-emerald-600"],
+  [class*="bg-green-500"], [class*="bg-green-600"]) {
+  color: #052e16;
+}
+/* Gold-filled buttons: same text-[var(--bg-primary)] pairing goes near-white
+   on the light theme's orange (#df8e1d), 2.5:1. Force a dark label. */
+:root[data-theme="light"] [class*="bg-[var(--accent-gold)]"] {
+  color: #221a05;
+}
+/* Ticker pager dots are white-on-dark; inside the pastel-ized green slots
+   they vanish. Re-ink them green where the container fill was swapped. */
+:root[data-theme="light"] :is([class*="bg-green-900/"], [class*="bg-emerald-900/"]) [class*="bg-white/80"] {
+  background-color: rgba(20, 83, 45, 0.85);
+}
+:root[data-theme="light"] :is([class*="bg-green-900/"], [class*="bg-emerald-900/"]) [class*="bg-white/30"] {
+  background-color: rgba(20, 83, 45, 0.35);
+}
+/* Links inside those slots hover to white on dark; on the pastel fill hover
+   to the same deep green as the body text instead. */
+:root[data-theme="light"] :is([class*="bg-green-900/"], [class*="bg-emerald-900/"]) a:hover {
+  color: #052e16;
 }
 
 @theme inline {
