@@ -104,7 +104,7 @@ def _new_acc_one() -> dict[str, Any]:
         # below 50% max HP walking INTO the campfire (previous floor's HP, so a
         # Heal doesn't reclassify itself as a high-HP choice).
         "rest": {},
-        "ancient": {},  # relic_id -> count (chosen from the 3-relic offer)
+        "ancient": {},  # relic_id -> [chosen, offered] (the 3-relic offer take-rate)
         "removed": {},  # card_id -> count (purged at a shop/event)
         "stolen": {},  # card_id -> count (taken by the Thieving Hopper)
         "reward_screens": 0,
@@ -136,11 +136,19 @@ def new_accumulator(recent_versions: tuple | list = ()) -> dict[str, Any]:
 # nested event -> {option -> count}; the counter dicts add per key; the three
 # records keep the best (min run_time / max run_time / max deck_size).
 _COMMUNITY_INT_FIELDS = ("total_runs", "total_wins", "reward_screens", "reward_skips")
-_COMMUNITY_LIST_DICT_FIELDS = ("by_ascension", "by_character", "map_danger", "rest")
+# "ancient" belongs here, NOT in the counters: its values became
+# [chosen, offered] lists when the take-rate tip shipped, and merging it as
+# an int counter is the TypeError that broke every parallel rebuild.
+_COMMUNITY_LIST_DICT_FIELDS = (
+    "by_ascension",
+    "by_character",
+    "map_danger",
+    "rest",
+    "ancient",
+)
 _COMMUNITY_COUNTER_FIELDS = (
     "deaths_encounter",
     "deaths_event",
-    "ancient",
     "removed",
     "stolen",
 )
