@@ -220,7 +220,7 @@ export default async function CardsPage() {
                   <img
                     src={fullCardUrl(card.id.toLowerCase())}
                     alt={`${card.name} - Slay the Spire 2 card`}
-                    className="w-full h-auto transition-transform group-hover:scale-[1.04] drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+                    className="w-full h-auto aspect-[400/520] transition-transform group-hover:scale-[1.04] drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
                     loading="lazy"
                     crossOrigin="anonymous"
                   />

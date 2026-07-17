@@ -195,8 +195,16 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: url("https://cdn.spire-codex.com/misc/main_menu_bg.png") center center / cover no-repeat;
+  /* webp, not the original png: at 4% opacity the 876 KB png and the 25 KB
+     webp are indistinguishable, and the png was the single heaviest asset
+     on every first visit. */
+  background: url("https://cdn.spire-codex.com/misc/main_menu_bg.webp") center center / cover no-repeat;
   opacity: 0.04;
+}
+/* Phones skip the texture entirely: at 4% opacity on a small bright screen
+   it's imperceptible, and mobile is where the page-weight budget hurts. */
+@media (max-width: 640px) {
+  body::before { display: none; }
 }
 
 /* Entity detail pages swap the global menu art for the entity's own artwork,

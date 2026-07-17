@@ -49,7 +49,7 @@ function FullCardItem({ card, stat }: { card: Card; stat?: CardStat }) {
         <img
           src={src}
           alt={`${card.name}${showUpgraded ? "+" : ""} - Slay the Spire 2`}
-          className="w-full h-auto transition-transform duration-150 group-hover:scale-[1.04] drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+          className="w-full h-auto aspect-[400/520] transition-transform duration-150 group-hover:scale-[1.04] drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
           loading="lazy"
           crossOrigin="anonymous"
           onError={() => setFailed(true)}

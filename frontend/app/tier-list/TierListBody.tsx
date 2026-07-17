@@ -255,7 +255,7 @@ export async function TierListBody({ lang }: { lang: string }) {
                           <img
                             src={fullCardUrl(ent.id.toLowerCase())}
                             alt={ent.name}
-                            className="w-full h-auto drop-shadow-[0_3px_10px_rgba(0,0,0,0.5)]"
+                            className="w-full h-auto aspect-[400/520] drop-shadow-[0_3px_10px_rgba(0,0,0,0.5)]"
                             loading="lazy"
                             crossOrigin="anonymous"
                           />
@@ -321,7 +321,7 @@ export async function TierListBody({ lang }: { lang: string }) {
                   <img
                     src={fullCardUrl(ent.id.toLowerCase())}
                     alt={ent.name}
-                    className="w-full h-auto drop-shadow-[0_3px_10px_rgba(0,0,0,0.5)]"
+                    className="w-full h-auto aspect-[400/520] drop-shadow-[0_3px_10px_rgba(0,0,0,0.5)]"
                     loading="lazy"
                     crossOrigin="anonymous"
                   />
