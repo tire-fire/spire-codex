@@ -103,6 +103,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      {/* React hoists these into <head>. Preconnecting to the CDN saves a
+          DNS + TLS round trip before the first image request — on mobile
+          RTTs that's a few hundred ms off every art-heavy page. */}
+      <link rel="preconnect" href="https://cdn.spire-codex.com" crossOrigin="anonymous" />
+      <link rel="dns-prefetch" href="https://cdn.spire-codex.com" />
       <body
         className={`${kreon.variable} ${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >

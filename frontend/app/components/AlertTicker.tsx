@@ -185,7 +185,7 @@ export default function AlertTicker() {
       node: (
         <>
           <img
-            src="/spire-codex-white-final.png"
+            src="/spire-codex-white-final.webp"
             alt="Spire Codex"
             className="w-7 h-7 sm:w-8 sm:h-8 object-contain flex-shrink-0 hidden sm:block"
           />

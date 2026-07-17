@@ -372,12 +372,12 @@ export default function Navbar() {
           <div className="flex items-center gap-2 sm:gap-6 min-w-0">
             <Link href={`${langPrefix}/`} className="flex items-center gap-2 shrink-0">
               <img
-                src="/spire-codex-white-final.png"
+                src="/spire-codex-white-final.webp"
                 alt="Spire Codex"
                 className="sc-nav-logo--w h-8 w-auto sm:hidden"
               />
               <img
-                src="/spire-codex-black-final.png"
+                src="/spire-codex-black-final.webp"
                 alt="Spire Codex"
                 aria-hidden="true"
                 className="sc-nav-logo--b h-8 w-auto sm:hidden"
