@@ -18,6 +18,7 @@ export const LANGUAGES: { code: string; name: string }[] = [
   { code: "tha", name: "ไทย" },
   { code: "tur", name: "Türkçe" },
   { code: "zhs", name: "简体中文" },
+  { code: "zht", name: "繁體中文" },
 ];
 
 const LANG_CODES = new Set(LANGUAGES.map((l) => l.code).filter((c) => c !== "eng"));

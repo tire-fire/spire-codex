@@ -43,6 +43,7 @@ VALID_LANGUAGES = {
     "tha",
     "tur",
     "zhs",
+    "zht",
 }
 
 LANGUAGE_NAMES = {
@@ -60,6 +61,7 @@ LANGUAGE_NAMES = {
     "tha": "ไทย",
     "tur": "Türkçe",
     "zhs": "简体中文",
+    "zht": "繁體中文",
 }
 
 DEFAULT_LANG = "eng"
@@ -69,7 +71,7 @@ def get_lang(
     lang: str = Query(
         DEFAULT_LANG,
         description=(
-            "Language code. One of the 14 supported codes; unknown values "
+            "Language code. One of the 15 supported codes; unknown values "
             "fall back to English."
         ),
         json_schema_extra={"enum": sorted(VALID_LANGUAGES)},

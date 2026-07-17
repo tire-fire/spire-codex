@@ -225,7 +225,7 @@ export function buildSoftwareApplicationJsonLd() {
     url: `${SITE_URL}/developers`,
     image: DEFAULT_OG_IMAGE,
     description:
-      "Public REST API and embeddable tooltip widget for Slay the Spire 2 game data. 22+ endpoints, 14-language support, no authentication required.",
+      "Public REST API and embeddable tooltip widget for Slay the Spire 2 game data. 22+ endpoints, 15-language support, no authentication required.",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     provider: PUBLISHER_ORG,
     termsOfService: `${SITE_URL}/terms`,

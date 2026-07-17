@@ -349,10 +349,10 @@ export default async function DevelopersPage() {
             Multi-Language
           </h3>
           <p className="text-sm text-[var(--text-secondary)] mb-2">
-            Add <code className="text-[var(--accent-gold)]">?lang=jpn</code> to any endpoint. 14 languages supported:
+            Add <code className="text-[var(--accent-gold)]">?lang=jpn</code> to any endpoint. 15 languages supported:
           </p>
           <p className="text-xs text-[var(--text-muted)]">
-            eng, deu, esp, fra, ita, jpn, kor, pol, ptb, rus, spa, tha, tur, zhs
+            eng, deu, esp, fra, ita, jpn, kor, pol, ptb, rus, spa, tha, tur, zhs, zht
           </p>
         </div>
 
@@ -598,7 +598,7 @@ console.log(relics.map(r => r.name));`}</code>
           </pre>
           <p className="text-sm text-[var(--text-muted)] mt-3">
             Localized renders live under a language subfolder, e.g.{" "}
-            <code>cards-full/stable/jpn/bash.webp</code>. All 14 languages are
+            <code>cards-full/stable/jpn/bash.webp</code>. All 15 languages are
             available.
           </p>
         </div>
@@ -659,7 +659,7 @@ https://cdn.spire-codex.com/cards-full/stable/jpn/ench/corrupted/anger.webp`}</c
             Download English Data (ZIP)
           </a>
           <p className="text-sm text-[var(--text-muted)] mt-4">
-            14 languages available. Example downloads:{" "}
+            15 languages available. Example downloads:{" "}
             {[
               { code: "jpn", label: "Japanese" },
               { code: "kor", label: "Korean" },
