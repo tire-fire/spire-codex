@@ -926,10 +926,19 @@ def _accumulate(rows, official_chars, wr_map, recent_versions=()):
     # bucket to fold into (accumulate() only fills buckets that already exist).
     encounter_acc = encounter_stats.new_accumulator(recent_versions)
     _recent_versions_set = set(recent_versions)
-    # Parallel lightweight accumulators, one per non-"all" bracket.
+    # Parallel lightweight accumulators, one per non-"all" bracket. Seeded
+    # with every key the walk can emit: the static keys, one per release
+    # version, and every static-key x version composite. The walk indexes
+    # these directly (no setdefault), so a missing seed is a hard KeyError
+    # mid-walk - which is exactly how the un-seeded version keys killed
+    # every v18-v20 rebuild the first time one actually ran to this point.
     bracket_accs: dict[str, dict[str, Any]] = {
         k: _new_bracket_acc() for k in _BRACKET_KEYS
     }
+    for _v in recent_versions:
+        bracket_accs[_v] = _new_bracket_acc()
+        for _b in _BRACKET_KEYS:
+            bracket_accs[f"{_b}:{_v}"] = _new_bracket_acc()
 
     for row in rows:
         # Official runs only: the game's ascensions are A0-A10. A11+ are modded
