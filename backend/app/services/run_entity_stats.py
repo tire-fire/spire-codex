@@ -240,10 +240,13 @@ _HISTORY_RETENTION_DAYS = 90
 # endpoint — e.g. bracket=solo:a10&character=IRONCLAD (additive; the bump
 # forces the rebuild).
 SNAPSHOT_VERSION = 20
-# Entities per persisted chunk doc. With version-composable brackets a
-# popular entity carries hundreds of per-bracket blocks, so entity arrays
-# are split across docs to stay well under Mongo's 16MB document cap.
-_ENTITY_CHUNK = 150
+# Serialized-byte budget per persisted chunk doc. With version-composable
+# brackets a popular entity carries hundreds of per-bracket blocks and
+# entity sizes vary wildly (a card dwarfs an affliction), so chunks are
+# packed by measured BSON size, not entity count — a fixed count crossed
+# Mongo's 16MB document cap once version brackets multiplied per-entity
+# payloads. Half the cap leaves headroom for command overhead and growth.
+_CHUNK_MAX_BYTES = 8 * 1024 * 1024
 # The oldest snapshot version readers can still serve. Bump SNAPSHOT_VERSION
 # on every shape change; bump this floor ONLY when a change actually breaks
 # readers (a removed/retyped field). Everything in between is additive, and
@@ -1757,6 +1760,26 @@ def _snapshot_coll():
     return _get_collection().database[SNAPSHOT_COLLECTION_NAME]
 
 
+def _size_chunks(entities: list[dict]) -> list[list[dict]]:
+    """Split an entity array into chunks whose serialized size stays under
+    _CHUNK_MAX_BYTES each. Always returns at least one (possibly empty)
+    chunk so an empty entity type still gets its chunk:0 doc."""
+    from bson import encode as bson_encode
+
+    chunks: list[list[dict]] = []
+    cur: list[dict] = []
+    cur_bytes = 0
+    for entry in entities:
+        size = len(bson_encode({"e": entry}))
+        if cur and cur_bytes + size > _CHUNK_MAX_BYTES:
+            chunks.append(cur)
+            cur, cur_bytes = [], 0
+        cur.append(entry)
+        cur_bytes += size
+    chunks.append(cur)
+    return chunks
+
+
 _history_indexes_ready = False
 
 
@@ -1945,10 +1968,7 @@ def _persist_snapshot(
         # previous (larger) snapshot are deleted so a shrink can't leave
         # phantom entities behind.
         prev = coll.find_one({"_id": etype}, {"chunk_count": 1}) or {}
-        chunks = [
-            entities[i : i + _ENTITY_CHUNK]
-            for i in range(0, len(entities), _ENTITY_CHUNK)
-        ] or [[]]
+        chunks = _size_chunks(entities)
         for ci, chunk in enumerate(chunks):
             coll.replace_one(
                 {"_id": f"{etype}:chunk:{ci}"},
