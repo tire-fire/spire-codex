@@ -35,6 +35,8 @@ export function setBetaRenderVersion(v: string | null | undefined) {
 export const CARD_RENDER_LANGS = new Set<string>([
   "eng", "deu", "esp", "fra", "ita", "jpn", "kor",
   "pol", "ptb", "rus", "spa", "tha", "tur", "zhs",
+  // zht joins after its full-catalog render export uploads to
+  // cards-full/ — until then zht pages fall back to English renders.
 ]);
 
 /**

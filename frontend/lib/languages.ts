@@ -1,10 +1,11 @@
 /**
  * Language configuration for international SEO landing pages.
- * These are the 13 non-English languages supported by the game's localization.
+ * These are the 14 non-English languages supported by the game's localization
+ * (zht shipped in game v0.109.0 with English fallback for untranslated strings).
  */
 
 export const SUPPORTED_LANGS = [
-  "deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs",
+  "deu", "esp", "fra", "ita", "jpn", "kor", "pol", "ptb", "rus", "spa", "tha", "tur", "zhs", "zht",
 ] as const;
 
 export type LangCode = (typeof SUPPORTED_LANGS)[number];
@@ -28,6 +29,7 @@ export const LANG_HREFLANG: Record<LangCode, string> = {
   tha: "th",
   tur: "tr",
   zhs: "zh-Hans",
+  zht: "zh-Hant",
 };
 
 /** Human-readable native language names */
@@ -45,6 +47,7 @@ export const LANG_NAMES: Record<LangCode, string> = {
   tha: "ไทย",
   tur: "Turkce",
   zhs: "简体中文",
+  zht: "繁體中文",
 };
 
 /**
@@ -68,6 +71,7 @@ export const LANG_GAME_NAME: Record<LangCode, string> = {
   tha: "Slay the Spire 2 (STS2)",
   tur: "Slay the Spire 2 (STS2)",
   zhs: "杀戮尖塔2 (STS2)",
+  zht: "殺戮尖塔2 (STS2)",
 };
 
 /** Localized "Database" for title/descriptions */
@@ -85,6 +89,7 @@ export const LANG_DATABASE: Record<LangCode, string> = {
   tha: "ฐานข้อมูล",
   tur: "Veritabani",
   zhs: "数据库",
+  zht: "資料庫",
 };
 
 /** Localized "Cards" label */
@@ -102,6 +107,7 @@ export const LANG_CARDS: Record<LangCode, string> = {
   tha: "การ์ด",
   tur: "Kartlar",
   zhs: "卡牌",
+  zht: "卡牌",
 };
 
 /** Localized "Relics" label */
@@ -119,6 +125,7 @@ export const LANG_RELICS: Record<LangCode, string> = {
   tha: "เรลิก",
   tur: "Kalintilari",
   zhs: "遗物",
+  zht: "遺物",
 };
 
 export function isValidLang(lang: string): lang is LangCode {

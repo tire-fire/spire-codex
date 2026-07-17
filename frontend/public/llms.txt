@@ -1,6 +1,6 @@
 # Spire Codex
 
-> Fan-built database, wiki, and community stats site for Slay the Spire 2 (STS2), the deck-building roguelike by Mega Crit. Game data is extracted from the game files each patch and served in 14 languages, alongside community-submitted run statistics, tier lists, and leaderboards.
+> Fan-built database, wiki, and community stats site for Slay the Spire 2 (STS2), the deck-building roguelike by Mega Crit. Game data is extracted from the game files each patch and served in 15 languages, alongside community-submitted run statistics, tier lists, and leaderboards.
 
 Spire Codex is not affiliated with Mega Crit. Game content belongs to Mega Crit; the site's own data is available through a public REST API.
 
