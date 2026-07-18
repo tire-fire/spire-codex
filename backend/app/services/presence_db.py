@@ -115,29 +115,61 @@ def _credit_live_time(steam_id: str, username: str | None, now: datetime) -> Non
     total. Best-effort: accounting never breaks a heartbeat. Gaps longer than
     CREDIT_CAP_SECONDS (a crash/quit and a later return) aren't counted, so the
     total reflects real continuous play. Because credit accrues per beat, it
-    captures sessions that end by crash/TTL, not just clean stops."""
-    try:
-        from pymongo import ReturnDocument
+    captures sessions that end by crash/TTL, not just clean stops.
 
-        set_fields: dict[str, Any] = {"last_seen": now}
-        if username:
-            set_fields["username"] = username
-        prev = _live_totals_coll().find_one_and_update(
-            {"_id": steam_id},
-            {
-                "$set": set_fields,
-                "$setOnInsert": {"first_seen": now, "total_seconds": 0},
+    One aggregation-pipeline update: the gap is computed server-side from the
+    stored last_seen, so the old read-back (find_one_and_update) + $inc pair —
+    two cross-host round trips per heartbeat — collapses into one."""
+    try:
+        set_stage: dict[str, Any] = {
+            "last_seen": now,
+            "first_seen": {"$ifNull": ["$first_seen", now]},
+            "total_seconds": {
+                "$let": {
+                    # Seconds since the previous beat; on a fresh upsert
+                    # last_seen is absent, so the gap is zero (no credit),
+                    # matching the old insert path's total_seconds: 0.
+                    "vars": {
+                        "delta": {
+                            "$divide": [
+                                {
+                                    "$subtract": [
+                                        now,
+                                        {"$ifNull": ["$last_seen", now]},
+                                    ]
+                                },
+                                1000,
+                            ]
+                        }
+                    },
+                    "in": {
+                        "$add": [
+                            {"$ifNull": ["$total_seconds", 0]},
+                            {
+                                "$cond": [
+                                    {
+                                        "$and": [
+                                            {"$gt": ["$$delta", 0]},
+                                            {"$lte": ["$$delta", CREDIT_CAP_SECONDS]},
+                                        ]
+                                    },
+                                    # int(delta) equivalent (delta is positive).
+                                    {"$toInt": {"$trunc": "$$delta"}},
+                                    0,
+                                ]
+                            },
+                        ]
+                    },
+                }
             },
-            upsert=True,
-            return_document=ReturnDocument.BEFORE,
+        }
+        if username:
+            # $literal: the username is client-derived text; a leading "$"
+            # must not be read as a field path by the pipeline.
+            set_stage["username"] = {"$literal": username}
+        _live_totals_coll().update_one(
+            {"_id": steam_id}, [{"$set": set_stage}], upsert=True
         )
-        last = (prev or {}).get("last_seen")
-        if isinstance(last, datetime):
-            delta = (now - last.replace(tzinfo=timezone.utc)).total_seconds()
-            if 0 < delta <= CREDIT_CAP_SECONDS:
-                _live_totals_coll().update_one(
-                    {"_id": steam_id}, {"$inc": {"total_seconds": int(delta)}}
-                )
     except Exception:
         pass
 
