@@ -13,6 +13,7 @@ is set.
 
 import logging
 import re
+import time
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from slowapi import Limiter
@@ -21,7 +22,11 @@ from ..services import rate_limit_config
 
 from ..services import cache as app_cache
 from ..services import charts_stats as cs
-from ..services.run_entity_stats import get_charts_blob_stats
+from ..services.run_entity_stats import (
+    _BRACKET_KEYS,
+    get_charts_blob_stats,
+    get_recent_stat_versions,
+)
 
 router = APIRouter(prefix="/api/charts", tags=["Charts"])
 # client_ip, not slowapi's get_remote_address: behind Cloudflare -> nginx
@@ -30,7 +35,17 @@ router = APIRouter(prefix="/api/charts", tags=["Charts"])
 limiter = Limiter(key_func=client_ip, **rate_limit_config.storage_kwargs())
 logger = logging.getLogger(__name__)
 
-_CACHE_TTL = 300
+# On-demand entries. Chart data only changes when the snapshot does (one
+# refresh cycle, ~2h), so a longer TTL just means the second-through-Nth
+# viewers of a filtered slice hit Redis instead of re-aggregating; staleness
+# stays bounded by the cycle either way.
+_CACHE_TTL = 1800
+# Entries the refresher pre-warms each cycle. They're overwritten with fresh
+# data every cycle, so the TTL is only a safety net against a dead refresher;
+# it must comfortably outlive one full cycle or the warm cache expires while
+# the next walk is still running (which is exactly the first-visitor tax the
+# prewarm exists to prevent).
+_WARM_TTL = 8 * 60 * 60
 
 _ALL_SPLITS = ["character", "players", "outcome", "ascension"]
 # Win-rate charts can't split by outcome (a winners-only win rate is 100%).
@@ -477,12 +492,26 @@ def _compute_chart(
 
 
 def prewarm_charts() -> int:
-    """Precompute the default (no-filter) payload for every chart that doesn't
-    wait on a user-picked entity, encounter, or event, and warm the shared
-    cache so the /charts page and chart switches serve from Redis instead of
-    aggregating live. Stat / scatter charts warm with the same defaults the UI
-    sends. Called from the stats refresher cycle; returns how many warmed."""
+    """Precompute chart payloads for the slices people actually open and warm
+    the shared cache, so the /charts page, chart switches, and the common
+    bracket/version filters serve from Redis instead of aggregating live.
+
+    Warmed per chart (skipping charts that wait on a user-picked entity,
+    encounter, or event): the unfiltered default, each plain bracket
+    (solo/2p/.../wr75), and the newest few game versions. Composite slices
+    (solo:a10:v0.109.0 and friends) stay on-demand — the long tail is huge
+    and _CACHE_TTL keeps repeat views of any slice cheap.
+
+    Called from the stats refresher cycle right after each snapshot rebuild,
+    so every cycle overwrites the warm set with fresh data. Returns how many
+    payloads were warmed."""
+    plain_brackets = [b for b in _BRACKET_KEYS if ":" not in b]
+    versions = get_recent_stat_versions()[:3]
+    slices: list[tuple[str | None, str | None]] = [(None, None)]
+    slices += [(b, None) for b in plain_brackets]
+    slices += [(None, v) for v in versions]
     warmed = 0
+    started = time.monotonic()
     for chart_key, spec in CHARTS.items():
         needs = spec.get("needs", [])
         # These charts have no sensible default until the user picks one.
@@ -492,10 +521,37 @@ def prewarm_charts() -> int:
         x = "floors_reached" if "x" in needs else None
         y = "deck_size" if "x" in needs else None
         split = "character"
-        try:
-            payload = _compute_chart(
+        for bracket, build_id in slices:
+            try:
+                payload = _compute_chart(
+                    chart_key,
+                    spec,
+                    None,
+                    None,
+                    None,
+                    None,
+                    split,
+                    stat,
+                    x,
+                    y,
+                    None,
+                    None,
+                    None,
+                    None,
+                    bracket=bracket,
+                    build_id=build_id,
+                )
+            except Exception:
+                logger.warning(
+                    "chart prewarm failed for %s (bracket=%s build=%s)",
+                    chart_key,
+                    bracket,
+                    build_id,
+                    exc_info=True,
+                )
+                continue
+            key = _chart_cache_key(
                 chart_key,
-                spec,
                 None,
                 None,
                 None,
@@ -508,29 +564,19 @@ def prewarm_charts() -> int:
                 None,
                 None,
                 None,
+                bracket=bracket,
+                build_id=build_id,
             )
-        except Exception:
-            logger.warning("chart prewarm failed for %s", chart_key, exc_info=True)
-            continue
-        key = _chart_cache_key(
-            chart_key,
-            None,
-            None,
-            None,
-            None,
-            split,
-            stat,
-            x,
-            y,
-            None,
-            None,
-            None,
-            None,
-        )
-        # Mirror the endpoint: a still-building blob chart caches briefly so it
-        # re-warms once the snapshot lands, not for the full TTL.
-        app_cache.set_json(key, payload, 30 if payload["building"] else _CACHE_TTL)
-        warmed += 1
+            # Mirror the endpoint: a still-building blob chart caches briefly
+            # so it re-warms once the snapshot lands, not for the full TTL.
+            app_cache.set_json(key, payload, 30 if payload["building"] else _WARM_TTL)
+            warmed += 1
+    logger.info(
+        "chart prewarm: %d payloads (%d slices) in %.1fs",
+        warmed,
+        len(slices),
+        time.monotonic() - started,
+    )
     return warmed
 
 

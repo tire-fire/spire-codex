@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { cachedFetch } from "@/lib/fetch-cache";
 import ScoreBadge, { scoreToTier } from "@/app/components/ScoreBadge";
-import EntityTrends from "./EntityTrends";
+
+// chart.js is ~70KB gzipped and the trends chart sits below the fold, so
+// it must not ride in the first-load JS of every card/relic/potion page.
+const EntityTrends = dynamic(() => import("./EntityTrends"), { ssr: false });
 import { CONTENT_BRACKETS, PLAYER_BRACKETS, combineBracket, splitBracket } from "@/lib/content-brackets";
 import { useLanguage } from "@/app/contexts/LanguageContext";
 import { t } from "@/lib/ui-translations";

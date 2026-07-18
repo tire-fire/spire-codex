@@ -117,6 +117,9 @@ const [powers, setPowers] = useState<Power[]>(initialPowers);
                     <img
                       src={imageUrl(power.image_url)}
                       alt=""
+                      width={32}
+                      height={32}
+                      loading="lazy"
                       className="w-8 h-8 object-contain flex-shrink-0"
                       crossOrigin="anonymous"
                     />

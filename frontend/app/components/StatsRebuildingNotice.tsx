@@ -15,18 +15,34 @@ export default function StatsRebuildingNotice() {
 
   useEffect(() => {
     let active = true;
-    const check = () =>
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const stop = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+    const check = () => {
+      // Hidden tabs skip the poll; a rebuild only matters when someone is
+      // looking, and the next visible check catches up.
+      if (document.hidden) return;
       fetch(`${API}/api/runs/snapshot-status`)
         .then((r) => (r.ok ? r.json() : null))
         .then((s) => {
-          if (active && s) setBuilding(Boolean(s.building));
+          if (!active || !s) return;
+          const b = Boolean(s.building);
+          setBuilding(b);
+          // Once the snapshot is confirmed built there's nothing left to
+          // watch; a rebuild starting mid-session shows on the next page.
+          if (!b) stop();
         })
         .catch(() => {});
+    };
     check();
-    const timer = setInterval(check, 60_000);
+    timer = setInterval(check, 60_000);
     return () => {
       active = false;
-      clearInterval(timer);
+      stop();
     };
   }, []);
 
