@@ -69,10 +69,16 @@ def _load_run_blob(run_hash: str) -> str | None:
     json.dumps loop. `None` means file missing.
     """
     run_file = _data_dir / "runs" / f"{run_hash}.json"
-    if not run_file.exists():
-        return None
-    with open(run_file, "r", encoding="utf-8") as f:
-        return f.read()
+    if run_file.exists():
+        with open(run_file, "r", encoding="utf-8") as f:
+            return f.read()
+    if os.environ.get("MONGO_URL", "").strip():
+        from ..services.runs_db_mongo import get_run_blob
+
+        blob = get_run_blob(run_hash)
+        if blob is not None:
+            return json.dumps(blob, ensure_ascii=False)
+    return None
 
 
 @router.post("", tags=["Runs"])
