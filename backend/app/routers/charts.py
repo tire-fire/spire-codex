@@ -727,10 +727,6 @@ def get_chart(
         bracket,
         build_id,
     )
-    # A still-building snapshot resolves within minutes; don't pin the empty
-    # answer for the full TTL, and keep it out of the edge cache entirely
-    # (the generic /api/* header let Cloudflare serve a building payload
-    # for an hour after the origin had recovered).
     if payload["building"]:
         response.headers["Cache-Control"] = "no-store"
     app_cache.set_json(cache_key, payload, 30 if payload["building"] else _CACHE_TTL)

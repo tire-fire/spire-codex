@@ -62,9 +62,7 @@ _RUNS_DIR = _DATA_DIR / "runs"
 
 _FRAME: list[tuple] = []
 _FRAME_TS: float = 0.0
-# Seconds between store reloads. The scan takes ~400s on prod under load,
-# so a short TTL kept every worker rescanning most of the time; an hour of
-# staleness is invisible on 850k-run aggregates.
+# The scan costs ~400s under load; rescanning every 10min starved workers.
 _FRAME_TTL = 3600
 _FRAME_LOCK = threading.Lock()
 
