@@ -303,22 +303,26 @@ def runs_search(
 
 @router.delete("/runs/{run_hash}")
 def runs_delete(request: Request, run_hash: str):
-    """Remove a submitted run: every Mongo doc sharing the hash, the blob
-    file, and the in-process blob cache. Aggregates (snapshot, leaderboard
-    summaries) drop it on their next scheduled rebuild."""
+    """Remove a submitted run: every Mongo doc sharing the hash, the
+    run_blobs doc, the blob file, and the caches in front of them.
+    Aggregates (snapshot, leaderboard summaries) drop it on their next
+    scheduled rebuild."""
     _audit(request)
     from ..services import admin_db
     from .runs import _data_dir, _load_run_blob
 
     result = admin_db.delete_run(run_hash.strip(), _data_dir / "runs")
-    # The shared-run endpoint serves blobs from an in-process LRU; evict so
-    # a deleted run stops being served by this worker immediately. Other
-    # workers age it out on their own.
+    # The shared-run endpoint caches blobs in Redis (run:<hash>, 15min TTL)
+    # and an in-process LRU; evict both so the deleted run stops being served
+    # here immediately. The LRU is per worker, so other workers only age it
+    # out via LRU eviction — acceptable for moderation deletes.
+    app_cache.delete(f"run:{run_hash.strip()}")
     _load_run_blob.cache_clear()
     logger.info(
-        "admin deleted run %s: %s docs, file_removed=%s",
+        "admin deleted run %s: %s docs, blob_deleted=%s, file_removed=%s",
         run_hash,
         result["deleted_docs"],
+        result["blob_deleted"],
         result["file_removed"],
     )
     return {"run_hash": run_hash, **result}

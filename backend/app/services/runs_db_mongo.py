@@ -495,7 +495,11 @@ def submit_run(
                             json.dump(data, f, ensure_ascii=False)
                     except Exception as e:
                         print(f"Warning: failed to save run {run_hash}: {e}")
-                    save_run_blob(run_hash, data)
+                # Outside the exists-gate on purpose: blob write failures are
+                # swallowed, so gating on the file would make one transient
+                # Mongo hiccup permanent (resubmission would skip the repair).
+                # The upsert inside makes the duplicate-submission case cheap.
+                save_run_blob(run_hash, data)
 
     return results[0]
 
@@ -536,9 +540,99 @@ def get_run_blobs(hashes: list[str]) -> dict[str, dict]:
                 if doc.get("blob") is not None:
                     out[doc["_id"]] = doc["blob"]
         except Exception as e:
-            logger.warning("run blob batch fetch failed: %s", e)
+            # Callers fall back to per-file reads for whatever we don't
+            # return, so this degrades quietly — log how much was left.
+            logger.warning(
+                "run blob batch fetch failed, %d of %d ids left to file "
+                "fallback: %s",
+                len(hashes) - i,
+                len(hashes),
+                e,
+            )
             break
     return out
+
+
+def backfill_run_blobs(batch: int = 500) -> dict:
+    """Copy data/runs/*.json into run_blobs for every hash missing a blob.
+
+    Idempotent and resumable: each batch is existence-checked with one $in
+    query, and present blobs are skipped without reading their files. Also
+    invoked automatically by the stats refresher (rebuilder) on its first
+    leader cycle, so gaps — pre-collection history, blob writes that failed
+    at submit time — heal without a manual run.
+    """
+    runs_dir = _data_dir / "runs"
+    # Stems as plain strings, not Path objects: at ~850k files the Path list
+    # alone costs 100MB+.
+    try:
+        stems = sorted(n[:-5] for n in os.listdir(runs_dir) if n.endswith(".json"))
+    except OSError:
+        stems = []
+    coll = _blob_collection()
+    # Cheap gap check before walking 850k stems: orphaned blobs from deleted
+    # runs can push the blob count above the file count; that's fine, it
+    # still means no gap.
+    blob_count = coll.estimated_document_count()
+    if blob_count >= len(stems):
+        logger.info(
+            "run blob backfill: skipped, %d blobs >= %d files",
+            blob_count,
+            len(stems),
+        )
+        return {"files": len(stems), "inserted": 0, "skipped": len(stems), "failed": 0}
+    logger.info(
+        "run blob backfill: starting, %d files vs %d blobs", len(stems), blob_count
+    )
+    inserted = skipped = failed = 0
+    started = time.time()
+    for i in range(0, len(stems), batch):
+        ids = stems[i : i + batch]
+        existing = {d["_id"] for d in coll.find({"_id": {"$in": ids}}, {"_id": 1})}
+        docs = []
+        for stem in ids:
+            if stem in existing:
+                skipped += 1
+                continue
+            try:
+                docs.append(
+                    {
+                        "_id": stem,
+                        "blob": json.loads(
+                            (runs_dir / f"{stem}.json").read_text(encoding="utf-8")
+                        ),
+                    }
+                )
+            except Exception as e:
+                logger.warning("run blob backfill: unreadable %s.json: %s", stem, e)
+                failed += 1
+        if docs:
+            try:
+                coll.insert_many(docs, ordered=False)
+                inserted += len(docs)
+            except Exception:
+                for d in docs:
+                    try:
+                        coll.replace_one({"_id": d["_id"]}, d, upsert=True)
+                        inserted += 1
+                    except Exception as e:
+                        logger.warning(
+                            "run blob backfill: failed %s: %s", d["_id"], e
+                        )
+                        failed += 1
+    logger.info(
+        "run blob backfill: done, %d inserted, %d skipped, %d failed in %.0fs",
+        inserted,
+        skipped,
+        failed,
+        time.time() - started,
+    )
+    return {
+        "files": len(stems),
+        "inserted": inserted,
+        "skipped": skipped,
+        "failed": failed,
+    }
 
 
 def _shop_purchases(data: dict) -> list[str]:
