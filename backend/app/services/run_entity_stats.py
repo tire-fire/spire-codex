@@ -354,8 +354,30 @@ _recent_stat_versions: list[str] = []
 # How many game versions get their own per-version bucket. None = every
 # release version that has a submitted run (the dropdowns go back to the
 # first patch, not just the recent window). Per-version buckets are small,
-# so unbounded growth tracks the game's release cadence, not run volume.
-_RECENT_VERSIONS_N: int | None = None
+# so unbounded growth tracks the game's release cadence, not run volume —
+# but every version also multiplies the per-bracket Bradley-Terry fits and
+# blob shards, so ENTITY_STATS_RECENT_VERSIONS_N caps it when that cost
+# outgrows the box. Capping to N hides versions older than the newest N
+# from every stats-page version dropdown (stat_versions in
+# /api/runs/versions) AND makes /api/runs/list reject a build_id filter
+# naming a dropped version, so the default stays unbounded.
+
+
+def _env_recent_versions_n() -> int | None:
+    raw = (os.environ.get("ENTITY_STATS_RECENT_VERSIONS_N") or "").strip()
+    if not raw:
+        return None
+    try:
+        n = int(raw)
+    except ValueError:
+        logger.warning(
+            "ignoring non-integer ENTITY_STATS_RECENT_VERSIONS_N=%r", raw
+        )
+        return None
+    return n if n > 0 else None
+
+
+_RECENT_VERSIONS_N: int | None = _env_recent_versions_n()
 _cache_built_at: float = 0.0
 _building: bool = False
 # The snapshot_version of whatever is currently loaded (None = nothing
@@ -769,8 +791,24 @@ def _walk_rest_upgrade_choices(blob: dict) -> Iterable[tuple[list[str], list[str
                         yield winners, losers
 
 
+# Warm-start cache for the Bradley-Terry solver: the last converged raw
+# strengths per fit key ("all", "upgrade", "bracket:<key>"). The MM update's
+# fixed point doesn't depend on the starting point, only the iteration count
+# to reach it does — and between two finalizes the pair matrix barely moves,
+# so starting from the previous solution converges in a handful of iterations
+# instead of up to _ELO_MAX_ITERS from the flat cold start. Bounded: one entry
+# per fit key (the same set of fits _finalize runs anyway), and each entry is
+# replaced wholesale on every fit, so it holds only current-fit nodes.
+# Parent-process only: the spawn workers run _accumulate, never a fit.
+_elo_warm_starts: dict[str, dict[str, float]] = {}
+# BT fits run since import; the rebuild timing logs report the per-finalize
+# delta so a slow finalize is attributable to its fit count.
+_elo_fit_count: int = 0
+
+
 def _compute_codex_elo(
     pair_wins: dict[tuple[str, str], int],
+    warm_key: str | None = None,
 ) -> dict[str, float]:
     """Bradley-Terry MM solver → Codex Elo per card.
 
@@ -784,7 +822,14 @@ def _compute_codex_elo(
 
     Cards with fewer than `_ELO_MIN_GAMES` total head-to-heads are dropped
     (too thin to rate). Returns {} when there's no comparison data.
+
+    `warm_key` names a slot in the module warm-start cache: the fit starts
+    from that slot's last converged strengths (nodes it doesn't know start at
+    1.0 as before) and writes its own converged strengths back. Purely a
+    starting-point optimization — tolerance, max iterations, and the fixed
+    point itself are unchanged.
     """
+    global _elo_fit_count
     if not pair_wins:
         return {}
 
@@ -814,6 +859,14 @@ def _compute_codex_elo(
     # solver stays well-defined. With real data this is negligible.
     eps = 1e-3
     p = {n: 1.0 for n in nodes}
+    if warm_key:
+        prev = _elo_warm_starts.get(warm_key)
+        if prev:
+            for n in nodes:
+                v = prev.get(n)
+                if v is not None and v > 0:
+                    p[n] = v
+    _elo_fit_count += 1
     w = {n: wins.get(n, 0.0) + eps for n in nodes}
 
     for _ in range(_ELO_MAX_ITERS):
@@ -843,6 +896,9 @@ def _compute_codex_elo(
         p = new_p
         if delta < _ELO_TOL:
             break
+
+    if warm_key:
+        _elo_warm_starts[warm_key] = p
 
     out: dict[str, float] = {}
     for n in nodes:
@@ -916,7 +972,22 @@ def _new_bracket_acc() -> dict[str, Any]:
     }
 
 
-def _finalize_bracket(acc: dict[str, Any]) -> tuple[dict, dict]:
+def _bracket_baselines_from_cache(cache: dict) -> dict[str, float]:
+    """Per-type pick-weighted baseline within one bracket's entity cache."""
+    type_totals: dict[str, dict[str, int]] = {}
+    for (etype, _), agg in cache.items():
+        tt = type_totals.setdefault(etype, {"wins": 0, "picks": 0})
+        tt["wins"] += agg["wins"]
+        tt["picks"] += agg["picks"]
+    return {
+        etype: (tt["wins"] / tt["picks"]) if tt["picks"] else 0.5
+        for etype, tt in type_totals.items()
+    }
+
+
+def _finalize_bracket(
+    acc: dict[str, Any], warm_key: str | None = None
+) -> tuple[dict, dict]:
     """Turn a bracket accumulator into (entities, type_baselines).
 
     entities[(etype, eid)] = {picks, wins, offered, picked, off_act,
@@ -924,7 +995,7 @@ def _finalize_bracket(acc: dict[str, Any]) -> tuple[dict, dict]:
     the same as an all-runs row.
     """
     cache = acc["cache"]
-    elo = _compute_codex_elo(acc["pair_wins"])
+    elo = _compute_codex_elo(acc["pair_wins"], warm_key=warm_key)
     for cid, pc in acc["pick_counts"].items():
         key = ("cards", cid)
         agg = cache.setdefault(key, {"picks": 0, "wins": 0})
@@ -933,17 +1004,7 @@ def _finalize_bracket(acc: dict[str, Any]) -> tuple[dict, dict]:
         agg["off_act"] = pc["off_act"]
         agg["pick_act"] = pc["pick_act"]
         agg["elo"] = elo.get(cid)
-    # Per-type pick-weighted baseline within this bracket.
-    type_totals: dict[str, dict[str, int]] = {}
-    for (etype, _), agg in cache.items():
-        tt = type_totals.setdefault(etype, {"wins": 0, "picks": 0})
-        tt["wins"] += agg["wins"]
-        tt["picks"] += agg["picks"]
-    baselines = {
-        etype: (tt["wins"] / tt["picks"]) if tt["picks"] else 0.5
-        for etype, tt in type_totals.items()
-    }
-    return cache, baselines
+    return cache, _bracket_baselines_from_cache(cache)
 
 
 def _accumulate(rows, official_chars, wr_map, recent_versions=()):
@@ -1340,10 +1401,20 @@ def _finalize(
     community_acc,
     charts_acc,
     encounter_acc,
+    dirty_brackets: set[str] | None = None,
 ) -> tuple[dict, dict, dict, dict]:
     """Fold the merged raw accumulators into the finalized snapshot payload.
 
-    Runs once, after accumulation (serial or parallel+merged).
+    Runs once, after accumulation (serial or parallel+merged), and always in
+    the parent process (the worker pool only runs _accumulate).
+
+    `dirty_brackets` (incremental ticks only) names the bracket keys that
+    received new runs since the previous finalize over these SAME accumulator
+    objects. Untouched brackets are bit-identical to what that finalize
+    already fitted and nested into `new_cache` (both mutations are in place
+    and the raw state is retained between ticks), so their BT re-fit and
+    re-serialization are skipped. None (the full rebuild, or an unknown
+    state) finalizes every bracket.
     """
     from . import charts_stats, community_stats, encounter_stats
 
@@ -1351,7 +1422,7 @@ def _finalize(
     # Cards that were offered but never decked still get an entry (picks=0
     # → no Win%/Score, but a valid Pick%/Elo). Starter cards that are
     # never offered keep no pick stats (correct, they have no reward Elo).
-    elo = _compute_codex_elo(pair_wins)
+    elo = _compute_codex_elo(pair_wins, warm_key="all")
     for cid, pc in pick_counts.items():
         key = ("cards", cid)
         agg = new_cache.setdefault(
@@ -1375,7 +1446,7 @@ def _finalize(
     # metrics table's "+" row carries its own preference rating instead of
     # echoing the base card's reward Elo. Only cards that actually appear
     # upgraded in a deck have an "upg" block to attach it to.
-    upgrade_elo = _compute_codex_elo(upgrade_pair_wins)
+    upgrade_elo = _compute_codex_elo(upgrade_pair_wins, warm_key="upgrade")
     for (etype, cid), agg in new_cache.items():
         if etype != "cards":
             continue
@@ -1401,7 +1472,19 @@ def _finalize(
     bracket_baselines: dict[str, dict[str, float]] = {}
     bracket_totals: dict[str, dict[str, int]] = {}
     for ck, acc in bracket_accs.items():
-        bracket_cache, baselines = _finalize_bracket(acc)
+        if dirty_brackets is not None and ck not in dirty_brackets:
+            # No new run touched this bracket since the previous finalize:
+            # its accumulator (totals, cache, pick_counts, pair_wins — every
+            # contribution path increments totals["total_runs"], the dirty
+            # marker) is unchanged, so the BT fit it would produce and the
+            # per-entity brackets[ck] blocks that finalize already nested
+            # into new_cache are still exact. Reuse them; recompute only the
+            # cheap baseline from the unchanged cache so nothing derived is
+            # ever served from a code path that could go stale.
+            bracket_baselines[ck] = _bracket_baselines_from_cache(acc["cache"])
+            bracket_totals[ck] = acc["totals"]
+            continue
+        bracket_cache, baselines = _finalize_bracket(acc, warm_key=f"bracket:{ck}")
         bracket_baselines[ck] = baselines
         bracket_totals[ck] = acc["totals"]
         for entity, cagg in bracket_cache.items():
@@ -1766,9 +1849,28 @@ def _build_cache_data(stash: bool = False) -> tuple[dict, dict, dict, dict]:
             "pending": 0,
             "last_persist_ts": time.time(),
             "last_full_ts": time.time(),
+            # Bracket keys that received runs since the last finalize over
+            # this raw state. None = no finalize has completed over it yet,
+            # so the incremental path must fit every bracket; flipped to an
+            # empty set right after the finalize below succeeds.
+            "dirty_brackets": None,
         }
 
+    _t_fin = time.time()
+    _fits_before = _elo_fit_count
     result = _finalize(**raw)
+    # The finalize (hundreds of Bradley-Terry fits + bracket serialization)
+    # used to be an unlogged gap between the walk-done line above and the
+    # "snapshot rebuilt" line; time it like the incremental path does.
+    logger.info(
+        "snapshot rebuild: finalize took %.1fs (%d BT fits)",
+        time.time() - _t_fin,
+        _elo_fit_count - _fits_before,
+    )
+    if stash and _USING_MONGO and _incr is not None:
+        # This raw state has now been finalized once (all bracket blocks are
+        # nested in its new_cache), so incremental ticks may dirty-skip.
+        _incr["dirty_brackets"] = set()
     # Advertise which versions actually got their own bucket, so the read path
     # and the version dropdown only offer versions that have data. result[3] is
     # the bracket_meta dict.
@@ -2329,6 +2431,16 @@ def _incremental_tick() -> int:
             rows, _incr["official_chars"], wr_map, _incr["recent_versions"]
         )
         _merge_raw(_incr["raw"], partial)
+        # Dirty-bracket tracking for the finalize below: every contribution a
+        # run makes to a bracket accumulator comes with a totals["total_runs"]
+        # increment, so a zero-run partial bracket is bit-untouched and its
+        # previous fit can be reused. None means the raw state has never been
+        # finalized (interrupted full rebuild) — leave it None: everything
+        # gets fitted until a full finalize re-establishes the invariant.
+        if _incr.get("dirty_brackets") is not None:
+            for ck, acc in partial["bracket_accs"].items():
+                if acc["totals"]["total_runs"] > 0:
+                    _incr["dirty_brackets"].add(ck)
         tail = rows[-1]
         _incr["last_key"] = (tail["submitted_at"], str(tail["run_hash"]))
         _incr["pending"] += len(rows)
@@ -2338,20 +2450,28 @@ def _incremental_tick() -> int:
         and time.time() - _incr["last_persist_ts"] >= _STATS_PERSIST_SECONDS
     ):
         _t0 = time.time()
-        cache, totals, baselines, bracket_meta = _finalize(**_incr["raw"])
+        _fits_before = _elo_fit_count
+        cache, totals, baselines, bracket_meta = _finalize(
+            **_incr["raw"], dirty_brackets=_incr.get("dirty_brackets")
+        )
         bracket_meta["recent_versions"] = _incr["recent_versions"]
         _persist_snapshot(cache, totals, baselines, bracket_meta)
         _apply_cache(cache, totals, baselines, bracket_meta)
         _cache_snapshot_version = SNAPSHOT_VERSION
         logger.info(
             "incremental stats: folded %d new runs, finalize+persist took "
-            "%.1fs (%d runs total)",
+            "%.1fs (%d BT fits, %d runs total)",
             _incr["pending"],
             time.time() - _t0,
+            _elo_fit_count - _fits_before,
             totals["total_runs"],
         )
         _incr["pending"] = 0
         _incr["last_persist_ts"] = time.time()
+        # Everything is fitted/reused and persisted; start a fresh dirty set
+        # for the next window (also flips None → tracking after the first
+        # successful incremental finalize).
+        _incr["dirty_brackets"] = set()
         return len(cache)
     return 0
 
@@ -2396,16 +2516,20 @@ def refresh_entity_stats_snapshot(force_full: bool = False) -> int:
     cache, totals, baselines, bracket_meta = _build_cache_data(
         stash=_INCREMENTAL_ENABLED
     )
+    _t_persist = time.time()
     _persist_snapshot(cache, totals, baselines, bracket_meta)
+    _persist_secs = time.time() - _t_persist
     _apply_cache(cache, totals, baselines, bracket_meta)
     _cache_snapshot_version = SNAPSHOT_VERSION
     # Best-effort: the snapshot + cache are already committed above; this only
     # appends the daily Score/Elo history and never raises into the rebuild.
     _archive_metric_history()
     logger.info(
-        "entity-stats snapshot rebuilt: %d entities across %d runs",
+        "entity-stats snapshot rebuilt: %d entities across %d runs "
+        "(persist took %.1fs)",
         len(cache),
         totals["total_runs"],
+        _persist_secs,
     )
     return len(cache)
 
