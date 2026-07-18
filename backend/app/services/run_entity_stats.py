@@ -1821,6 +1821,55 @@ def _snapshot_coll():
     return _get_collection().database[SNAPSHOT_COLLECTION_NAME]
 
 
+class _LazyBlobMap:
+    """Read-through view over one blob's per-key shard docs. Workers used to
+    eager-load every shard (hundreds of keys, most never requested) into RAM
+    on every snapshot load; this fetches a key on first use and keeps a small
+    bounded cache, so a worker holds only what its traffic touches."""
+
+    _MAX_KEYS = max(8, int(os.environ.get("STATS_BLOB_CACHE_KEYS", "") or 48))
+
+    def __init__(self, blob_id: str, keys):
+        self._blob_id = blob_id
+        self._keys = set(keys)
+        self._cache: dict[str, Any] = {}
+        self._lock = threading.Lock()
+
+    def __bool__(self) -> bool:
+        return bool(self._keys)
+
+    def __len__(self) -> int:
+        return len(self._keys)
+
+    def __contains__(self, key) -> bool:
+        return key in self._keys
+
+    def keys(self):
+        return set(self._keys)
+
+    def get(self, key, default=None):
+        if key not in self._keys:
+            return default
+        with self._lock:
+            if key in self._cache:
+                return self._cache[key]
+        try:
+            doc = _snapshot_coll().find_one({"_id": f"{self._blob_id}:{key}"}) or {}
+        except Exception:
+            logger.warning(
+                "lazy blob fetch failed for %s:%s", self._blob_id, key, exc_info=True
+            )
+            return default
+        blob = doc.get("blob")
+        if blob is None:
+            return default
+        with self._lock:
+            if len(self._cache) >= self._MAX_KEYS:
+                self._cache.pop(next(iter(self._cache)))
+            self._cache[key] = blob
+        return blob
+
+
 def _size_chunks(entities: list[dict]) -> list[list[dict]]:
     """Split an entity array into chunks whose serialized size stays under
     _CHUNK_MAX_BYTES each. Always returns at least one (possibly empty)
@@ -2181,15 +2230,7 @@ def _load_snapshot() -> bool:
         keys = doc.get("keys")
         if not keys:
             return doc.get("blob") or meta.get(blob_id) or {}
-        # One batched query for all shards of this blob: with version
-        # composites that's hundreds of keys, and a round trip per key was
-        # most of the post-deploy snapshot-load window.
-        out: dict[str, Any] = {}
-        prefix = f"{blob_id}:"
-        for kdoc in coll.find({"_id": {"$in": [prefix + k for k in keys]}}):
-            if kdoc.get("blob") is not None:
-                out[kdoc["_id"][len(prefix) :]] = kdoc["blob"]
-        return out
+        return _LazyBlobMap(blob_id, keys)
 
     community = _blob_doc("community")
     charts = _blob_doc("charts")
