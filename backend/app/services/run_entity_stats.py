@@ -1616,7 +1616,7 @@ def _pick_recent_versions(rows, n: int | None = None) -> list[str]:
     return ordered[:n] if n else ordered
 
 
-def _build_cache_data() -> tuple[dict, dict, dict, dict]:
+def _build_cache_data(stash: bool = False) -> tuple[dict, dict, dict, dict]:
     """Walk every run JSON + DB row and return (cache, totals,
     type_baselines, bracket_meta) WITHOUT mutating module globals. The heavy
     100k-file walk lives here so the leader refresher can compute + persist a
@@ -1745,6 +1745,28 @@ def _build_cache_data() -> tuple[dict, dict, dict, dict]:
         time.time() - _t0,
         len(raw["new_cache"]),
     )
+
+    if stash and _USING_MONGO:
+        last_key = None
+        for r in rows:
+            ts = r.get("submitted_at")
+            if ts is None or not hasattr(ts, "timestamp"):
+                continue
+            k = (ts, str(r["run_hash"]))
+            if last_key is None or k > last_key:
+                last_key = k
+        global _incr
+        _incr = {
+            "raw": raw,
+            "wr_counts": _wr_counts,
+            "wr_min": WINRATE_MIN_RUNS,
+            "official_chars": official_chars,
+            "recent_versions": recent_versions,
+            "last_key": last_key,
+            "pending": 0,
+            "last_persist_ts": time.time(),
+            "last_full_ts": time.time(),
+        }
 
     result = _finalize(**raw)
     # Advertise which versions actually got their own bucket, so the read path
@@ -2200,31 +2222,180 @@ def _load_snapshot() -> bool:
     return True
 
 
-def refresh_entity_stats_snapshot() -> int:
-    """Leader-only: rebuild the cache from run files and persist it to
-    Mongo for every worker to read. Skips the heavy walk if the existing
-    snapshot is younger than _SNAPSHOT_REBUILD_SECONDS. Returns the
-    entity count written (0 if skipped)."""
-    coll = _snapshot_coll()
-    meta = coll.find_one({"_id": "__meta__"}, {"built_at": 1, "snapshot_version": 1})
-    # Only honor the freshness skip for a snapshot this code version wrote.
-    # A stale writer keeps built_at young forever, which would otherwise pin
-    # the leader on an old-shape snapshot it can never replace.
+_incr: dict[str, Any] | None = None
+_INCREMENTAL_ENABLED = os.environ.get("STATS_INCREMENTAL", "on").lower() not in (
+    "off",
+    "0",
+    "false",
+    "no",
+)
+_STATS_PERSIST_SECONDS = max(
+    60, int(os.environ.get("STATS_PERSIST_SECONDS", "") or 600)
+)
+_STATS_REPAIR_SECONDS = max(
+    3600, int(os.environ.get("STATS_REPAIR_INTERVAL_SECONDS", "") or 86400)
+)
+_RELEASE_VERSION_RE = None
+
+
+def _is_release_version(build_id: str) -> bool:
+    global _RELEASE_VERSION_RE
+    if _RELEASE_VERSION_RE is None:
+        import re
+
+        _RELEASE_VERSION_RE = re.compile(r"v\d+(\.\d+)*$")
+    return bool(_RELEASE_VERSION_RE.fullmatch(build_id or ""))
+
+
+def _load_rows_after(last_key: tuple) -> list[dict]:
+    """New run rows past the (submitted_at, run_hash) keyset cursor, in
+    submission order — the same ordering contract the run export uses."""
+    from .runs_db_mongo import _get_collection
+
+    ts, h = last_key
+    docs = list(
+        _get_collection()
+        .find(
+            {
+                "$or": [
+                    {"submitted_at": {"$gt": ts}},
+                    {"submitted_at": ts, "_id": {"$gt": h}},
+                ]
+            },
+            {
+                "_id": 1,
+                "character": 1,
+                "win": 1,
+                "submitted_at": 1,
+                "player_count": 1,
+                "ascension": 1,
+                "game_mode": 1,
+                "killed_by": 1,
+                "username": 1,
+                "build_id": 1,
+            },
+        )
+        .sort([("submitted_at", 1), ("_id", 1)])
+    )
+    return [
+        {
+            "run_hash": d["_id"],
+            "character": d.get("character") or "",
+            "win": bool(d.get("win")),
+            "submitted_at": d.get("submitted_at"),
+            "player_count": d.get("player_count") or 1,
+            "ascension": d.get("ascension") or 0,
+            "game_mode": d.get("game_mode") or "standard",
+            "killed_by": d.get("killed_by"),
+            "username": d.get("username") or "",
+            "build_id": d.get("build_id") or "",
+        }
+        for d in docs
+    ]
+
+
+def _incremental_tick() -> int:
+    """Fold newly submitted runs into the retained raw accumulators and
+    re-finalize + persist on the _STATS_PERSIST_SECONDS cadence. The raw
+    state is merge-and-refinalize safe: every finalize output field is
+    recomputed from the accumulators, never consumed from them."""
+    global _cache_snapshot_version
+    assert _incr is not None
+    rows = _load_rows_after(_incr["last_key"])
+    if rows:
+        rec = set(_incr["recent_versions"])
+        for r in rows:
+            b = (r.get("build_id") or "").strip()
+            if b and b not in rec and _is_release_version(b):
+                logger.info(
+                    "incremental stats: new game version %s; running a full "
+                    "rebuild to seed its buckets",
+                    b,
+                )
+                return refresh_entity_stats_snapshot(force_full=True)
+        for r in rows:
+            u = (r.get("username") or "").lower()
+            if u:
+                c = _incr["wr_counts"].setdefault(u, [0, 0])
+                c[0] += 1
+                if r.get("win"):
+                    c[1] += 1
+        wr_map = {
+            u: (w / t)
+            for u, (t, w) in _incr["wr_counts"].items()
+            if t >= _incr["wr_min"] and t > 0
+        }
+        partial = _accumulate(
+            rows, _incr["official_chars"], wr_map, _incr["recent_versions"]
+        )
+        _merge_raw(_incr["raw"], partial)
+        tail = rows[-1]
+        _incr["last_key"] = (tail["submitted_at"], str(tail["run_hash"]))
+        _incr["pending"] += len(rows)
+
     if (
-        meta
-        and meta.get("built_at")
-        and meta.get("snapshot_version") == SNAPSHOT_VERSION
+        _incr["pending"]
+        and time.time() - _incr["last_persist_ts"] >= _STATS_PERSIST_SECONDS
     ):
-        built = meta["built_at"]
-        if built.tzinfo is None:
-            built = built.replace(tzinfo=timezone.utc)
-        if (datetime.now(timezone.utc) - built).total_seconds() < (
-            _SNAPSHOT_REBUILD_SECONDS
+        _t0 = time.time()
+        cache, totals, baselines, bracket_meta = _finalize(**_incr["raw"])
+        bracket_meta["recent_versions"] = _incr["recent_versions"]
+        _persist_snapshot(cache, totals, baselines, bracket_meta)
+        _apply_cache(cache, totals, baselines, bracket_meta)
+        _cache_snapshot_version = SNAPSHOT_VERSION
+        logger.info(
+            "incremental stats: folded %d new runs, finalize+persist took "
+            "%.1fs (%d runs total)",
+            _incr["pending"],
+            time.time() - _t0,
+            totals["total_runs"],
+        )
+        _incr["pending"] = 0
+        _incr["last_persist_ts"] = time.time()
+        return len(cache)
+    return 0
+
+
+def refresh_entity_stats_snapshot(force_full: bool = False) -> int:
+    """Leader-only. With a retained incremental base, folds new runs in and
+    persists every _STATS_PERSIST_SECONDS; otherwise (boot, repair due, new
+    game version, incremental disabled) runs the full walk and retains its
+    raw state as the new base. Returns entities persisted, 0 if nothing."""
+    coll = _snapshot_coll()
+    if (
+        not force_full
+        and _INCREMENTAL_ENABLED
+        and _USING_MONGO
+        and _incr is not None
+        and _incr.get("last_key") is not None
+        and time.time() - _incr["last_full_ts"] < _STATS_REPAIR_SECONDS
+    ):
+        return _incremental_tick()
+
+    if not _INCREMENTAL_ENABLED:
+        meta = coll.find_one(
+            {"_id": "__meta__"}, {"built_at": 1, "snapshot_version": 1}
+        )
+        # Only honor the freshness skip for a snapshot this code version
+        # wrote. A stale writer keeps built_at young forever, which would
+        # otherwise pin the leader on an old-shape snapshot.
+        if (
+            meta
+            and meta.get("built_at")
+            and meta.get("snapshot_version") == SNAPSHOT_VERSION
         ):
-            return 0  # snapshot still fresh
+            built = meta["built_at"]
+            if built.tzinfo is None:
+                built = built.replace(tzinfo=timezone.utc)
+            if (datetime.now(timezone.utc) - built).total_seconds() < (
+                _SNAPSHOT_REBUILD_SECONDS
+            ):
+                return 0  # snapshot still fresh
 
     global _cache_snapshot_version
-    cache, totals, baselines, bracket_meta = _build_cache_data()
+    cache, totals, baselines, bracket_meta = _build_cache_data(
+        stash=_INCREMENTAL_ENABLED
+    )
     _persist_snapshot(cache, totals, baselines, bracket_meta)
     _apply_cache(cache, totals, baselines, bracket_meta)
     _cache_snapshot_version = SNAPSHOT_VERSION

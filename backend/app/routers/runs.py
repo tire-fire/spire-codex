@@ -1201,6 +1201,34 @@ _STATS_FALLBACK_TTL_SECONDS = 300
 _stats_fallback_cache: dict[tuple, tuple[float, dict]] = {}
 
 _REFRESHER_INTERVAL_SECONDS = 60
+_SUMMARY_INTERVAL_SECONDS = max(
+    300, int(os.environ.get("STATS_SUMMARY_INTERVAL_SECONDS", "") or 7200)
+)
+_PREWARM_INTERVAL_SECONDS = max(
+    300, int(os.environ.get("CHART_PREWARM_INTERVAL_SECONDS", "") or 7200)
+)
+_cadence = {"summary": 0.0, "prewarm": 0.0}
+_side_jobs: dict[str, bool] = {}
+
+
+def _kick_side_job(name: str, fn) -> None:
+    """Run fn on a daemon thread, one in flight per name, so the hour-long
+    summary/prewarm jobs never block the every-minute stats tick."""
+    import threading
+
+    if _side_jobs.get(name):
+        return
+    _side_jobs[name] = True
+
+    def _run() -> None:
+        try:
+            fn()
+        except Exception:
+            logger.warning("%s job failed", name, exc_info=True)
+        finally:
+            _side_jobs[name] = False
+
+    threading.Thread(target=_run, daemon=True, name=f"stats-{name}").start()
 
 
 def start_stats_refresher() -> None:
@@ -1278,47 +1306,40 @@ def start_stats_refresher() -> None:
         _cyc0 = time.time()
         logger.info("refresh cycle: starting (leader)")
 
-        # The entity-stats snapshot rebuild below is the critical product data
-        # (tier list / Codex Score / metrics), so it runs FIRST and nothing may
-        # starve it. Charts prewarm — which loads the full ~740k-run frame from
-        # Mongo and can run long under DB load — is deferred to the END of the
-        # cycle. This reverses PR #567's ordering: putting prewarm first let it
-        # block the snapshot rebuild indefinitely, so the snapshot never advanced.
+        # Summaries are heavy Mongo aggregations (the stats summary alone can
+        # run ~1h under load), so they run on their own thread and cadence;
+        # the snapshot tick below must stay every-minute.
+        if time.time() - _cadence["summary"] >= _SUMMARY_INTERVAL_SECONDS:
+            _cadence["summary"] = time.time()
+
+            def _summaries() -> None:
+                refresh_stats_summary()
+                logger.info(
+                    "refresh cycle: stats summary done at %.1fs",
+                    time.time() - _cyc0,
+                )
+                refresh_leaderboard_summary()
+                logger.info(
+                    "refresh cycle: leaderboard summary done at %.1fs",
+                    time.time() - _cyc0,
+                )
+
+            _kick_side_job("summaries", _summaries)
+
+        # Entity-stats snapshot: full walk at boot / repair / new game
+        # version, otherwise an incremental fold of just the new runs.
+        persisted = 0
         try:
-            refresh_stats_summary()
-        except Exception:
-            logger.warning("stats summary refresh failed", exc_info=True)
-        logger.info("refresh cycle: stats summary done at %.1fs", time.time() - _cyc0)
-        # Pre-compute the default (category, character) ladder
-        # views into leaderboard_summary. Reads for the common
-        # combos become O(1) find_one instead of a 500ms
-        # count+sort. Cheap (~600ms total) and idempotent.
-        try:
-            refresh_leaderboard_summary()
-        except Exception:
-            logger.warning("leaderboard summary refresh failed", exc_info=True)
-        logger.info(
-            "refresh cycle: leaderboard summary done at %.1fs, entering snapshot "
-            "rebuild",
-            time.time() - _cyc0,
-        )
-        # Rebuild the shared entity-stats snapshot (tier-list
-        # / Codex Score source) on the same leader-only loop.
-        # Internally throttled, so this is a no-op find_one
-        # most cycles and only walks the run files every
-        # ~10 min on one worker.
-        try:
-            refresh_entity_stats_snapshot()
+            persisted = refresh_entity_stats_snapshot()
         except Exception:
             logger.warning("entity-stats snapshot refresh failed", exc_info=True)
-        # Proactive warm of the entity-scores cache (in-memory
-        # reads, cheap every cycle) so tier pages serve straight
-        # from Redis cluster-wide instead of recomputing per
-        # worker. Includes the per-act relic views.
+        # Proactive warm of the entity-scores cache so tier pages serve
+        # straight from Redis cluster-wide. Only after something was
+        # actually persisted; a no-op tick has nothing new to warm.
         try:
             # Never warm Redis from an unloaded cache: that would push
             # empty score maps cluster-wide with the warm TTL.
-            if app_cache.enabled() and snapshot_loaded():
+            if persisted and app_cache.enabled() and snapshot_loaded():
                 for etype in ("cards", "relics", "potions"):
                     app_cache.set_json(
                         app_cache.entity_scores_key(etype),
@@ -1334,18 +1355,24 @@ def start_stats_refresher() -> None:
         except Exception:
             logger.warning("entity-scores cache warm failed", exc_info=True)
 
-        # Charts prewarm LAST — it loads the full run frame from Mongo and can run
-        # for a while under load, so it must never delay the snapshot rebuild
-        # above. Trade-off: /charts warms a bit later after a deploy; the snapshot
-        # actually completing is the priority.
-        try:
-            if app_cache.enabled():
+        # Charts prewarm on its own thread and cadence: it can run up to its
+        # 15-minute budget and must never block the stats tick.
+        if (
+            app_cache.enabled()
+            and time.time() - _cadence["prewarm"] >= _PREWARM_INTERVAL_SECONDS
+        ):
+            _cadence["prewarm"] = time.time()
+
+            def _prewarm() -> None:
                 from .charts import prewarm_charts
 
                 prewarm_charts()
-        except Exception:
-            logger.warning("charts prewarm failed", exc_info=True)
-        logger.info("refresh cycle: charts prewarm done at %.1fs", time.time() - _cyc0)
+                logger.info(
+                    "refresh cycle: charts prewarm done at %.1fs",
+                    time.time() - _cyc0,
+                )
+
+            _kick_side_job("prewarm", _prewarm)
 
     threading.Thread(target=_loop, daemon=True, name="stats-refresher").start()
 
