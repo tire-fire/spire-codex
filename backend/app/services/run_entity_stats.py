@@ -182,6 +182,52 @@ _RUNS_DIR = (
     / "runs"
 )
 
+
+def _read_blob_file(run_hash: str) -> dict | None:
+    path = _RUNS_DIR / f"{run_hash}.json"
+    if not path.exists():
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning("skipping unreadable run %s: %s", run_hash, e)
+        return None
+
+
+class _BlobProvider:
+    """Feeds run blobs to the walk in row order. On the Mongo path it
+    prefetches batches from the run_blobs collection (one query per 300
+    runs instead of one file open per run) and falls back to the on-disk
+    file for anything not yet backfilled. Holds at most one batch."""
+
+    _BATCH = 300
+
+    def __init__(self, hashes: list[str]):
+        self._hashes = hashes
+        self._pos = 0
+        self._buf: dict[str, dict | None] = {}
+
+    def get(self, run_hash: str) -> dict | None:
+        if run_hash in self._buf:
+            return self._buf.pop(run_hash)
+        while self._pos < len(self._hashes):
+            batch = self._hashes[self._pos : self._pos + self._BATCH]
+            self._pos += self._BATCH
+            fetched: dict[str, dict] = {}
+            if _USING_MONGO:
+                from .runs_db_mongo import get_run_blobs
+
+                fetched = get_run_blobs(batch)
+            self._buf = {
+                h: (fetched.get(h) if h in fetched else _read_blob_file(h))
+                for h in batch
+            }
+            if run_hash in self._buf:
+                return self._buf.pop(run_hash)
+        return _read_blob_file(run_hash)
+
+
 # Materialized-snapshot config. The expensive 100k-file walk runs in a
 # SINGLE leader process (via the existing stats-refresher lease) and is
 # persisted to Mongo. Every worker reads that shared snapshot instead of
@@ -943,6 +989,8 @@ def _accumulate(rows, official_chars, wr_map, recent_versions=()):
         for _b in _BRACKET_KEYS:
             bracket_accs[f"{_b}:{_v}"] = _new_bracket_acc()
 
+    blobs = _BlobProvider([r["run_hash"] for r in rows])
+
     for row in rows:
         # Official runs only: the game's ascensions are A0-A10. A11+ are modded
         # and a negative/placeholder like A-1 is bad data; both must be skipped
@@ -1002,14 +1050,8 @@ def _accumulate(rows, official_chars, wr_map, recent_versions=()):
         if submitted is not None and hasattr(submitted, "isoformat"):
             submitted = submitted.isoformat()
 
-        path = _RUNS_DIR / f"{run_hash}.json"
-        if not path.exists():
-            continue
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                blob = json.load(f)
-        except (OSError, json.JSONDecodeError) as e:
-            logger.warning("skipping unreadable run %s: %s", run_hash, e)
+        blob = blobs.get(run_hash)
+        if blob is None:
             continue
 
         # The content brackets this run feeds, shared by the community, charts,

@@ -1455,13 +1455,23 @@ def build_user_blob_stats(username: str) -> dict[str, Any]:
     # Single-bracket walk: the username is the filter, so content brackets don't
     # apply here. Use the per-bracket-free helpers directly.
     acc = _new_acc_one()
+    blob_map: dict[str, dict] = {}
+    if os.environ.get("MONGO_URL", "").strip():
+        from .runs_db_mongo import get_run_blobs
+
+        blob_map = get_run_blobs([row["run_hash"] for row in rows])
     for row in rows:
-        path = _RUNS_DIR / f"{row['run_hash']}.json"
-        if not path.exists():
-            continue
+        blob = blob_map.get(row["run_hash"])
+        if blob is None:
+            path = _RUNS_DIR / f"{row['run_hash']}.json"
+            if not path.exists():
+                continue
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    blob = json.load(f)
+            except Exception:
+                continue
         try:
-            with open(path, "r", encoding="utf-8") as f:
-                blob = json.load(f)
             _accumulate_one(
                 acc,
                 blob,
