@@ -138,10 +138,11 @@ def dismiss_guide_submission(sub_id: str) -> bool:
 
 def delete_run(run_hash: str, runs_dir: Path) -> dict[str, Any]:
     """Remove a submitted run everywhere it lives synchronously: every Mongo
-    doc with the hash (multiplayer runs store one doc per player) and the
-    blob file. The stats snapshot and leaderboard summaries pick up the
-    removal on their next scheduled rebuild."""
+    doc with the hash (multiplayer runs store one doc per player), the
+    run_blobs doc, and the blob file. The stats snapshot and leaderboard
+    summaries pick up the removal on their next scheduled rebuild."""
     deleted_docs = 0
+    blob_deleted = 0
     if _enabled():
         # Single-player runs key on _id (= run hash) with no run_hash field;
         # multiplayer runs share a run_hash field. Match either so the doc is
@@ -151,6 +152,9 @@ def delete_run(run_hash: str, runs_dir: Path) -> dict[str, Any]:
             .delete_many({"$or": [{"_id": run_hash}, {"run_hash": run_hash}]})
             .deleted_count
         )
+        # Blob docs key on _id == run_hash. Without this the shared-run
+        # endpoint's Mongo fallback resurrects moderation-deleted runs.
+        blob_deleted = _db()["run_blobs"].delete_one({"_id": run_hash}).deleted_count
     file_removed = False
     blob = runs_dir / f"{run_hash}.json"
     try:
@@ -159,7 +163,11 @@ def delete_run(run_hash: str, runs_dir: Path) -> dict[str, Any]:
             file_removed = True
     except OSError:
         logger.warning("run blob delete failed for %s", run_hash, exc_info=True)
-    return {"deleted_docs": deleted_docs, "file_removed": file_removed}
+    return {
+        "deleted_docs": deleted_docs,
+        "blob_deleted": blob_deleted,
+        "file_removed": file_removed,
+    }
 
 
 # ── Announcements (the site banner) ──────────────────────────
