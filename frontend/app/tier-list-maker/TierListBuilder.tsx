@@ -17,7 +17,6 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
-import { toCanvas } from "html-to-image";
 
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "@/app/contexts/LanguageContext";
@@ -391,6 +390,8 @@ export default function TierListBuilder({ entityType, entities, initial }: Props
       getComputedStyle(document.documentElement).getPropertyValue("--bg-primary").trim() ||
       "#0a0a0a";
     try {
+      // Loaded on demand: only users who actually export pay for the library.
+      const { toCanvas } = await import("html-to-image");
       const canvas = await toCanvas(node, {
         pixelRatio,
         backgroundColor: pageBg,

@@ -220,6 +220,9 @@ function EventsClientInner({ initialEvents }: { initialEvents: GameEvent[] }) {
                     <img
                       src={imageUrl(event.image_url)}
                       alt={`${event.name} - Slay the Spire 2 Event`}
+                      width={40}
+                      height={40}
+                      loading="lazy"
                       className="w-10 h-10 object-contain flex-shrink-0"
                       crossOrigin="anonymous"
                     />
@@ -350,6 +353,9 @@ function EventsClientInner({ initialEvents }: { initialEvents: GameEvent[] }) {
                             <img
                               src={imageUrl(relic.image_url)}
                               alt={`${relic.name} - Slay the Spire 2 Relic`}
+                              width={32}
+                              height={32}
+                              loading="lazy"
                               className="w-8 h-8 object-contain flex-shrink-0"
                               crossOrigin="anonymous"
                             />

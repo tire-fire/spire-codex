@@ -251,13 +251,15 @@ export default function HomeClient({ initialStats, initialTranslations }: HomeCl
           <Link className="viewmore" href={`${langPrefix}/characters`}>{t("All characters", lang)} {ARROW}</Link>
         </div>
         <div className="charbar">
-          {CHARACTERS.map((char) => {
+          {CHARACTERS.map((char, i) => {
             const charName = translations.character_names?.[char.id] ?? char.id.charAt(0).toUpperCase() + char.id.slice(1);
             return (
               <Link key={char.id} href={`${langPrefix}/characters/${char.id.toLowerCase()}`} className="charp" style={{ ["--cc"]: char.cssColor } as CSSProperties}>
                 <span className="charp-art">
-                  <img className="charp-combat" src={imageUrl(`/static/images/characters/combat_${char.id}.webp`)} alt={`${charName} - Slay the Spire 2 Character`} crossOrigin="anonymous" />
-                  <img className="charp-icon" src={imageUrl(`/static/images/characters/character_icon_${char.id}.webp`)} alt="" aria-hidden="true" crossOrigin="anonymous" />
+                  {/* The first combat portraits are the page's LCP candidates:
+                      hint the browser to fetch them ahead of the below-fold art. */}
+                  <img className="charp-combat" src={imageUrl(`/static/images/characters/combat_${char.id}.webp`)} alt={`${charName} - Slay the Spire 2 Character`} width={512} height={512} fetchPriority={i < 2 ? "high" : undefined} crossOrigin="anonymous" />
+                  <img className="charp-icon" src={imageUrl(`/static/images/characters/character_icon_${char.id}.webp`)} alt="" aria-hidden="true" width={88} height={88} crossOrigin="anonymous" />
                 </span>
                 <span className="charp-meta"><span className="charp-name">{charName}</span><span className="charp-wr">{char.wr}% {t("win rate", lang)}</span></span>
               </Link>
@@ -288,7 +290,7 @@ export default function HomeClient({ initialStats, initialTranslations }: HomeCl
               return [
                 tile,
                 <Link key="ow-promo" href={`${langPrefix}/overlay`} className="promo">
-                  <img className="promo-img" src="/overwolf-logo.png" alt="Overwolf" />
+                  <img className="promo-img" src="/overwolf-logo.png" alt="Overwolf" loading="lazy" />
                   <div className="promo-body">
                     <span className="promo-kick">{t("New · Overwolf companion", lang)}</span>
                     <div className="promo-t">{t("Spire Codex Overlay", lang)}</div>
