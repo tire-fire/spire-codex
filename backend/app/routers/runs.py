@@ -8,6 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from slowapi import Limiter
+from starlette.concurrency import run_in_threadpool
 from ..dependencies import client_ip
 from ..services import rate_limit_config
 from ..services.runs_db import submit_run, get_stats, claim_runs
@@ -159,7 +160,11 @@ async def submit_run_endpoint(
         digits = "".join(ch for ch in discord_id if ch.isdigit())
         clean_discord_id = digits or None
 
-    result = submit_run(
+    # Threadpool: submit_run is sync work (Mongo insert on a separate host +
+    # JSON file write); run on the event loop it would stall every concurrent
+    # request on this worker for the duration of the round trips.
+    result = await run_in_threadpool(
+        submit_run,
         data,
         username=clean_username,
         steam_id=clean_steam_id,
@@ -198,7 +203,8 @@ async def submit_run_endpoint(
         try:
             from ..services.runs_db_mongo import seed_rank_for
 
-            rank = seed_rank_for(clean_steam_id, seed)
+            # Several sync Mongo queries — off the event loop, same as above.
+            rank = await run_in_threadpool(seed_rank_for, clean_steam_id, seed)
             result["seed_rank"] = rank.get("seed_rank")
             result["seed_total"] = rank.get("seed_total")
         except Exception:
@@ -275,7 +281,8 @@ async def claim_runs_endpoint(request: Request):
     if not clean_hashes:
         return {"claimed": 0, "already_claimed": 0, "unknown": 0}
 
-    return claim_runs(sanitized, clean_hashes)
+    # Sync DB write (cross-host round trips) — off the event loop.
+    return await run_in_threadpool(claim_runs, sanitized, clean_hashes)
 
 
 @router.get("/list", tags=["Runs"])
