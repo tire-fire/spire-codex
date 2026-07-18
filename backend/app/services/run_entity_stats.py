@@ -1340,10 +1340,17 @@ def _finalize(
     community_acc,
     charts_acc,
     encounter_acc,
+    *,
+    changed_brackets=None,
+    changed_blobs=None,
+    bracket_baselines_memo=None,
+    blob_final_memo=None,
 ) -> tuple[dict, dict, dict, dict]:
     """Fold the merged raw accumulators into the finalized snapshot payload.
 
-    Runs once, after accumulation (serial or parallel+merged).
+    With `changed_brackets`/`changed_blobs`, only touched slices are
+    re-finalized; untouched ones come from the memos, which the caller owns
+    and which persist across ticks (and through the checkpoint).
     """
     from . import charts_stats, community_stats, encounter_stats
 
@@ -1400,10 +1407,18 @@ def _finalize(
     # to. An entity only carries a bracket key if it has data in that bracket.
     bracket_baselines: dict[str, dict[str, float]] = {}
     bracket_totals: dict[str, dict[str, int]] = {}
+    memo = bracket_baselines_memo if bracket_baselines_memo is not None else {}
     for ck, acc in bracket_accs.items():
-        bracket_cache, baselines = _finalize_bracket(acc)
-        bracket_baselines[ck] = baselines
         bracket_totals[ck] = acc["totals"]
+        # Untouched brackets already have their blocks embedded in new_cache
+        # from the previous finalize; skipping them is what makes an
+        # incremental tick proportional to the new runs, not the grammar.
+        if changed_brackets is not None and ck not in changed_brackets and ck in memo:
+            bracket_baselines[ck] = memo[ck]
+            continue
+        bracket_cache, baselines = _finalize_bracket(acc)
+        memo[ck] = baselines
+        bracket_baselines[ck] = baselines
         for entity, cagg in bracket_cache.items():
             host = new_cache.get(entity)
             if host is None:
@@ -1430,12 +1445,25 @@ def _finalize(
                 # Per-character split for the char-brackets (empty otherwise).
                 "by_character": cagg.get("by_character", {}),
             }
+    bmemo = blob_final_memo if blob_final_memo is not None else {}
+
+    def _blob_final(mod, acc, blob_id):
+        touched = None if changed_blobs is None else changed_blobs.get(blob_id)
+        prev = bmemo.get(blob_id)
+        if touched is None or prev is None:
+            out = mod.finalize(acc)
+        else:
+            fresh = mod.finalize({k: acc[k] for k in touched if k in acc})
+            out = {**prev, **fresh}
+        bmemo[blob_id] = out
+        return out
+
     bracket_meta = {
         "baselines": bracket_baselines,
         "totals": bracket_totals,
-        "community": community_stats.finalize(community_acc),
-        "charts": charts_stats.finalize(charts_acc),
-        "encounters": encounter_stats.finalize(encounter_acc),
+        "community": _blob_final(community_stats, community_acc, "community"),
+        "charts": _blob_final(charts_stats, charts_acc, "charts"),
+        "encounters": _blob_final(encounter_stats, encounter_acc, "encounters"),
     }
     return new_cache, new_totals, new_type_baselines, bracket_meta
 
@@ -1766,9 +1794,19 @@ def _build_cache_data(stash: bool = False) -> tuple[dict, dict, dict, dict]:
             "pending": 0,
             "last_persist_ts": time.time(),
             "last_full_ts": time.time(),
+            "pending_brackets": set(),
+            "pending_blobs": {"community": set(), "charts": set(), "encounters": set()},
+            "bracket_baselines_memo": {},
+            "blob_final_memo": {},
         }
 
-    result = _finalize(**raw)
+    fin_kwargs = {}
+    if stash and _USING_MONGO and _incr is not None:
+        fin_kwargs = {
+            "bracket_baselines_memo": _incr["bracket_baselines_memo"],
+            "blob_final_memo": _incr["blob_final_memo"],
+        }
+    result = _finalize(**raw, **fin_kwargs)
     # Advertise which versions actually got their own bucket, so the read path
     # and the version dropdown only offer versions that have data. result[3] is
     # the bracket_meta dict.
@@ -2018,7 +2056,11 @@ def get_entity_metric_history(
 
 
 def _persist_snapshot(
-    cache: dict, totals: dict, baselines: dict, bracket_meta: dict | None = None
+    cache: dict,
+    totals: dict,
+    baselines: dict,
+    bracket_meta: dict | None = None,
+    changed_blobs: dict | None = None,
 ) -> None:
     """Write the built cache to Mongo as one doc per entity type plus a
     meta doc. Entities are stored as arrays (not dicts) so entity IDs
@@ -2104,8 +2146,11 @@ def _persist_snapshot(
     # are deleted the same way as entity chunks.
     for blob_id in ("community", "charts", "encounters"):
         blob = bracket_meta.get(blob_id, {}) or {}
+        touched = None if changed_blobs is None else changed_blobs.get(blob_id, set())
         prev_doc = coll.find_one({"_id": blob_id}, {"keys": 1}) or {}
         for bkey, acc in blob.items():
+            if touched is not None and bkey not in touched:
+                continue
             coll.replace_one(
                 {"_id": f"{blob_id}:{bkey}"},
                 {"_id": f"{blob_id}:{bkey}", "blob": acc, "updated_at": now},
@@ -2116,11 +2161,12 @@ def _persist_snapshot(
             {"_id": blob_id, "keys": sorted(blob.keys()), "updated_at": now},
             upsert=True,
         )
-        stale = [
-            f"{blob_id}:{k}" for k in (prev_doc.get("keys") or []) if k not in blob
-        ]
-        if stale:
-            coll.delete_many({"_id": {"$in": stale}})
+        if touched is None:
+            stale = [
+                f"{blob_id}:{k}" for k in (prev_doc.get("keys") or []) if k not in blob
+            ]
+            if stale:
+                coll.delete_many({"_id": {"$in": stale}})
     coll.replace_one(
         {"_id": "__meta__"},
         {
@@ -2450,6 +2496,22 @@ def _incremental_tick() -> int:
             rows, _incr["official_chars"], wr_map, _incr["recent_versions"]
         )
         _merge_raw(_incr["raw"], partial)
+        pb = _incr.setdefault("pending_brackets", set())
+        for ck, acc in partial["bracket_accs"].items():
+            if acc["totals"]["total_runs"]:
+                pb.add(ck)
+        blobs = _incr.setdefault(
+            "pending_blobs", {"community": set(), "charts": set(), "encounters": set()}
+        )
+        for k, sub in partial["community_acc"].items():
+            if sub.get("total_runs"):
+                blobs["community"].add(k)
+        for k, sub in partial["charts_acc"].items():
+            if any(bool(v) for v in sub.values()):
+                blobs["charts"].add(k)
+        for k, sub in partial["encounter_acc"].items():
+            if sub.get("cells"):
+                blobs["encounters"].add(k)
         tail = rows[-1]
         _incr["last_key"] = (tail["submitted_at"], str(tail["run_hash"]))
         _incr["pending"] += len(rows)
@@ -2458,20 +2520,45 @@ def _incremental_tick() -> int:
         _incr["pending"]
         and time.time() - _incr["last_persist_ts"] >= _STATS_PERSIST_SECONDS
     ):
+        changed_brackets = _incr.get("pending_brackets")
+        changed_blobs = _incr.get("pending_blobs")
+        if _incr.get("bracket_baselines_memo") is None:
+            _incr["bracket_baselines_memo"] = {}
+            _incr["blob_final_memo"] = {}
+            changed_brackets = None
+            changed_blobs = None
         _t0 = time.time()
-        cache, totals, baselines, bracket_meta = _finalize(**_incr["raw"])
+        cache, totals, baselines, bracket_meta = _finalize(
+            **_incr["raw"],
+            changed_brackets=changed_brackets,
+            changed_blobs=changed_blobs,
+            bracket_baselines_memo=_incr["bracket_baselines_memo"],
+            blob_final_memo=_incr["blob_final_memo"],
+        )
+        fin_s = time.time() - _t0
         bracket_meta["recent_versions"] = _incr["recent_versions"]
-        _persist_snapshot(cache, totals, baselines, bracket_meta)
+        _t1 = time.time()
+        _persist_snapshot(
+            cache, totals, baselines, bracket_meta, changed_blobs=changed_blobs
+        )
         _apply_cache(cache, totals, baselines, bracket_meta)
         _cache_snapshot_version = SNAPSHOT_VERSION
         logger.info(
-            "incremental stats: folded %d new runs, finalize+persist took "
-            "%.1fs (%d runs total)",
+            "incremental stats: folded %d new runs (%d brackets touched), "
+            "finalize %.1fs + persist %.1fs (%d runs total)",
             _incr["pending"],
-            time.time() - _t0,
+            len(changed_brackets) if changed_brackets is not None else -1,
+            fin_s,
+            time.time() - _t1,
             totals["total_runs"],
         )
         _incr["pending"] = 0
+        _incr["pending_brackets"] = set()
+        _incr["pending_blobs"] = {
+            "community": set(),
+            "charts": set(),
+            "encounters": set(),
+        }
         _incr["last_persist_ts"] = time.time()
         if time.time() - _last_checkpoint_ts >= _CHECKPOINT_INTERVAL:
             save_stats_checkpoint()
