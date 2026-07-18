@@ -505,8 +505,6 @@ def _blob_collection():
 
 
 def save_run_blob(run_hash: str, data: dict) -> None:
-    """Best-effort: the on-disk file stays the fallback until the
-    migration off run files completes."""
     try:
         _blob_collection().replace_one(
             {"_id": run_hash},

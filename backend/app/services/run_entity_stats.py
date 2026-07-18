@@ -196,10 +196,7 @@ def _read_blob_file(run_hash: str) -> dict | None:
 
 
 class _BlobProvider:
-    """Feeds run blobs to the walk in row order. On the Mongo path it
-    prefetches batches from the run_blobs collection (one query per 300
-    runs instead of one file open per run) and falls back to the on-disk
-    file for anything not yet backfilled. Holds at most one batch."""
+    """Batched, in-row-order run blob reads: Mongo first, file fallback."""
 
     _BATCH = 300
 

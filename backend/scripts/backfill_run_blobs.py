@@ -1,12 +1,7 @@
-"""Backfill data/runs/*.json into the run_blobs Mongo collection.
-
-Run inside the backend or rebuilder container:
+"""Backfill data/runs/*.json into the run_blobs collection. Idempotent,
+resumable, leaves the files untouched.
 
     python -m scripts.backfill_run_blobs
-
-Idempotent and resumable: hashes already in the collection are skipped, so
-it can be interrupted and re-run. The files are left untouched; readers
-prefer Mongo and fall back to the files, so nothing breaks mid-backfill.
 """
 
 import argparse
