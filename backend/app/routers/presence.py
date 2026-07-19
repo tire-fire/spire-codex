@@ -9,8 +9,10 @@ GET  /api/presence/{steam_id} — one player's full live doc (deck/relics/potion
 """
 
 import os
+import time
 
 from fastapi import APIRouter, HTTPException, Request
+from starlette.concurrency import run_in_threadpool
 
 router = APIRouter(prefix="/api/presence", tags=["Presence"])
 
@@ -649,6 +651,53 @@ def _require_mongo():
         raise HTTPException(status_code=503, detail="presence unavailable")
 
 
+# Process-local TTL cache of user records for the heartbeat path only (same
+# idiom as runs.py's _stats_fallback_cache: monotonic timestamps, expired
+# entries swept on miss). The mod beats ~every 30s, so without this every
+# heartbeat pays a cross-host Mongo round trip just to re-read a username
+# that almost never changes. users_db semantics elsewhere are untouched.
+_USER_CACHE_TTL_SECONDS = 300
+_USER_CACHE_MAX_ENTRIES = 4096
+_user_cache: dict[str, tuple[float, dict | None]] = {}
+
+
+def _cached_user(steam_id: str) -> dict | None:
+    """get_user_by_steam_id with a small TTL cache — heartbeat path only."""
+    now = time.monotonic()
+    hit = _user_cache.get(steam_id)
+    if hit and now - hit[0] < _USER_CACHE_TTL_SECONDS:
+        return hit[1]
+    for k in [
+        k for k, (t, _) in _user_cache.items() if now - t >= _USER_CACHE_TTL_SECONDS
+    ]:
+        del _user_cache[k]
+    from ..services.users_db import get_user_by_steam_id
+
+    user = get_user_by_steam_id(steam_id)
+    if len(_user_cache) < _USER_CACHE_MAX_ENTRIES:
+        _user_cache[steam_id] = (now, user)
+    return user
+
+
+def _heartbeat_sync(
+    steam_id: str, fields: dict, events: list[dict], unset: list[str]
+) -> None:
+    """The heartbeat's blocking Mongo work (user lookup + presence upsert +
+    live-time credit), bundled so the async route ships it to the threadpool
+    in one hop. Mongo runs on a separate host, so each call here is a network
+    round trip that must never run on the event loop."""
+    from ..services import presence_db
+
+    # Display name: the verified user record outranks the client-sent username.
+    try:
+        user = _cached_user(steam_id)
+        if user and user.get("username"):
+            fields["username"] = user["username"]
+    except Exception:
+        pass
+    presence_db.heartbeat(steam_id, fields, events, unset)
+
+
 @router.post("")
 async def post_presence(request: Request):
     _require_mongo()
@@ -673,7 +722,8 @@ async def post_presence(request: Request):
     from ..services import presence_db
 
     if data.get("ended"):
-        presence_db.end(steam_id)
+        # Sync pymongo delete = a cross-host round trip; off the event loop.
+        await run_in_threadpool(presence_db.end, steam_id)
         return {"ok": True, "ended": True}
 
     # Whitelist-copy the heartbeat; everything else in the body is dropped.
@@ -774,17 +824,12 @@ async def post_presence(request: Request):
         if k in data and data[k] is None
     ]
 
-    # Display name: the verified user record outranks the client-sent username.
-    try:
-        from ..services.users_db import get_user_by_steam_id
-
-        user = get_user_by_steam_id(steam_id)
-        if user and user.get("username"):
-            fields["username"] = user["username"]
-    except Exception:
-        pass
-
-    presence_db.heartbeat(steam_id, fields, _clean_events(data.get("events")), unset)
+    # All the Mongo work (user lookup, presence upsert, live-time credit, peak
+    # check) in one threadpool hop: run on the event loop, these cross-host
+    # round trips would stall every concurrent request on this worker.
+    await run_in_threadpool(
+        _heartbeat_sync, steam_id, fields, _clean_events(data.get("events")), unset
+    )
     return {"ok": True}
 
 
