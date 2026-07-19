@@ -140,6 +140,9 @@ services:
       # BACKEND_STATS_REFRESHER=on in the box .env to revert to the old
       # single-container behavior.
       - STATS_REFRESHER=${BACKEND_STATS_REFRESHER:-off}
+      # Only matters if BACKEND_STATS_REFRESHER=on (lease holders run the
+      # run_blobs startup backfill); see the rebuilder service.
+      - RUN_BLOBS_STARTUP_BACKFILL=${RUN_BLOBS_STARTUP_BACKFILL:-on}
     # Ordering only (no health condition): the backend must boot fine with
     # Redis down, since the cache layer is fail-safe by design.
     depends_on:
@@ -172,6 +175,9 @@ services:
       - DATA_DIR=/data
       - BETA_DATA_DIR=/data-beta
       - STATS_REFRESHER=on
+      # One-shot files -> run_blobs backfill on the first lease cycle after
+      # boot. Set to off to skip (e.g. while diagnosing Mongo load).
+      - RUN_BLOBS_STARTUP_BACKFILL=${RUN_BLOBS_STARTUP_BACKFILL:-on}
       - ENTITY_STATS_REBUILD_WORKERS=${ENTITY_STATS_REBUILD_WORKERS:-1}
       # See the backend service: optional cap on per-version stats buckets.
       # Must match the backend's value so both build the same snapshot shape.

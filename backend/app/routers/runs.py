@@ -1246,6 +1246,7 @@ _PREWARM_INTERVAL_SECONDS = max(
 )
 _cadence = {"summary": 0.0, "prewarm": 0.0}
 _side_jobs: dict[str, float] = {}
+_blob_backfill_kicked = False
 
 
 def _kick_side_job(name: str, fn) -> None:
@@ -1273,6 +1274,33 @@ def _kick_side_job(name: str, fn) -> None:
             _side_jobs.pop(name, None)
 
     threading.Thread(target=_run, daemon=True, name=f"stats-{name}").start()
+
+
+def _maybe_kick_blob_backfill() -> None:
+    """Heal any gap between data/runs files and the run_blobs collection,
+    once per process lifetime, on this instance's first leader cycle (i.e.
+    in the rebuilder). Kicked after the snapshot tick with the other side
+    jobs — the tick's finalize pins the GIL and pegs Mongo, so anything
+    started before it just races it — and runs on a side-job thread so it
+    never delays the tick or startup. RUN_BLOBS_STARTUP_BACKFILL=off skips
+    it entirely."""
+    global _blob_backfill_kicked
+    if _blob_backfill_kicked:
+        return
+    if os.environ.get("RUN_BLOBS_STARTUP_BACKFILL", "on").strip().lower() in (
+        "off",
+        "0",
+        "false",
+    ):
+        return
+    _blob_backfill_kicked = True
+
+    def _backfill() -> None:
+        from ..services.runs_db_mongo import backfill_run_blobs
+
+        backfill_run_blobs()
+
+    _kick_side_job("blob-backfill", _backfill)
 
 
 def start_stats_refresher() -> None:
@@ -1362,6 +1390,8 @@ def start_stats_refresher() -> None:
         # Stats aggregations run after the tick: its finalize pins the GIL and
         # pegs Mongo for minutes, so anything kicked before it just races it.
         _kick_side_job("home_stats", refresh_home_stats)
+        # One-shot files -> run_blobs backfill, first leader cycle only.
+        _maybe_kick_blob_backfill()
 
         if time.time() - _cadence["summary"] >= _SUMMARY_INTERVAL_SECONDS:
             _cadence["summary"] = time.time()
