@@ -229,6 +229,9 @@ services:
     environment:
       - API_INTERNAL_URL=http://spire-codex-backend:8000
       - NEXT_PUBLIC_SITE_URL=https://spire-codex.com
+      # Server/edge Sentry reads this at runtime (was previously a hardcoded
+      # DSN in sentry.{server,edge}.config.ts). Empty = Sentry disabled.
+      - SENTRY_DSN=${SENTRY_DSN:-}
     networks:
       - nginx_web-network
     logging:

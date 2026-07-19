@@ -63,6 +63,9 @@ services:
       # Server-side data fetches (tier list, etc.) must reach the backend over
       # the compose network, not localhost (which is the frontend container).
       - API_INTERNAL_URL=http://backend:8000
+      # Server/edge Sentry reads this at runtime (no longer hardcoded). Empty
+      # = Sentry disabled, which is the default for local dev.
+      - SENTRY_DSN=${SENTRY_DSN:-}
     depends_on:
       - backend
     logging:
