@@ -277,14 +277,25 @@ async def callback(request: Request) -> HTMLResponse:
     if token:
         frontend = os.environ.get("FRONTEND_URL", "").strip() or _public_base(request)
         auth_session_store.pop_session(session_id)
+        from ..services.auth_jwt import set_auth_cookie
+
         # A link lands back on settings (where the connect button lives); a
         # fresh sign-in lands on the profile, as before.
-        dest = (
-            f"{frontend}/settings?linked=steam&token={token}"
-            if linked_existing
-            else f"{frontend}/profile?auth=steam&token={token}"
+        path = "/settings?linked=steam" if linked_existing else "/profile?auth=steam"
+        # Same-origin (production: site + API share a host) → authenticate via
+        # the httpOnly cookie and keep the JWT out of the redirect URL, so it
+        # can't leak through browser history or a Referer header. Only the
+        # cross-origin local-dev case (frontend :3000 vs API :8000, where a
+        # cookie won't cross ports) still needs the token handoff in the URL.
+        # The web /redirect flow rides the browser here; the overlay poll flow
+        # gets its token from /poll instead, so it's unaffected either way.
+        same_origin = (
+            urllib.parse.urlparse(frontend).netloc
+            == urllib.parse.urlparse(_public_base(request)).netloc
         )
+        dest = f"{frontend}{path}" if same_origin else f"{frontend}{path}&token={token}"
         response = RedirectResponse(dest)
+        set_auth_cookie(response, token)
         response.headers["Cache-Control"] = "no-store, no-cache"
         response.headers["Pragma"] = "no-cache"
         return response
