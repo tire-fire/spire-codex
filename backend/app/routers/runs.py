@@ -1542,15 +1542,38 @@ def get_community_stats(
             if winner is not None:
                 return winner
 
-    try:
-        result = get_stats(
-            character=character,
-            win=win,
-            ascension=ascension,
-            game_mode=game_mode,
-            players=players,
-            username=username,
+    # Bound the live aggregation on the Mongo path. This endpoint is anonymous
+    # and rate-limited only per-IP, so without a server-side cap an attacker
+    # enumerating rare filter combos could each pin Mongo on a multi-second
+    # (unbounded, allowDiskUse) aggregation. maxTimeMS lets a runaway combo
+    # abort instead of running unbounded; a timeout degrades to 503, not a
+    # hung worker. Only the Mongo get_stats accepts the kwarg (the SQLite dev
+    # fallback doesn't), so pass it conditionally.
+    live_kwargs: dict = {}
+    if os.environ.get("MONGO_URL", "").strip():
+        live_kwargs["max_time_ms"] = int(
+            os.environ.get("STATS_LIVE_MAX_TIME_MS", "") or 15000
         )
+    try:
+        try:
+            result = get_stats(
+                character=character,
+                win=win,
+                ascension=ascension,
+                game_mode=game_mode,
+                players=players,
+                username=username,
+                **live_kwargs,
+            )
+        except Exception as exc:
+            from pymongo.errors import ExecutionTimeout, PyMongoError
+
+            if isinstance(exc, (ExecutionTimeout, PyMongoError)):
+                raise HTTPException(
+                    status_code=503,
+                    detail="Stats are busy right now — try again shortly.",
+                ) from exc
+            raise
         _stats_fallback_cache[cache_key] = (time.monotonic(), result)
         app_cache.set_json(redis_key, result, ttl_seconds=60)
 
