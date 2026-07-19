@@ -246,32 +246,33 @@ MAX_CLAIM_HASHES = 5000
 @router.post("/claim", tags=["Runs"])
 @limiter.limit("10/minute")
 async def claim_runs_endpoint(request: Request):
-    """Attach a username to previously-submitted runs by hash.
+    """Attach the signed-in user's name to previously-submitted runs by hash.
 
-    Body: `{ "username": "name", "hashes": ["abc123...", ...] }`
+    Body: `{ "hashes": ["abc123...", ...] }`
 
-    Only rows with a NULL/empty username are updated — existing
-    claims are never overwritten. Intended for the Spire Compendium
-    desktop app: after Steam sign-in, the client computes hashes
-    for every local run and claims the ones it already uploaded
-    anonymously.
+    Requires authentication (session cookie or `Authorization: Bearer <jwt>`,
+    which the Spire Compendium desktop app sends after Steam sign-in). The
+    claimed name is taken from the authenticated account — NEVER from the
+    request body — so a caller can only claim runs under their own name. This
+    endpoint used to accept an arbitrary `username` with no auth, which let
+    anyone attach a victim's name to any run (impersonation / stats
+    manipulation). Only rows with a NULL/empty username are updated, so an
+    existing claim is never overwritten.
     """
+    from ..services.auth_jwt import require_user
+
+    user = require_user(request)
+    sanitized = (user.get("username") or "").strip()
+    if not sanitized:
+        raise HTTPException(
+            status_code=400,
+            detail="Set a username on your account before claiming runs",
+        )
+
     try:
         payload = await request.json()
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON body")
-
-    raw_username = payload.get("username")
-    if not raw_username or not isinstance(raw_username, str):
-        raise HTTPException(status_code=400, detail="username is required")
-
-    import re
-
-    sanitized = re.sub(r"[^a-zA-Z0-9_\- ]", "", raw_username.strip())[:32].strip()
-    if not sanitized:
-        raise HTTPException(
-            status_code=400, detail="username is empty after sanitization"
-        )
 
     hashes = payload.get("hashes")
     if not isinstance(hashes, list):
